@@ -1,3 +1,0 @@
-# NEOVIM CONFIG
-
-## some
