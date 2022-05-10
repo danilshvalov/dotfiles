@@ -1,4 +1,4 @@
--- :fennel:1652171198
+-- :fennel:1652172305
 do
   if (0 == vim.fn.isdirectory("/Users/danilshvalov/.local/share/nvim/site/pack/packer/start/packer.nvim")) then
     print("packer.nvim: installing in data dir...")
@@ -20,51 +20,50 @@ local function _2_(use)
     end
     use({config = _3_, "gbprod/yanky.nvim"})
     use({"danilshvalov/dna.nvim"})
-    use({after = "nvim-treesitter", config = "floppy.configs.neorg", ft = "norg", requires = "nvim-lua/plenary.nvim", "nvim-neorg/neorg"})
+    use("kdheepak/lazygit.nvim")
     local function _4_()
+      return require("floppy.configs.neorg")
+    end
+    use({after = "nvim-treesitter", config = _4_, ft = "norg", requires = "nvim-lua/plenary.nvim", "nvim-neorg/neorg"})
+    local function _5_()
       return require("floppy.configs.align")
     end
-    use({config = _4_, "junegunn/vim-easy-align"})
-    local function _5_()
+    use({config = _5_, "junegunn/vim-easy-align"})
+    local function _6_()
       local theme = require("github-theme")
       theme.setup({theme_style = "dark"})
       return vim.api.nvim_set_hl(0, "CmpItemKindSnippetDefault", {fg = "#666666"})
     end
-    use({config = _5_, "projekt0n/github-nvim-theme"})
-    local function _6_()
+    use({config = _6_, "projekt0n/github-nvim-theme"})
+    local function _7_()
       local icons = require("nvim-web-devicons")
       return icons.setup({override = {fnl = {icon = "\238\156\170", color = "#fff3d6", name = "Fennel"}}, default = true})
     end
-    use({config = _6_, "kyazdani42/nvim-web-devicons"})
-    local function _7_()
+    use({config = _7_, "kyazdani42/nvim-web-devicons"})
+    local function _8_()
       local module_1_auto = require("floppy.configs.luasnip")
       return module_1_auto.setup()
     end
-    use({config = _7_, requires = {"saadparwaiz1/cmp_luasnip"}, "L3MON4D3/LuaSnip"})
+    use({config = _8_, requires = {"saadparwaiz1/cmp_luasnip"}, "L3MON4D3/LuaSnip"})
     use({"udayvir-singh/tangerine.nvim"})
     use({"udayvir-singh/hibiscus.nvim"})
     use({"McAuleyPenney/tidy.nvim"})
-    local function _8_()
+    local function _9_()
       local orgmode = require("orgmode")
       orgmode.setup_ts_grammar()
       return orgmode.setup({})
     end
-    use({config = _8_, ft = {"org"}, "nvim-orgmode/orgmode"})
-    local function _9_()
+    use({config = _9_, ft = {"org"}, "nvim-orgmode/orgmode"})
+    local function _10_()
       local module_1_auto = require("lsp_signature")
       return module_1_auto.setup()
     end
-    use({config = _9_, "ray-x/lsp_signature.nvim"})
-    local function _10_()
+    use({config = _10_, "ray-x/lsp_signature.nvim"})
+    local function _11_()
       local module_1_auto = require("floppy.configs.leap")
       return module_1_auto.setup()
     end
-    use({config = _10_, requires = "tpope/vim-repeat", "ggandor/leap.nvim"})
-    local function _11_()
-      local module_1_auto = require("neogit")
-      return module_1_auto.setup({})
-    end
-    use({config = _11_, "TimUntersberger/neogit"})
+    use({config = _11_, requires = "tpope/vim-repeat", "ggandor/leap.nvim"})
     local function _12_()
       return require("floppy.configs.virt-column")
     end

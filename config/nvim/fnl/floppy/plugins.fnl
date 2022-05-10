@@ -11,12 +11,14 @@
 
   (use! :danilshvalov/dna.nvim)
 
+  (use :kdheepak/lazygit.nvim)
+
   (use!
     :nvim-neorg/neorg
     :requires :nvim-lua/plenary.nvim
     :ft :norg
     :after :nvim-treesitter
-    :config :floppy.configs.neorg
+    :cfg! :floppy.configs.neorg
   )
 
   (use!
@@ -89,11 +91,6 @@
   )
 
   (use!
-    :TimUntersberger/neogit
-    :config (cfg! "neogit" {})
-  )
-
-  (use!
     "lukas-reineke/virt-column.nvim"
     :cfg! :floppy.configs.virt-column
   )
@@ -109,24 +106,10 @@
     :after "nvim-cmp"
   )
 
-  ; (use!
-  ;     "folke/tokyonight.nvim"
-  ;     :config (fn []
-  ;         vim.o.background  "dark"
-  ;         (vim.cmd "colorscheme tokyonight")
-  ;     )
-  ; )
-
   (use!
       "sindrets/diffview.nvim"
       :config (cfg! "floppy.configs.diffview")
   )
-
-  ; TODO: remove
-  ; (use!
-  ;     "rhysd/conflict-marker.vim"
-  ;     :config (cfg! "floppy.configs.conflict-marker")
-  ; )
 
   (use! :akinsho/git-conflict.nvim)
 
