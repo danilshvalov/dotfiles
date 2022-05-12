@@ -1,4 +1,4 @@
--- :fennel:1652084625
+-- :fennel:1652172829
 local neotree = require("neo-tree")
 local command = require("neo-tree.command")
 local function toggle_tree()

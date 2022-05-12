@@ -11,8 +11,6 @@
 
   (use! :danilshvalov/dna.nvim)
 
-  (use :kdheepak/lazygit.nvim)
-
   (use!
     :nvim-neorg/neorg
     :requires :nvim-lua/plenary.nvim
@@ -24,17 +22,6 @@
   (use!
     :junegunn/vim-easy-align
     :cfg! :floppy.configs.align
-  )
-
-  (use!
-    :projekt0n/github-nvim-theme
-    :config (fn []
-      (local theme (require :github-theme))
-      (theme.setup {
-        :theme_style :dark
-      })
-      (hi! CmpItemKindSnippetDefault {:fg :#666666})
-    )
   )
 
   (use!
@@ -68,16 +55,6 @@
 
   ; remove trailing space
   (use! :McAuleyPenney/tidy.nvim)
-
-  (use!
-      "nvim-orgmode/orgmode"
-      :ft [:org]
-      :config (fn []
-          (local orgmode (require :orgmode))
-          (orgmode.setup_ts_grammar)
-          (orgmode.setup {})
-      )
-  )
 
   (use!
       :ray-x/lsp_signature.nvim
@@ -234,25 +211,28 @@
 
   (use! :kburdett/vim-nuuid)
 
-  ; (use!
-  ;   :rebelot/kanagawa.nvim
-  ;   :config (fn []
-  ;     (vim.cmd "colorscheme kanagawa")
-  ;     (vim.cmd "hi VertSplit guibg=NONE")
-  ;   )
-  ; )
-
   (use!
     "lukas-reineke/indent-blankline.nvim"
-    :config (fn [] (require "floppy.configs.indent-blankline"))
+    :config! :floppy.configs.indent-blankline
   )
-
 
   (use! "folke/lua-dev.nvim")
 
   (use!
     :dstein64/vim-startuptime
   )
+
+  (use!
+    :projekt0n/github-nvim-theme
+    :config (fn []
+      (local theme (require :github-theme))
+      (theme.setup {
+        :theme_style :dark
+      })
+      (hi! CmpItemKindSnippetDefault {:fg :#666666})
+    )
+  )
+
 
   ; improve startup time
   (use!
