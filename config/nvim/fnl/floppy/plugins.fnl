@@ -4,12 +4,47 @@
 (packer-setup {})
 
 (packer
+  (use!
+    :projekt0n/github-nvim-theme
+    :config (fn []
+      (local theme (require :github-theme))
+      (theme.setup {
+        :theme_style :dark_default
+      })
+      (vim.cmd "colorscheme github_dark_default")
+      (hi! CmpItemKindSnippetDefault {:fg :#666666})
+      (hi! cppTSProperty {:fg :#e1e4e8})
+      (hi! cppTSType  {:fg :#75beff})
+      (hi! VertSplit {:fg :#505050})
+    )
+  )
+
+  (use!
+    :nvim-telescope/telescope-fzf-native.nvim
+    :run :make
+  )
+
+  (use!
+    :chentoast/marks.nvim
+    :config (fn []
+      (local marks (require :marks))
+      (marks.setup)
+    )
+  )
+
+  (use!
+    :toppair/reach.nvim
+    :cfg! :vdk.plugins.configs.reach
+  )
+
   ;improve vim-yank
   (use!
     :gbprod/yanky.nvim
     :config (cfg! :floppy.configs.yanky))
 
   (use! :danilshvalov/dna.nvim)
+
+  (use! :TimUntersberger/neogit)
 
   (use!
     :nvim-neorg/neorg
@@ -21,7 +56,7 @@
 
   (use!
     :junegunn/vim-easy-align
-    :cfg! :floppy.configs.align
+    :cfg! :vdk.plugins.configs.align
   )
 
   (use!
@@ -58,13 +93,13 @@
 
   (use!
       :ray-x/lsp_signature.nvim
-      :config (cfg! :lsp_signature)
+      :cfg! "vdk.plugins.configs.lsp-signature"
   )
 
   (use!
     :ggandor/leap.nvim
     :requires "tpope/vim-repeat"
-    :config! "floppy.configs.leap"
+    :cfg! "vdk.plugins.configs.leap"
   )
 
   (use!
@@ -134,12 +169,6 @@
   )
 
   (use!
-      "akinsho/bufferline.nvim"
-      :requires "kyazdani42/nvim-web-devicons"
-      :config (cfg! "floppy.configs.bufferline")
-  )
-
-  (use!
       "windwp/nvim-autopairs"
       :config (cfg! "floppy.configs.nvim-autopairs")
   )
@@ -147,18 +176,17 @@
   (use! "tpope/vim-surround")
 
   (use!
-      "b3nj5m1n/kommentary"
-      :config (fn []
-          (let [kommentary (require "kommentary.config")]
-              (kommentary.configure_language :default {:prefer_single_line_comments true})
-          )
-      )
+    :numToStr/Comment.nvim
+    :config (fn []
+      (local Comment (require :Comment))
+      (Comment.setup)
+    )
   )
 
   (use!
       "neovim/nvim-lspconfig"
       :requires "williamboman/nvim-lsp-installer"
-      :config (cfg! "floppy.configs.lspconfig")
+      :cfg! "vdk.plugins.configs.lspconfig"
   )
 
   (use!
@@ -174,7 +202,7 @@
 
   (use!
       "folke/lsp-colors.nvim"
-      :config (cfg! "floppy.configs.lsp-colors")
+      :cfg! "vdk.plugins.configs.lsp-colors"
   )
 
   (use!
@@ -213,7 +241,7 @@
 
   (use!
     "lukas-reineke/indent-blankline.nvim"
-    :config! :floppy.configs.indent-blankline
+    :cfg! :vdk.plugins.configs.indent-blankline
   )
 
   (use! "folke/lua-dev.nvim")
@@ -221,18 +249,6 @@
   (use!
     :dstein64/vim-startuptime
   )
-
-  (use!
-    :projekt0n/github-nvim-theme
-    :config (fn []
-      (local theme (require :github-theme))
-      (theme.setup {
-        :theme_style :dark
-      })
-      (hi! CmpItemKindSnippetDefault {:fg :#666666})
-    )
-  )
-
 
   ; improve startup time
   (use!

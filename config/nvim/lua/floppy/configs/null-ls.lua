@@ -1,4 +1,4 @@
--- :fennel:1651661900
+-- :fennel:1652561830
 local null_ls = require("null-ls")
 local api = vim.api
 local enable_format = true
@@ -11,7 +11,7 @@ vim.keymap.set("", "<Leader>tf", toggle_format, {silent = true})
 local function make_sources()
   local builtins = null_ls.builtins
   local formatting = builtins.formatting
-  return {builtins.code_actions.gitsigns, builtins.diagnostics.eslint, builtins.diagnostics.codespell, formatting.stylua, formatting.prettier.with({filetypes = {"java", "markdown"}}), formatting.prettierd.with({filetypes = {"json", "javascript"}}), formatting.clang_format, formatting.black, formatting.latexindent.with({extra_args = {"-g /dev/null"}}), formatting.taplo}
+  return {builtins.code_actions.gitsigns, builtins.diagnostics.eslint, builtins.diagnostics.codespell, formatting.stylua, formatting.prettier.with({filetypes = {"java", "markdown"}}), formatting.prettierd.with({filetypes = {"json", "javascript", "yaml"}}), formatting.clang_format, formatting.black, formatting.latexindent.with({extra_args = {"-g /dev/null"}}), formatting.taplo}
 end
 local function lsp_formatting(bufnr)
   return vim.lsp.buf.format({async = true})

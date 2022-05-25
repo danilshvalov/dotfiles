@@ -1,4 +1,4 @@
--- :fennel:1652207921
+-- :fennel:1652559239
 local ls = require("luasnip")
 local _local_1_ = require("luasnip.extras.fmt")
 local fmt = _local_1_["fmt"]
@@ -12,4 +12,4 @@ local func = _local_2_["function_node"]
 local choice = _local_2_["choice_node"]
 local dyn = _local_2_["dynamic_node"]
 local restore = _local_2_["restore_node"]
-return ls.add_snippets("cpp", {snip("inc", {text("#include <"), ins(1), text(">")}), snip("std", text("using namespace std;")), snip("cout", {text("std::cout << "), ins(1), text(" << std::endl")}), snip("main", {text({"int main() {", "\9"}), ins(0), text({"", "}"})})})
+return ls.add_snippets("cpp", {snip("inc", {text("#include <"), ins(1), text(">")}), snip("std", text("using namespace std;")), snip("cout", {text("std::cout << "), ins(1), text(" << std::endl;")}), snip("main", {text({"int main() {", "\9"}), ins(0), text({"", "}"})}), snip("for", fmt("for ({} {} = {}; {}; {}) {{\n\9{}\n}}", {ins(1, "size_t"), ins(2, "i"), ins(3, "0"), ins(4), ins(5, "++i"), ins(0)}))})

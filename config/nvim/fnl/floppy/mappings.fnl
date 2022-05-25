@@ -1,4 +1,4 @@
-(import-macros {: map! : nmap!} :floppy.macros)
+(import-macros {: map! : nmap!} :dna.vim)
 
 (map! "в" :d)
 (map! "н" :y)
@@ -51,4 +51,4 @@
 
 (map! :<Leader>cs :<Cmd>noh<CR>)
 
-(map! :<Space> :<Leader> {:remap true :silent true})
+; (map! :<Space> :<Leader> {:remap true :silent true})

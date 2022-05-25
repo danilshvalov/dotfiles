@@ -1,5 +1,5 @@
 (local leap (require :leap))
-(import-macros {: hi!} :floppy.macros)
+(import-macros {: hi!} :dna.vim)
 
 (fn setup-highlights []
   (hi! LeapMatch {:fg "#ff768e"})
@@ -10,6 +10,7 @@
 (fn setup []
   (leap.setup {})
   (leap.set_default_keymaps)
-  (setup-highlights))
+  (setup-highlights)
+)
 
 {: setup}

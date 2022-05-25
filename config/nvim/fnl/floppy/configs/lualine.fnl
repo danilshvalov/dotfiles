@@ -39,6 +39,7 @@
     )
   ]
   :lualine_x [
+    (item :diagnostics)
     (item :progress)
     (item
       #(vim.opt.tabstop:get)

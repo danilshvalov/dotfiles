@@ -97,7 +97,9 @@
   (lspconfig.texlab.setup {:on_attach disable-formatting}))
 
 (fn setup-pyright []
-  (lspconfig.pyright.setup {}))
+  (lspconfig.pyright.setup {
+    :root_dir (util.root_pattern :.git)
+  }))
 
 (fn setup-servers []
   (lspinstaller.setup {:ensure_installed [:clangd
@@ -106,13 +108,15 @@
                                           :sumneko_lua
                                           :texlab
                                           :pyright
-                                          :cmake]})
+                                          :cmake
+  :clojure_lsp]})
   (setup-clangd)
   (setup-jdtls)
   (setup-rust-analyzer)
   (setup-sumneko-lua)
   (setup-texlab)
   (setup-pyright)
+  (lspconfig.clojure_lsp.setup {})
   (lspconfig.cmake.setup {})
 )
 

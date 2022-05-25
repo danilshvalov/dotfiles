@@ -1,4 +1,4 @@
--- :fennel:1651828333
+-- :fennel:1653322106
 local lspinstaller = require("nvim-lsp-installer")
 local lspconfig = require("lspconfig")
 local util = require("lspconfig/util")
@@ -86,16 +86,17 @@ local function setup_texlab()
   return lspconfig.texlab.setup({on_attach = disable_formatting})
 end
 local function setup_pyright()
-  return lspconfig.pyright.setup({})
+  return lspconfig.pyright.setup({root_dir = util.root_pattern(".git")})
 end
 local function setup_servers()
-  lspinstaller.setup({ensure_installed = {"clangd", "jdtls", "rust_analyzer", "sumneko_lua", "texlab", "pyright", "cmake"}})
+  lspinstaller.setup({ensure_installed = {"clangd", "jdtls", "rust_analyzer", "sumneko_lua", "texlab", "pyright", "cmake", "clojure_lsp"}})
   setup_clangd()
   setup_jdtls()
   setup_rust_analyzer()
   setup_sumneko_lua()
   setup_texlab()
   setup_pyright()
+  lspconfig.clojure_lsp.setup({})
   return lspconfig.cmake.setup({})
 end
 local function setup()

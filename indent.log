@@ -1,6 +1,6 @@
 INFO:  latexindent version 3.9.1, 2021-03-21, a script to indent .tex files
        latexindent lives here: /usr/local/texlive/2021/texmf-dist/scripts/latexindent/
-       Thu May  5 01:16:57 2022
+       Mon May 23 21:03:43 2022
        Reading input from STDIN
 INFO:  Processing switches:
 INFO:  Directory for backup files and indent.log: .

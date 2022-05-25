@@ -143,6 +143,8 @@ path=(
     /Users/danilshvalov/.dotnet/tools
     /Library/Frameworks/Mono.framework/Versions/Current/Commands
 
+    /opt/homebrew/Cellar/clojure/1.11.1.1113/libexec
+
     $path
 )
 

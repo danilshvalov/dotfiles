@@ -17,7 +17,7 @@
    builtins.diagnostics.codespell
    formatting.stylua
    (formatting.prettier.with {:filetypes [:java :markdown]})
-   (formatting.prettierd.with {:filetypes [:json :javascript]})
+   (formatting.prettierd.with {:filetypes [:json :javascript :yaml]})
    formatting.clang_format
    formatting.black
    (formatting.latexindent.with {:extra_args ["-g /dev/null"]})

@@ -44,8 +44,53 @@
   `(snip {:trig ,(tostring trig) :wordTrig false} [(text (.. :\ ,(tostring name) "{")) (ins 1) (text "}")])
 )
 
+(macro fmt! [format ...] `(fmt ,format [,...] {:delimiters "<>"}))
+
+
+
 
 (ls.add_snippets "tex" [
+  (snip :beg
+    (fmt
+      "
+      \\begin{{{}}}
+      \t{}
+      \\end{{{}}}
+      "
+    [(ins 1) (ins 0) (rep 1)])
+  )
+  (snip :img
+    (fmt
+      "
+      \\begin{{center}}
+      \t\\includegraphics[width={}\\textwidth]{{{}}}
+      \\end{{center}}
+      "
+    [(ins 1) (ins 0)]))
+  (snip :fig
+    (fmt
+      "
+      \\begin{{figure}}[H]
+      \t\\centering
+      \t\\includegraphics[width=\\textwidth]{{{}}}
+      \t\\caption{{{}}}
+      \t\\label{{fig:{}}}
+      \\end{{figure}}
+      "
+    [(ins 1) (ins 2) (rep 2)]))
+
+  (snip :pyt
+    (fmt
+      "
+      \\begin{{code}}
+      \t\\caption{{{}}}
+      \t\\label{{code:{}}}
+      \t\\inputminted{{python}}{{{}}}
+      \\end{{code}}
+      "
+    [(ins 1) (rep 1) (ins 2)])
+  )
+
   (env-snip eq equation)
   (env-snip eqs equation*)
   (env-snip item itemize)
@@ -69,7 +114,6 @@
   (sec-snip ssub  \subsubsection  ssub)
   (sec-snip ssubs \subsubsection* ssub)
 
-
   (text-snip \a \alpha)
   (text-snip \b \beta)
   (text-snip \g \gamma)
@@ -92,6 +136,18 @@
   (text-snip \qq \qquad)
   (text-snip \qqq "\\qquad \\qquad")
 
+  (snip :mk (fmt "\\({}\\)" [(ins 1)]))
+  (snip :\fr (fmt! "\\frac{<>}{<>}" (ins 1) (ins 2)))
+  (snip :\dfr (fmt! "\\dfrac{<>}{<>}" (ins 1) (ins 2)))
+  (snip :\lim (fmt! "\\lim_{<>}{<>}" (ins 1) (ins 2)))
+  (snip :\int (fmt! "\\int\\limits_{<>}{<>}" (ins 1) (ins 2)))
+  (snip :\iint (fmt! "\\iint\\limits_{<>}" (ins 1)))
+  (snip :\iiint (fmt! "\\iiint\\limits_{<>}" (ins 1)))
+
   (wrap-snip \t text)
   (wrap-snip \s sqrt)
+  (wrap-snip \bf textbf)
+  (wrap-snip \it textit)
+  (wrap-snip \tt texttt)
+  (wrap-snip \bo boxed)
 ])

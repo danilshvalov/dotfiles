@@ -1,4 +1,4 @@
--- :fennel:1651251097
+-- :fennel:1652600437
 local leap = require("leap")
 local function setup_highlights()
   vim.api.nvim_set_hl(0, "LeapMatch", {fg = "#ff768e"})

@@ -1,4 +1,4 @@
--- :fennel:1652082775
+-- :fennel:1652613648
 local cmp = require("cmp")
 local luasnip = require("luasnip")
 local api = vim.api
@@ -18,24 +18,36 @@ local function map_scroll_docs(n)
 end
 local function setup_mappings()
   local function _1_(fallback)
-    if luasnip.expand_or_jumpable() then
+    if cmp.get_selected_entry() then
+      return cmp.confirm()
+    elseif luasnip.expand_or_jumpable() then
       return luasnip.expand_or_jump()
-    elseif cmp.visible() then
-      return cmp.select_next_item()
     else
       return fallback()
     end
   end
   local function _3_(fallback)
-    if cmp.visible() then
-      return cmp.select_prev_item()
-    elseif luasnip.jumpable(-1) then
+    if luasnip.jumpable(1) then
+      return luasnip.jump(1)
+    else
+      return fallback()
+    end
+  end
+  local function _5_(fallback)
+    if luasnip.jumpable(-1) then
       return luasnip.jump(-1)
     else
       return fallback()
     end
   end
-  return {["<C-d>"] = map_scroll_docs(-4), ["<C-f>"] = map_scroll_docs(4), ["<C-Space>"] = cmp.mapping(cmp.mapping.complete(), {"i", "c"}), ["<C-n>"] = cmp.mapping(cmp.mapping.complete(), {"i", "c"}), ["<Up>"] = cmp.mapping(cmp.mapping.select_prev_item({behavior = cmp.SelectBehavior.Select}), {"i"}), ["<Down>"] = cmp.mapping(cmp.mapping.select_next_item({behavior = cmp.SelectBehavior.Select}), {"i"}), ["<C-y>"] = cmp.config.disable, ["<C-e>"] = cmp.mapping({i = cmp.mapping.abort(), c = cmp.mapping.close()}), ["<CR>"] = cmp.mapping.confirm({select = false}), ["<Tab>"] = cmp.mapping(_1_, {"i", "c", "s"}), ["<S-Tab>"] = cmp.mapping(_3_, {"i", "c", "s"})}
+  local function _7_(fallback)
+    if luasnip.jumpable(-1) then
+      return luasnip.jump(-1)
+    else
+      return fallback()
+    end
+  end
+  return {["<C-d>"] = map_scroll_docs(-4), ["<C-f>"] = map_scroll_docs(4), ["<C-Space>"] = cmp.mapping(cmp.mapping.complete(), {"i", "c"}), ["<C-n>"] = cmp.mapping(cmp.mapping.complete(), {"i", "c"}), ["<Up>"] = cmp.mapping(cmp.mapping.select_prev_item(), {"i", "c", "s"}), ["<Down>"] = cmp.mapping(cmp.mapping.select_next_item(), {"i", "c", "s"}), ["<C-y>"] = cmp.config.disable, ["<C-e>"] = cmp.mapping({i = cmp.mapping.abort(), c = cmp.mapping.close()}), ["<CR>"] = cmp.mapping.confirm({select = false}), ["<Tab>"] = cmp.mapping({i = _1_, s = _3_, c = cmp.mapping.select_next_item()}), ["<S-Tab>"] = cmp.mapping({i = _5_, s = _7_, c = cmp.mapping.select_prev_item()})}
 end
 local function setup_sources()
   local sources = {"path", "orgmode", "nvim_lsp", "nvim_lsp_signature_help", "neorg", "luasnip"}
@@ -53,14 +65,14 @@ local function setup_sources()
 end
 local function setup()
   cmp.setup.cmdline(":", {sources = cmp.config.sources({{name = "path"}}, {{name = "cmdline"}})})
-  local function _6_(args)
+  local function _10_(args)
     return luasnip.lsp_expand(args.body)
   end
-  local function _7_(_, vim_item)
+  local function _11_(_, vim_item)
     vim_item.menu = vim_item.kind
     vim_item.kind = icons[vim_item.kind]
     return vim_item
   end
-  return cmp.setup({snippet = {expand = _6_}, mapping = setup_mappings(), sources = setup_sources(), formatting = {fields = {"kind", "abbr", "menu"}, format = _7_}})
+  return cmp.setup({snippet = {expand = _10_}, mapping = setup_mappings(), sources = setup_sources(), formatting = {fields = {"kind", "abbr", "menu"}, format = _11_}})
 end
 return {setup = setup}

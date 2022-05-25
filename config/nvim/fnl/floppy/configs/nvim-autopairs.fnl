@@ -18,49 +18,25 @@
 (npairs.add_rule (Rule "\\{" "\\}"))
 (npairs.add_rule (Rule "\\(" "\\)"))
 (npairs.add_rule (Rule "\\[" "\\]"))
-; (npairs.add_rule (doto (Rule "\\Big(" "\\Big)" :tex)
-;                    (: :with_del (cond.none))))
 
-; npairs.add_rule(Rule("<", ">", "cpp"):with_pair(ts_conds.is_not_ts_node({ "condition_clause", "repeat_statement" })))
 
-; npairs.add_rules({
-;     Rule(" ", " ")
-;         :with_pair(function(opts)
-;             local pair = opts.line:sub(opts.col - 1, opts.col)
-;             return vim.tbl_contains({ "()", "[]", "{}" }, pair)
-;         end)
-;         :with_pair(cond.not_filetypes({ "org" })),
-;     Rule("( ", " )")
-;         :with_pair(function()
-;             return false
-;         end)
-;         :with_move(function(opts)
-;             return opts.prev_char:match(".%)") ~= nil
-;         end)
-;         :use_key(")")
-;         :with_del(cond.none())
-;         :with_pair(cond.not_filetypes({ "org" })),
-;     Rule("{ ", " }")
-;         :with_pair(function()
-;             return false
-;         end)
-;         :with_move(function(opts)
-;             return opts.prev_char:match(".%}") ~= nil
-;         end)
-;         :use_key("}")
-;         :with_del(cond.none())
-;         :with_pair(cond.not_filetypes({ "org" })),
-;     Rule("[ ", " ]")
-;         :with_pair(function()
-;             return false
-;         end)
-;         :with_move(function(opts)
-;             return opts.prev_char:match(".%]") ~= nil
-;         end)
-;         :use_key("]")
-;         :with_del(cond.none())
-;         :with_pair(cond.not_filetypes({ "org" })),
-; })
+(npairs.add_rule
+  (doto (Rule "{" "};")
+    (: :with_pair (fn [opts]
+      (local struct (string.match opts.line "struct%s*%S*%s*$"))
+      (local class (string.match opts.line "class%s*%S*%s*$"))
+      (or (not= struct nil) (not= class nil))
+    ))
+  )
+)
+
+(npairs.add_rule
+  (doto (Rule "<" ">")
+    (: :with_pair #(not= (string.match $1.line "[%w%d]+$") nil))
+  )
+)
+
+
 
 (fn setup [])
 

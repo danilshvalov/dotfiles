@@ -1,4 +1,4 @@
--- :fennel:1651221107
+-- :fennel:1652547516
 vim.keymap.set("", "\208\178", "d", {silent = true})
 vim.keymap.set("", "\208\189", "y", {silent = true})
 vim.keymap.set("", "\208\183", "p", {silent = true})
@@ -40,5 +40,4 @@ vim.keymap.set("n", "<C-Down>", "<Cmd>resize -1<CR>", {silent = true})
 vim.keymap.set("", "gt", ":tabnext<CR>", {silent = true})
 vim.keymap.set("", "gT", ":tabprevious<CR>", {silent = true})
 vim.keymap.set("", "gq", ":tabclose<CR>", {silent = true})
-vim.keymap.set("", "<Leader>cs", "<Cmd>noh<CR>", {silent = true})
-return vim.keymap.set("", "<Space>", "<Leader>", {remap = true, silent = true})
+return vim.keymap.set("", "<Leader>cs", "<Cmd>noh<CR>", {silent = true})
