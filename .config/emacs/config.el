@@ -1002,9 +1002,6 @@ Quit if no candidate is selected."
 (use-package git-modes
   :defer t)
 
-(use-package git-commit
-  :mode "/COMMIT_EDITMSG\\'")
-
 (use-package apheleia
   :hook ((prog-mode text-mode) . apheleia-mode)
   :config
@@ -2039,7 +2036,9 @@ https://github.com/magit/magit/issues/460 (@cpitclaudel)."
   (nvmap
     :prefix "SPC g"
     "g" 'magit-status
-    "d" 'my-magit-dotfiles)
+    "d" (lambda ()
+          (interactive)
+          (magit-status "~")))
 
   (general-define-key
     :keymaps 'transient-base-map
