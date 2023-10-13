@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: omega
+# uuid: omega
+# key: \o
+# condition: t
+# --
+\omega

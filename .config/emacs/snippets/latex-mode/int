@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: int
+# uuid: int
+# key: \int
+# condition: t
+# --
+\int\limits_$1^

@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: ssub
+# key: ssub
+# condition: t
+# --
+\subsubsection{$1}

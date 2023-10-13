@@ -1,0 +1,8 @@
+# -*- mode: snippet -*-
+# name: pri
+# uuid: pri
+# key: pri
+# condition: t
+# --
+private:
+    $0

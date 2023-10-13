@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: lm
+# uuid: lm
+# key: lm
+# condition: t
+# --
+\\{$1\\}

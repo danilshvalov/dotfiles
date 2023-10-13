@@ -1,0 +1,9 @@
+# -*- mode: snippet -*-
+# name: st
+# uuid: st
+# key: st
+# condition: t
+# --
+struct $1 {
+    $0
+};

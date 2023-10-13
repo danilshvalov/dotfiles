@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: side
+# key: side
+# --
+\begin{siderules}
+    $0
+\end{siderules}

@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: geq
+# uuid: geq
+# key: >=
+# condition: t
+# --
+\geq

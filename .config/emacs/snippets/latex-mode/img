@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: img
+# key: img
+# --
+\includegraphics[width=$1\textwidth]{./images/$2}

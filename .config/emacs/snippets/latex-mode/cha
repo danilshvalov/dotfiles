@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: cha
+# uuid: cha
+# key: \cha
+# condition: t
+# --
+\chapter{$1}

@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: mk
+# key: mk
+# condition: t
+# --
+\\($1\\)

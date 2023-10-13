@@ -1,0 +1,9 @@
+# -*- mode: snippet -*-
+# name: prop
+# uuid: prop
+# key: prop
+# condition: t
+# --
+\begin{property}
+    $0
+\end{property}

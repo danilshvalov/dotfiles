@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: intl
+# key: intl
+# --
+\int\limits_$1^$2

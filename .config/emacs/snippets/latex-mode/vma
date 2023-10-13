@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: vma 
+# key: vma
+# --
+\begin{vmatrix}
+	$0
+\end{vmatrix}

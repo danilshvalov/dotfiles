@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: big-sigma
+# uuid: big-sigma
+# key: \S
+# condition: t
+# --
+\Sigma

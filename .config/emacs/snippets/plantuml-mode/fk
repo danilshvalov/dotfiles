@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: fk
+# key: fk
+# --
+foreign_key($1): $0

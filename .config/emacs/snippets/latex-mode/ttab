@@ -1,0 +1,12 @@
+# -*- mode: snippet -*-
+# name: ttab
+# key: ttab
+# --
+\begin{longtable}{|C{0.22\textwidth}|C{0.2\textwidth}|C{0.5\textwidth}|}
+    \caption{Описание полей таблицы \texttt{$1}}     \\
+    \hline
+    \textbf{Название} & \textbf{Тип} & \textbf{Описание} \\
+    \hline
+    $0
+    \hline
+\end{longtable}

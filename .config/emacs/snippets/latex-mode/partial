@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: partial
+# uuid: partial
+# key: \p
+# condition: t
+# --
+\partial

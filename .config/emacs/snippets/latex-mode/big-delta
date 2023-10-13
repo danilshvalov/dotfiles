@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: big-delta
+# uuid: big-delta
+# key: \D
+# condition: t
+# --
+\Delta

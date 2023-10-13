@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: table
+# key: table
+# --
+CREATE TABLE IF NOT EXISTS $1 (
+    $0
+);

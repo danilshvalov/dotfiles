@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: nn
+# key: nn
+# --
+not_null($1)$0

@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: fa
+# uuid: fa
+# key: \fa
+# condition: t
+# --
+\forall

@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: todo
+# key: todo
+# condition: (not (equal major-mode 'org-mode))
+# --
+`(comment-padright comment-start comment-add)`TODO: $0`(comment-padright comment-end comment-add)`

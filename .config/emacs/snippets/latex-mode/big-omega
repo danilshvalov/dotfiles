@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: big-omega
+# uuid: big-omega
+# key: \O
+# condition: t
+# --
+\Omega

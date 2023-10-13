@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: ca
+# uuid: ca
+# key: \ca
+# condition: t
+# --
+\mathcal{$1}

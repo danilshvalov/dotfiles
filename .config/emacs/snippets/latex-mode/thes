@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: thes
+# key: thes
+# --
+\begin{theorem*}
+    $0
+\end{theorem*}

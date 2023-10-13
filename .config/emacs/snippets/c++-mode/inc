@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: inc
+# uuid: inc
+# key: inc
+# condition: t
+# --
+#include <$1>

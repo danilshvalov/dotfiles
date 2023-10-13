@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: curly-brace
+# key: \{
+# condition: 'auto
+# --
+\\{$0\\}

@@ -1,0 +1,9 @@
+# -*- mode: snippet -*-
+# name: the
+# uuid: the
+# key: the
+# condition: t
+# --
+\begin{theorem}
+    $0
+\end{theorem}

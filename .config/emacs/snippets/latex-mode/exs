@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: exs
+# key: exs
+# --
+\begin{example*}
+    $0
+\end{example*}

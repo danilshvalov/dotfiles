@@ -1,0 +1,9 @@
+# -*- mode: snippet -*-
+# name: dm
+# uuid: dm
+# key: dm
+# condition: t
+# --
+\[
+  $0
+\]

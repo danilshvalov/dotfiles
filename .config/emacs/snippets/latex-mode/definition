@@ -1,0 +1,9 @@
+# -*- mode: snippet -*-
+# name: definition
+# uuid: definition
+# key: def
+# condition: t
+# --
+\begin{definition}
+    $0
+\end{definition}

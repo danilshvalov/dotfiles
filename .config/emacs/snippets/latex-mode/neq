@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: neq
+# uuid: neq
+# key: !=
+# condition: t
+# --
+\neq

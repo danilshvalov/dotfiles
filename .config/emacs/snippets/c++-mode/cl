@@ -1,0 +1,9 @@
+# -*- mode: snippet -*-
+# name: cl
+# uuid: cl
+# key: cl
+# condition: t
+# --
+class $1 {
+    $0
+};

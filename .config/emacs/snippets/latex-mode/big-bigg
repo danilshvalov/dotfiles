@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: big-bigg
+# key: \Bigg(
+# condition: 'auto
+# --
+\Bigg( $0 \Bigg)

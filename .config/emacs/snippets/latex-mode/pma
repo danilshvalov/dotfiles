@@ -1,0 +1,9 @@
+# -*- mode: snippet -*-
+# name: pma
+# uuid: pma
+# key: pma
+# condition: t
+# --
+\begin{pmatrix}
+    $0
+\end{pmatrix}

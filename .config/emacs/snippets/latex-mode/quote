@@ -1,0 +1,9 @@
+# -*- mode: snippet -*-
+# name: quote
+# uuid: quote
+# key: quote
+# condition: t
+# --
+\begin{displayquote}
+    $0
+\end{displayquote}

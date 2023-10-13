@@ -1,0 +1,9 @@
+# -*- mode: snippet -*-
+# name: proof
+# uuid: proof
+# key: proof
+# condition: t
+# --
+\begin{proof}
+    $0
+\end{proof}

@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: ldots
+# uuid: ldots
+# key: ...
+# condition: t
+# --
+\ldots

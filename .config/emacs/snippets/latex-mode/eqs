@@ -1,0 +1,9 @@
+# -*- mode: snippet -*-
+# name: eqs
+# uuid: eqs
+# key: eqs
+# condition: t
+# --
+\begin{equation*}
+    $0
+\end{equation*}

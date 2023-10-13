@@ -1,0 +1,27 @@
+# Ignore all Emacs backup files
+*~
+
+.cache/
+auto-save-list/
+eln-cache/
+elpa/
+elpaca/
+etc/
+request/
+straight/
+transient/
+tree-sitter/
+undo-fu-session/
+var/
+
+bookmarks
+history
+org-roam.db
+places
+projectile-bookmarks.eld
+recentf
+tabsession.el
+tramp
+projects
+
+.DS_Store

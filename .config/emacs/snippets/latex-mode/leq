@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: leq
+# uuid: leq
+# key: <=
+# condition: t
+# --
+\leq
