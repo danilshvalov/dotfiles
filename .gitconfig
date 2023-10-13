@@ -1,0 +1,48 @@
+[user]
+  name = Daniil Shvalov
+  email = shvalovich@gmail.com
+[core]
+  excludesfile = ./.gitignore
+  #pager = "nvim -R -"
+[filter "lfs"]
+  clean = git-lfs clean -- %f
+  smudge = git-lfs smudge -- %f
+  process = git-lfs filter-process
+  required = true
+
+[diff]
+  tool = nvimdiff
+
+[mergetool]
+  keepBackup = false
+	trustExitCode = true
+
+[color]
+  ui = false
+  branch = true
+  diff = false
+  interactive = false
+  status = true
+  log = false
+
+[init]
+  defaultBranch = main
+[alias]
+  st = status
+  co = checkout
+  ci = commit
+  df = difftool
+  dfs = difftool --staged
+  l = -c color.ui=false log
+[difftool]
+  prompt = false
+	trustExitCode = true
+
+[credential "https://github.com"]
+	helper =
+	helper = !/opt/homebrew/bin//gh auth git-credential
+[credential "https://gist.github.com"]
+	helper =
+	helper = !/opt/homebrew/bin//gh auth git-credential
+[push]
+	default = current
