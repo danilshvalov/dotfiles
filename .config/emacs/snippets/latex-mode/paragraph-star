@@ -1,0 +1,4 @@
+# key: pars
+# name: paragraph-star
+# --
+\paragraph*{$1}

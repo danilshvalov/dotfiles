@@ -1,5 +1,5 @@
 # -*- mode: snippet -*-
 # name: sec
-# key: sec
+# key: se
 # --
 \section{$1}

@@ -151,6 +151,10 @@ Can be an integer to determine the exact padding."
    (dash-modeline-status :foreground bg :background blue)
    (dash-modeline-status-modified :foreground bg :background yellow)
 
+   (flymake-error :underline `(:color ,red))
+   (flymake-warning :underline `(:color ,yellow))
+   (flymake-note :underline `(:color ,green))
+
    ;;;; rainbow-delimiters
    (rainbow-delimiters-depth-1-face :foreground magenta)
    (rainbow-delimiters-depth-2-face :foreground orange)
@@ -164,7 +168,7 @@ Can be an integer to determine the exact padding."
    (markdown-link-face :foreground teal)
    (markdown-url-face :inherit 'underline :foreground fg)
    (markdown-markup-face :foreground fg)
-   (jinx-misspelled :inherit 'warning :underline t)
+   (jinx-misspelled :underline `(:color ,yellow))
    ;;;; rjsx-mode
    (rjsx-tag :foreground red)
    (rjsx-attr :foreground yellow :slant 'italic :weight 'medium)))

@@ -55,12 +55,14 @@
   (defvar my-default-directory
     (file-name-as-directory (or (getenv "PWD") "~")))
 
-  (advice-add
-    'cd
-    :around
-    (lambda (fun &rest args)
-      (apply fun args)
-      (setq my-default-directory (car args))))
+  (defvar my-directories nil)
+
+  (defun my-get-current-directory ()
+    (or (assoc-default (my-tab-name-current) my-directories)
+        (or (getenv "PWD") "~")))
+
+  (defun my-set-current-directory (directory)
+    (add-to-list 'my-directories (cons (my-tab-name-current) directory)))
 
   ;; remove image resize delay
   (advice-add 'image--delayed-change-size :override 'image--change-size)
@@ -140,13 +142,6 @@
     :keymaps 'override
     "ZX" 'kill-current-buffer)
 
-  (nmap
-    :keymaps 'override
-    "SPC cd" (lambda ()
-               (interactive)
-               (cd default-directory)
-               (message "Directory: %s" default-directory)))
-
   (nvmap
     :prefix "SPC d"
     "y" (lambda ()
@@ -179,6 +174,9 @@
   ;; Enable recursive minibuffers
   (setq enable-recursive-minibuffers t)
   :config
+  (setq-default buffer-file-coding-system 'utf-8-unix)
+  (setq buffer-file-coding-system 'utf-8-unix)
+
   (global-whitespace-mode +1)
   (window-divider-mode)
   (savehist-mode)
@@ -206,10 +204,7 @@
     `(font-lock-operator-face :foreground ,(doom-color 'operators))
     `(font-lock-punctuation-face :foreground ,(doom-color 'punctuations))
     `(tab-bar-tab :background ,(doom-color 'region))
-    `(flymake-end-of-line-diagnostics-face :height 'unspecified :box 'unspecified)
-    `(flymake-error :foreground ,(doom-color 'error) :underline t)
-    `(flymake-warning :foreground ,(doom-color 'warning) :underline t)
-    `(flymake-note :foreground ,(doom-color 'success) :underline t))
+    `(flymake-end-of-line-diagnostics-face :height 'unspecified :box 'unspecified))
 
   (add-hook 'image-mode-hook
             (lambda ()
@@ -437,7 +432,9 @@
 
   (defun project-root-current ()
     (or project-current-directory-override
-        my-default-directory))
+        (my-get-current-directory)
+        ;; my-default-directory
+        ))
 
   (defun project-find-root (dir)
     "Determine if DIR is a non-VC project.
@@ -626,8 +623,6 @@ DIR must include a .project file to be considered a project."
                            ("XXX" font-lock-constant-face bold))))
 
 (use-builtin electric
-  :custom
-  (electric-pair-delete-adjacent-pairs nil)
   :config
   (electric-indent-mode +1)
   (electric-pair-mode t))
@@ -753,15 +748,16 @@ DIR must include a .project file to be considered a project."
        (consult--read
         (or
          (mapcar
-          (lambda (file)
-            (let ((root (project-root-current)))
-              (if (string-prefix-p root file)
-                  (file-relative-name file root)
-                file)))
-          (remove
-           (consult--fast-abbreviate-file-name (or (buffer-file-name) ""))
-           (mapcar
-            #'consult--fast-abbreviate-file-name
+          #'consult--fast-abbreviate-file-name
+          (mapcar
+           (lambda (file)
+             (let ((root (expand-file-name (project-root-current)))
+                   (file (expand-file-name file)))
+               (if (string-prefix-p root file)
+                   (file-relative-name file root)
+                 file)))
+           (remove
+            (consult--fast-abbreviate-file-name (or (buffer-file-name) ""))
             (bound-and-true-p recentf-list))))
          (user-error "No recent files, `recentf-mode' is %s"
                      (if recentf-mode
@@ -1011,7 +1007,15 @@ Quit if no candidate is selected."
     '(sqlfluff . ("sqlfluff" "format" "--dialect" "postgres" "-"))
     '(taplo . ("taplo" "fmt"))
     '(csharpier . ("dotnet" "csharpier"))
-    '(prettier . ("prettier" "--stdin-filepath" filepath)))
+    '(prettier . ("prettier" "--stdin-filepath" filepath))
+    '(phpcs . ("my-phpcs" "fix" "-n" "-q" filepath))
+    )
+
+  (add-hook 'apheleia-formatter-exited-hook (cl-function
+                                             (lambda (&key formatter error log)
+                                               (interactive)
+                                               (when (eq major-mode 'php-mode)
+                                                 (revert-buffer nil t)))))
 
   (add-to-list! 'apheleia-mode-alist
     '(sql-mode . sqlfluff)
@@ -1174,6 +1178,7 @@ Quit if no candidate is selected."
   (font-latex-sectioning-3-face ((t :inherit 'bold)))
   (font-latex-sectioning-4-face ((t :inherit 'bold)))
   (font-latex-sectioning-5-face ((t :inherit 'bold)))
+  :hook (LaTeX-mode . auto-fill-mode)
   :config
   (add-to-list 'LaTeX-indent-environment-list '("align*")))
 
@@ -1190,7 +1195,8 @@ Quit if no candidate is selected."
   '("\\.sqlfluff\\'" . conf-mode)
   '("\\.clang-format\\'" . yaml-mode)
   '("\\.tsx\\'" . tsx-ts-mode)
-  '("\\.puml\\'" . plantuml-mode))
+  '("\\.puml\\'" . plantuml-mode)
+  '("skhdrc\\'" . conf-mode))
 
 (setq-default css-indent-offset 2)
 
@@ -1211,6 +1217,7 @@ Quit if no candidate is selected."
        ("C" . c-ts-mode)
        ("cpp" . c++-ts-mode)
        ("C++" . c++-ts-mode)
+       ;; ("python" . python-ts-mode)
        ("screen" . shell-script-mode)
        ("shell" . sh-mode)
        ("bash" . sh-mode)))
@@ -1219,6 +1226,16 @@ Quit if no candidate is selected."
     :keymaps 'markdown-mode-map
     "C-c C-c" 'markdown-toggle-gfm-checkbox)
   :config
+  (defun markdown-fontify-tables (last)
+    ;; (when (re-search-forward "|" last t)
+    ;;   (when (markdown-table-at-point-p)
+    ;;     (font-lock-append-text-property
+    ;;      (line-beginning-position) (min (1+ (line-end-position)) (point-max))
+    ;;      'face 'markdown-table-face))
+    ;;   (forward-line 1)
+    ;;   t)
+    )
+
   (setq markdown-regex-gfm-checkbox " \\(\\[[xX-]\\]\\) "))
 
 (use-package sql-indent
@@ -1276,7 +1293,7 @@ Quit if no candidate is selected."
   (with-current-buffer "*Messages*"
     (dash-modeline-message-mode)))
 
-(use-builtin
+(use-builtin compile
   :custom
   (compilation-scroll-output t)
   (compilation-read-command nil)
@@ -1973,28 +1990,28 @@ Note that these rules can't contain anchored rules themselves."
     "i" '(denote-insert-link :wk "Insert node reference")
     "c" '(denote-create-note :wk "Create new node")))
 
-(use-package smartparens
-  :demand t
-  :general
-  (imap "C-M-i" 'sp-up-sexp)
-  :config
-  (smartparens-global-mode t)
+;; (use-package smartparens
+;;   :demand t
+;;   :general
+;;   (imap "C-M-i" 'sp-up-sexp)
+;;   :config
+;;   (smartparens-global-mode t)
 
-  (dolist (prefix '("\\Big" "\\Bigg" "\\big" "\\bigg"))
-    (dolist (suffixes '(("(" . ")") ("{" . "}") ("[" . "]") ("|" . "|")))
-      (sp-local-pair 'latex-mode
-                     (concat prefix (car suffixes))
-                     (concat prefix (cdr suffixes)))))
+;;   (dolist (prefix '("\\Big" "\\Bigg" "\\big" "\\bigg"))
+;;     (dolist (suffixes '(("(" . ")") ("{" . "}") ("[" . "]") ("|" . "|")))
+;;       (sp-local-pair 'latex-mode
+;;                      (concat prefix (car suffixes))
+;;                      (concat prefix (cdr suffixes)))))
 
-  (sp-with-modes '(tex-mode
-                   plain-tex-mode
-                   latex-mode
-                   LaTeX-mode)
-    (sp-local-pair "\\{" "\\}")
-    (sp-local-pair "\\[" "\\]"))
+;;   (sp-with-modes '(tex-mode
+;;                    plain-tex-mode
+;;                    latex-mode
+;;                    LaTeX-mode)
+;;     (sp-local-pair "\\{" "\\}")
+;;     (sp-local-pair "\\[" "\\]"))
 
-  (sp-with-modes 'org-mode
-    (sp-local-pair "~" "~")))
+;;   (sp-with-modes 'org-mode
+;;     (sp-local-pair "~" "~")))
 
 (use-builtin treesit
   :custom
@@ -2098,13 +2115,21 @@ https://github.com/magit/magit/issues/460 (@cpitclaudel)."
   (tab-bar-close-button-show nil)
   (tab-bar-auto-width nil)
   (tab-bar-show 1)
+  (tab-bar-new-tab-to 'rightmost)
   :preface
   (defun my-tab-name-current ()
-    (number-to-string
-     (tab-bar--current-tab-index
-      (funcall tab-bar-tabs-function))))
+    (cdr (assoc 'name (cdr (tab-bar--current-tab-find nil nil)))))
 
   :config
+  (tab-bar-rename-tab (number-to-string (random)))
+  (advice-add
+   'tab-bar-new-tab
+   :around
+   (lambda (fun &rest args)
+     (apply fun args)
+     (tab-bar-rename-tab (number-to-string (random)))
+     (dired (project-root-current))))
+
   (defun tab-bar-tab-name-format-default (tab i)
     (let ((current-p (eq (car tab) 'current-tab)))
       (propertize
@@ -2115,3 +2140,336 @@ https://github.com/magit/magit/issues/460 (@cpitclaudel)."
                         tab-bar-close-button)
                    ""))
        'face (funcall tab-bar-tab-face-function tab)))))
+
+(use-package dockerfile-mode)
+
+(use-package nginx-mode)
+
+;; (defvar markdown-ts-mode--font-lock-settings
+;;   (treesit-font-lock-rules
+;;    :language 'markdown
+;;    :feature 'header
+;;    `((atx_heading (atx_h1_marker)) @markdown-header-face-1
+;;      (atx_heading (atx_h2_marker)) @markdown-header-face-2
+;;      (atx_heading (atx_h3_marker)) @markdown-header-face-3
+;;      (atx_heading (atx_h4_marker)) @markdown-header-face-4
+;;      (atx_heading (atx_h5_marker)) @markdown-header-face-5
+;;      (atx_heading (atx_h6_marker)) @markdown-header-face-6)
+
+;;    :language 'markdown
+;;    :feature 'keyword
+;;    `((fenced_code_block
+;;       (info_string (text) @markdown-language-keyword-face)))
+
+;;    :language 'markdown
+;;    :feature 'markup
+;;    `((fenced_code_block) @markdown-markup-face)
+
+;;    :language 'markdown
+;;    :feature 'inline-code
+;;    `((code_span) @markdown-inline-code-face)
+
+;;    :language 'markdown
+;;    :feature 'emphasis
+;;    `((strong_emphasis) @markdown-bold-face
+;;      (emphasis) @markdown-italic-face)
+
+;;    :language 'markdown
+;;    :feature 'link
+;;    `((link_text) @markdown-link-face
+;;      (link_destination) @markdown-url-face
+;;      (link_label) @markdown-reference-face)
+
+;; ;; (setext_heading (paragraph) @text.title.1 (setext_h1_underline) @text.title.1.marker)
+;; ;; (setext_heading (paragraph) @text.title.2 (setext_h2_underline) @text.title.2.marker)
+
+;; ;; (link_title) @text.literal
+;; ;; (indented_code_block) @text.literal.block
+;; ;; ((fenced_code_block) @text.literal.block (#set! "priority" 90))
+
+;; ;; (info_string) @label
+
+;; ;; (pipe_table_header (pipe_table_cell) @text.title)
+
+;; ;; (pipe_table_header "|" @punctuation.special)
+;; ;; (pipe_table_row "|" @punctuation.special)
+;; ;; (pipe_table_delimiter_row "|" @punctuation.special)
+;; ;; (pipe_table_delimiter_cell) @punctuation.special
+
+;; ;; [
+;; ;;   (fenced_code_block_delimiter)
+;; ;; ] @punctuation.delimiter
+
+;; ;; ;; Conceal backticks
+;; ;; (fenced_code_block
+;; ;;   (fenced_code_block_delimiter) @conceal
+;; ;;   (#set! conceal ""))
+;; ;; (fenced_code_block
+;; ;;   (info_string (language) @conceal
+;; ;;   (#set! conceal "")))
+
+;; ;; (code_fence_content) @none
+
+;; ;; [
+;; ;;   (link_destination)
+;; ;; ] @text.uri
+
+;; ;; [
+;; ;;   (link_label)
+;; ;; ] @text.reference
+
+;; ;; [
+;; ;;   (list_marker_plus)
+;; ;;   (list_marker_minus)
+;; ;;   (list_marker_star)
+;; ;;   (list_marker_dot)
+;; ;;   (list_marker_parenthesis)
+;; ;;   (thematic_break)
+;; ;; ] @punctuation.special
+
+
+;; ;; (task_list_marker_unchecked) @text.todo.unchecked
+;; ;; (task_list_marker_checked) @text.todo.checked
+
+;; ;; ((block_quote) @text.quote (#set! "priority" 90))
+
+;; ;; [
+;; ;;   (block_continuation)
+;; ;;   (block_quote_marker)
+;; ;; ] @punctuation.special
+
+;; ;; [
+;; ;;   (backslash_escape)
+;; ;; ] @string.escape
+
+;; ;; (inline) @spell
+
+;;        ;; :language 'php
+;;        ;; :feature 'preprocessor
+;;        ;; `((php_tag) @font-lock-preprocessor-face
+;;        ;;   ("?>") @font-lock-preprocessor-face)
+
+;;        ;; :language 'php
+;;        ;; :feature 'constant
+;;        ;; `((const_declaration (const_element (name) @font-lock-type-face))
+;;        ;;   (null) @php-constant)
+
+;;        ;; :language 'php
+;;        ;; :feature 'type
+;;        ;; `([(primitive_type)
+;;        ;;    (cast_type)
+;;        ;;    (bottom_type)
+;;        ;;    (named_type (name) @type)
+;;        ;;    (named_type (qualified_name) @type)
+;;        ;;    (namespace_use_clause)
+;;        ;;    (namespace_name (name))
+;;        ;;    (boolean)]
+;;        ;;   @font-lock-type-face
+;;        ;;   (class_interface_clause (name) @font-lock-type-face)
+;;        ;;   [(integer)
+;;        ;;    (float)]
+;;        ;;   @font-lock-number-face)
+
+;;        ;; :language 'php
+;;        ;; :feature 'definition
+;;        ;; `((class_declaration
+;;        ;;    name: (name) @font-lock-type-face)
+;;        ;;   (interface_declaration
+;;        ;;    name: (name) @font-lock-type-face)
+;;        ;;   (enum_declaration
+;;        ;;    name: (name) @font-lock-type-face)
+;;        ;;   (trait_declaration
+;;        ;;    name: (name) @font-lock-type-face)
+;;        ;;   (enum_case
+;;        ;;    name: (name) @font-lock-type-face))
+
+;;        ;; :language 'php
+;;        ;; :feature 'function
+;;        ;; `((array_creation_expression "array" @font-lock-builtin-face)
+;;        ;;   (list_literal "list" @font-lock-builtin-face)
+;;        ;;   (method_declaration
+;;        ;;    name: (name) @font-lock-function-name-face)
+;;        ;;   (function_call_expression
+;;        ;;    function: [(qualified_name (name)) (name)] @font-lock-function-call-face)
+;;        ;;   (scoped_call_expression
+;;        ;;    name: (name) @font-lock-function-call-face)
+;;        ;;   (member_call_expression
+;;        ;;    name: (name) @font-lock-function-call-face)
+;;        ;;   (function_definition
+;;        ;;    name: (name) @font-lock-function-name-face))
+
+;;        ;; :language 'php
+;;        ;; :feature 'variables
+;;        ;; `((relative_scope) @font-lock-builtin-face
+;;        ;;   ((name) @font-lock-constant-face
+;;        ;;    (:match ,(rx bos (? "_") (in "A-Z") (in "0-9A-Z_") eos)
+;;        ;;            @font-lock-constant-face))
+;;        ;;   ((name) @font-lock-builtin-face
+;;        ;;    (:match ,(rx-to-string `(: bos (or ,@php-ts-mode--magical-constants) eos))
+;;        ;;            @font-lock-builtin-face))
+
+;;        ;;   ;; ((name) @constructor
+;;        ;;   ;;  (:match ,(rx-to-string '(: bos (in "A-Z")))))
+
+;;        ;;   ;; ((name) @font-lock-variable-name-face
+;;        ;;   ;;  (#eq? @php-$this "this"))
+;;        ;;   (member_access_expression name: (name) @php-property-name)
+;;        ;;   (variable_name (name) @font-lock-variable-name-face)
+;;        ;;   (variable_name "$" @php-variable-sigil))
+
+;;        ;; :language 'php
+;;        ;; :feature 'comment
+;;        ;; `(((comment) @font-lock-doc-face
+;;        ;;    (:match ,(rx bos "/**")
+;;        ;;            @font-lock-doc-face))
+;;        ;;   (comment) @font-lock-comment-face)
+
+;;        ;; :language 'php
+;;        ;; :feature 'string
+;;        ;; `([(string)
+;;        ;;    (string_value)
+;;        ;;    (encapsed_string)
+;;        ;;    (heredoc)
+;;        ;;    (heredoc_body)
+;;        ;;    (nowdoc_body)]
+;;        ;;   @font-lock-string-face)
+
+;;        ;; :language 'php
+;;        ;; :feature 'operator
+;;        ;; `([,@php-ts-mode--operators] @font-lock-operator-face
+;;        ;;   (binary_expression operator: "xor" @font-lock-operator-face)
+;;        ;;   (binary_expression operator: "and" @font-lock-operator-face)
+;;        ;;   (binary_expression operator: "or" @font-lock-operator-face))
+
+;;        ;; :language 'php
+;;        ;; :feature 'keyword
+;;        ;; `([,@php-ts-mode--keywords] @font-lock-keyword-face
+;;        ;;   (yield_expression "from" @font-lock-keyword-face))
+
+;;        ;; :language 'php
+;;        ;; :feature 'delimiter
+;;        ;; '((["," ":" ";" "\\"]) @font-lock-delimiter-face)
+
+;;        ;; :language 'php
+;;        ;; :feature 'bracket
+;;        ;; `((["(" ")" "[" "]" "{" "}"]) @font-lock-bracket-face))
+;; ;; "Tree-sitter font-lock settings for `php-ts-mode'."
+;;    ))
+
+(defun markdown-ts-query-blocks ()
+  (let* ((parser (treesit-parser-create 'markdown))
+         (root (treesit-parser-root-node parser))
+         (query '((fenced_code_block
+                   (info_string) @lang
+                   (code_fence_content) @content)))
+         (captures (treesit-query-capture root query))
+         (i 0))
+    (while (< i (length captures))
+      (let* ((lang-node (cdr (nth i captures)))
+            (lang (treesit-node-text lang-node))
+            (lang-mode (if lang (markdown-get-lang-mode lang)
+                         markdown-fontify-code-block-default-mode))
+            (content-node (cdr (nth (1+ i) captures)))
+            (content (treesit-node-text content-node))
+            (start (treesit-node-start content-node))
+            (end (treesit-node-end content-node)))
+
+        (let ((string content)
+              (modified (buffer-modified-p))
+              (markdown-buffer (current-buffer))
+              pos next)
+          (remove-text-properties start end '(face nil))
+          (with-current-buffer
+              (get-buffer-create
+               (concat " markdown-code-fontification:" (symbol-name lang-mode)))
+            ;; Make sure that modification hooks are not inhibited in
+            ;; the org-src-fontification buffer in case we're called
+            ;; from `jit-lock-function' (Bug#25132).
+            (let ((inhibit-modification-hooks nil))
+              (delete-region (point-min) (point-max))
+              (insert string " ")) ;; so there's a final property change
+            (unless (eq major-mode lang-mode) (funcall lang-mode))
+            (font-lock-ensure)
+            (setq pos (point-min))
+            (while (setq next (next-single-property-change pos 'face))
+              (let ((val (get-text-property pos 'face)))
+                (when val
+                  (message "%s" `(put-text-property
+                   ,(+ start (1- pos)) ,(1- (+ start next)) 'face
+                   ,val ,markdown-buffer))
+                  (put-text-property
+                   (+ start (1- pos)) (1- (+ start next)) 'font-lock-face
+                   val markdown-buffer)))
+              (setq pos next)))
+          (add-text-properties
+           start end
+           '(font-lock-fontified t fontified t font-lock-multiline t))
+          (set-buffer-modified-p modified))
+        ;; (message "%s" lang-mode)
+        ;; (message "%s" content)
+        ;; (message "%s" "------------")
+        )
+      (setq i (+ i 2)))
+
+    )
+  ;; (treesit-update-ranges)
+  )
+
+
+(defmacro markdown-ts-capture (parser-language parser-mode)
+  `(lambda (beg end)
+             (let* ((parser (treesit-parser-create 'markdown))
+                    (root (treesit-parser-root-node parser))
+                    (query '((fenced_code_block
+                              (info_string) @lang
+                              (code_fence_content) @content)))
+                    (captures (treesit-query-capture root query beg end))
+                    (set-ranges)
+                    (i 0))
+               (while (< i (length captures))
+                 (let* ((lang-node (cdr (nth i captures)))
+                        (lang (treesit-node-text lang-node))
+                        (lang-mode (if lang (markdown-get-lang-mode lang)
+                                     markdown-fontify-code-block-default-mode))
+                        (content-node (cdr (nth (1+ i) captures))))
+                   (if (eq lang-mode ,parser-mode)
+                       (setq set-ranges (push (cons (treesit-node-start content-node)
+                                                    (treesit-node-end content-node))
+                                              set-ranges))))
+                 (setq i (+ i 2)))
+               (when set-ranges
+                 (treesit-parser-set-included-ranges
+                  (treesit-parser-create ,parser-language) (nreverse set-ranges))))))
+
+(use-builtin files
+  :general
+  (nmap
+    :keymaps 'override
+    :prefix "SPC c"
+    "d" (lambda ()
+               (interactive)
+               (cd default-directory))
+    "D" 'cd)
+  :config
+  (advice-add
+   'cd
+   :around
+   (lambda (fun &rest args)
+     (apply fun args)
+     (my-set-current-directory (car args))
+     (message "Directory: %s" default-directory))))
+
+(use-package web-mode
+  :custom
+  (web-mode-enable-auto-expanding t))
+
+(use-builtin indent
+  :general
+  (imap "<backtab>" "C-d")
+  :config
+  (advice-add 'indent-for-tab-command
+              :around
+              (lambda (fun &rest args)
+                (if (eq evil-state 'insert)
+                    (tab-to-tab-stop)
+                  (apply fun args)))))

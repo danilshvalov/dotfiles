@@ -170,6 +170,8 @@ made DEFAULT."
   (propertize
    (cond (name name)
          ((buffer-narrowed-p) (format"%s [narrow]" (buffer-name)))
+         (dired-directory dired-directory)
+         ((buffer-file-name) (abbreviate-file-name (buffer-file-name)))
          (t (buffer-name)))
    'face (dash-modeline-face 'name)))
 
