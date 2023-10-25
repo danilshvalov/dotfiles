@@ -1,0 +1,32 @@
+INFO:  latexindent version 3.20.1, 2023-01-07, a script to indent .tex files
+       latexindent lives here: /Users/danilshvalov/.local/share/nvim/mason/packages/latexindent/
+       Wed May 17 15:51:44 2023
+       Reading input from STDIN
+INFO:  Processing switches:
+INFO:  Directory for backup files and indent.log:
+       .
+INFO:  YAML settings read: defaultSettings.yaml
+       Reading defaultSettings.yaml from /Users/danilshvalov/.local/share/nvim/mason/packages/latexindent/defaultSettings.yaml
+       Reading defaultSettings.yaml (2nd attempt) from /Users/danilshvalov/.local/share/nvim/mason/packages/latexindent/../../texmf-dist/scripts/latexindent/defaultSettings.yaml
+       and then, if necessary, /Users/danilshvalov/.local/share/nvim/mason/packages/latexindent/LatexIndent/defaultSettings.yaml
+INFO:  YAML reading settings
+       The config file in "/Users/danilshvalov/indentconfig.yaml" will be read
+       Reading path information from /Users/danilshvalov/indentconfig.yaml
+       ---
+       paths:
+         - /Users/danilshvalov/latexindent.yaml
+
+INFO:  YAML settings, reading from the following files:
+       Reading USER settings from /Users/danilshvalov/latexindent.yaml
+       ---
+       defaultIndent: '    '
+
+INFO:  Phase 1: searching for objects
+INFO:  Phase 2: finding surrounding indentation
+INFO:  Phase 3: indenting objects
+INFO:  Phase 4: final indentation check
+INFO:  Output routine:
+       Not outputting to file; see -w and -o switches for more options.
+       --------------
+INFO:  Please direct all communication/issues to:
+        https://github.com/cmhughes/latexindent.pl
