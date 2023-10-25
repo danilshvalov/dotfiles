@@ -3,7 +3,7 @@
   email = shvalovich@gmail.com
 [core]
   excludesfile = ./.gitignore
-  #pager = "nvim -R -"
+  pager = "nvim -R -"
 [filter "lfs"]
   clean = git-lfs clean -- %f
   smudge = git-lfs smudge -- %f

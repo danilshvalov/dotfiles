@@ -91,8 +91,12 @@ function e() {
     printf "\e[0 q"
 }
 
-export EDITOR="emacs -nw"
+# export EDITOR="emacs -nw"
+
+export EDITOR=nvim
 
 export DOT=$HOME/dotfiles
 
 alias cfg='/usr/bin/git --git-dir=$HOME/dotfiles/ --work-tree=$HOME'
+
+eval "$(/opt/homebrew/bin/brew shellenv)"
