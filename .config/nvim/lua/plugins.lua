@@ -1406,66 +1406,66 @@ return {
       theme = "light",
     },
   },
-  {
-    "lukas-reineke/indent-blankline.nvim",
-    branch = "v3",
-    config = function()
-      local hooks = require("ibl.hooks")
-      hooks.register(hooks.type.WHITESPACE, hooks.builtin.hide_first_space_indent_level)
+  -- {
+  --   "lukas-reineke/indent-blankline.nvim",
+  --   branch = "v3",
+  --   config = function()
+  --     local hooks = require("ibl.hooks")
+  --     hooks.register(hooks.type.WHITESPACE, hooks.builtin.hide_first_space_indent_level)
 
-      require("ibl").setup({
-        exclude = {
-          filetypes = { "git" },
-        },
-        scope = {
-          enabled = false,
-        },
-      })
-    end,
-  },
-  {
-    dir = "~/.local/share/nvim/lazy/denote.nvim",
-    dependencies = {
-      "ibhagwan/fzf-lua",
-      -- "nvim-telescope/telescope.nvim",
-      "starwing/luautf8",
-    },
-    config = function()
-      local denote = require("denote")
-      map
-        :prefix("<leader>n")
-        :set("c", denote.new_note)
-        :set("f", denote.select_note)
-        :set("i", denote.create_link)
+  --     require("ibl").setup({
+  --       exclude = {
+  --         filetypes = { "git" },
+  --       },
+  --       scope = {
+  --         enabled = false,
+  --       },
+  --     })
+  --   end,
+  -- },
+  -- {
+  --   dir = "~/.local/share/nvim/lazy/denote.nvim",
+  --   dependencies = {
+  --     "ibhagwan/fzf-lua",
+  --     -- "nvim-telescope/telescope.nvim",
+  --     "starwing/luautf8",
+  --   },
+  --   config = function()
+  --     local denote = require("denote")
+  --     map
+  --       :prefix("<leader>n")
+  --       :set("c", denote.new_note)
+  --       :set("f", denote.select_note)
+  --       :set("i", denote.create_link)
 
-      vim.keymap.set("n", "gf", function()
-        if denote.get_link_under_cursor() then
-          return denote.goto_link_under_cursor()
-        else
-          return "gf"
-        end
-      end, { noremap = false })
-    end,
-  },
-  {
-    dir = "~/.local/share/nvim/lazy/mu.nvim",
-    dependencies = {
-      "ibhagwan/fzf-lua",
-      "starwing/luautf8",
-    },
-    config = function()
-      -- local denote = require("denote")
-      -- map:prefix("<leader>n"):set("c", denote.new_note):set("f", denote.select_note)
+  --     vim.keymap.set("n", "gf", function()
+  --       if denote.get_link_under_cursor() then
+  --         return denote.goto_link_under_cursor()
+  --       else
+  --         return "gf"
+  --       end
+  --     end, { noremap = false })
+  --   end,
+  -- },
+  -- {
+  --   dir = "~/.local/share/nvim/lazy/mu.nvim",
+  --   dependencies = {
+  --     "ibhagwan/fzf-lua",
+  --     "starwing/luautf8",
+  --   },
+  --   config = function()
+  --     -- local denote = require("denote")
+  --     -- map:prefix("<leader>n"):set("c", denote.new_note):set("f", denote.select_note)
 
-      -- vim.keymap.set("n", "gf", function()
-      --   if denote.get_link_under_cursor() then
-      --     return denote.goto_link_under_cursor()
-      --   else
-      --     return "gf"
-      --   end
-      -- end, { noremap = false })
-    end,
-  },
+  --     -- vim.keymap.set("n", "gf", function()
+  --     --   if denote.get_link_under_cursor() then
+  --     --     return denote.goto_link_under_cursor()
+  --     --   else
+  --     --     return "gf"
+  --     --   end
+  --     -- end, { noremap = false })
+  --   end,
+  -- },
   {
     "projekt0n/github-nvim-theme",
   },
