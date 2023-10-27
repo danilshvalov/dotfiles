@@ -1331,14 +1331,24 @@ return {
     end,
   },
   {
-    "ojroques/vim-oscyank",
+    "ojroques/nvim-osc52",
     config = function()
+      local osc = require("osc52")
+
       map
         :prefix("<leader>")
-        :set("c", "<Plug>OSCYankOperator")
+        :set("c", osc.copy_operator, { expr = true })
         :set("cc", "<leader>c_", { remap = true })
         :mode("v")
-        :set("c", "<Plug>OSCYankVisual")
+        :set("c", require("osc52").copy_visual)
+
+      function copy()
+        if vim.v.event.operator == "y" and vim.v.event.regname == "+" then
+          osc.copy_register("+")
+        end
+      end
+
+      vim.api.nvim_create_autocmd("TextYankPost", { callback = copy })
     end,
   },
   {
@@ -1406,23 +1416,22 @@ return {
       theme = "light",
     },
   },
-  -- {
-  --   "lukas-reineke/indent-blankline.nvim",
-  --   branch = "v3",
-  --   config = function()
-  --     local hooks = require("ibl.hooks")
-  --     hooks.register(hooks.type.WHITESPACE, hooks.builtin.hide_first_space_indent_level)
+  {
+    "lukas-reineke/indent-blankline.nvim",
+    config = function()
+      local hooks = require("ibl.hooks")
+      hooks.register(hooks.type.WHITESPACE, hooks.builtin.hide_first_space_indent_level)
 
-  --     require("ibl").setup({
-  --       exclude = {
-  --         filetypes = { "git" },
-  --       },
-  --       scope = {
-  --         enabled = false,
-  --       },
-  --     })
-  --   end,
-  -- },
+      require("ibl").setup({
+        exclude = {
+          filetypes = { "git" },
+        },
+        scope = {
+          enabled = false,
+        },
+      })
+    end,
+  },
   -- {
   --   dir = "~/.local/share/nvim/lazy/denote.nvim",
   --   dependencies = {
