@@ -1,0 +1,11 @@
+[core]
+  editor = "nvim"
+  pager = "nvim -R -"
+
+[alias]
+  st = status
+  co = checkout
+  ci = commit
+
+[branch "trunk"]
+    allowCommit = false
