@@ -73,6 +73,8 @@ ZSH_CUSTOM=$HOME/.config/oh-my-zsh
 # Add wisely, as too many plugins slow down shell startup.
 plugins=(git zsh-syntax-highlighting web-search)
 
+ZSH_DISABLE_COMPFIX=true
+
 source $ZSH/oh-my-zsh.sh
 
 export LANG=en_US.UTF-8
@@ -99,4 +101,6 @@ export DOT=$HOME/dotfiles
 
 alias cfg='/usr/bin/git --git-dir=$HOME/dotfiles/ --work-tree=$HOME'
 
-eval "$(/opt/homebrew/bin/brew shellenv)"
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+fi
