@@ -73,6 +73,8 @@ ZSH_CUSTOM=$HOME/.config/oh-my-zsh
 # Add wisely, as too many plugins slow down shell startup.
 plugins=(git zsh-syntax-highlighting web-search)
 
+fpath=(~/.zsh $fpath)
+
 ZSH_DISABLE_COMPFIX=true
 
 source $ZSH/oh-my-zsh.sh
