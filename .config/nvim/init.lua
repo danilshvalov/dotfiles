@@ -33,7 +33,7 @@ vim.opt.listchars = {
 
 -- vim.o.ttimeoutlen = 10
 
-vim.o.wrap = false
+vim.o.wrap = true
 vim.o.breakindent = true
 vim.o.lbr = true
 vim.o.history = 10000
@@ -203,7 +203,7 @@ vim.g.netrw_banner = 0
 
 vim.g.netrw_list_hide = [[^\.\.\=/\=$]]
 
-kit.call_at_ft({ "markdown", "org" }, function()
+kit.call_at_ft({ "markdown", "org", "tex" }, function()
   vim.bo.textwidth = 80
 end)
 

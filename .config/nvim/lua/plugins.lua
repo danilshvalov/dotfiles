@@ -268,7 +268,7 @@ return {
     end,
   },
   {
-    "jose-elias-alvarez/null-ls.nvim",
+    "nvimtools/none-ls.nvim",
     dependencies = {
       "nvim-lua/plenary.nvim",
       "lukas-reineke/lsp-format.nvim",
@@ -298,7 +298,7 @@ return {
           formatting.clang_format,
           formatting.black,
           formatting.latexindent.with({
-            extra_args = { "-g", "/dev/null" },
+            extra_args = { "-g", "/dev/null", "--local" },
           }),
           formatting.taplo,
           formatting.fnlfmt,
@@ -527,7 +527,7 @@ return {
         completion = {
           autocomplete = false,
           keyword_pattern = [[\k\+]],
-          completeopt = "menu,menuone,noinsert",
+          completeopt = "menu,menuone",
         },
       })
 
@@ -1335,6 +1335,10 @@ return {
     config = function()
       local osc = require("osc52")
 
+      osc.setup({
+        silent = true,
+      })
+
       map
         :prefix("<leader>")
         :set("c", osc.copy_operator, { expr = true })
@@ -1342,13 +1346,31 @@ return {
         :mode("v")
         :set("c", require("osc52").copy_visual)
 
-      function copy()
-        if vim.v.event.operator == "y" and vim.v.event.regname == "+" then
-          osc.copy_register("+")
-        end
+      local function copy(lines, _)
+        require("osc52").copy(table.concat(lines, "\n"))
       end
 
-      vim.api.nvim_create_autocmd("TextYankPost", { callback = copy })
+      local function paste()
+        return { vim.fn.split(vim.fn.getreg(""), "\n"), vim.fn.getregtype("") }
+      end
+
+      vim.g.clipboard = {
+        name = "osc52",
+        copy = { ["+"] = copy, ["*"] = copy },
+        paste = { ["+"] = paste, ["*"] = paste },
+      }
+
+      -- Now the '+' register will copy to system clipboard using OSC52
+      -- vim.keymap.set("n", "<leader>c", '"+y')
+      -- vim.keymap.set("n", "<leader>cc", '"+yy')
+
+      -- function copy()
+      --   if vim.v.event.operator == "y" and vim.v.event.regname == "+" then
+      --     osc.copy_register("+")
+      --   end
+      -- end
+
+      -- vim.api.nvim_create_autocmd("TextYankPost", { callback = copy })
     end,
   },
   {
@@ -1546,4 +1568,19 @@ return {
   --     telescope.load_extension("ui-select")
   --   end,
   -- },
+  {
+    "lervag/vimtex",
+    config = function()
+      vim.g.vimtex_syntax_enabled = 0
+      vim.g.vimtex_syntax_conceal_disable = 1
+      vim.g.vimtex_complete_enabled = 0
+      vim.g.vimtex_fold_enabled = 0
+      vim.g.vimtex_indent_enabled = 0
+      vim.g.vimtex_include_search_enabled = 0
+      vim.g.vimtex_doc_enabled = 0
+      vim.g.vimtex_format_enabled = 1
+      vim.g.vimtex_imaps_enabled = 0
+      vim.g.vimtex_include_search_enabled = 0
+    end,
+  },
 }

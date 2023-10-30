@@ -63,10 +63,23 @@ return {
     fmta(
       [[
         \begin{<>}
-            <>
+          <>
         \end{<>}
       ]],
       { i(1), i(0), rep(1) }
+    )
+  ),
+  s(
+    "frame",
+    fmta(
+      [[
+        \begin{frame}
+          \frametitle{<>}
+
+          <>
+        \end{frame}
+      ]],
+      { i(1), i(0) }
     )
   ),
   s(
@@ -106,6 +119,7 @@ return {
   env("exs", "example*"),
   env("th", "theorem"),
   env("ths", "theorem*"),
+  env("pm", "pmatrix"),
   const("\\i", "item "),
   const("al", "alpha"),
   const("be", "beta"),
@@ -122,6 +136,7 @@ return {
   list_env("enumc", "enumerate", "[wide, labelwidth=!, labelindent=0pt]"),
   frac("fr", "frac"),
   frac("dfr", "dfrac"),
+  frac("un", "underset"),
   text("..", "\\ldots"),
   s("*", t("\\cdot")),
   text("->", "\\to"),
