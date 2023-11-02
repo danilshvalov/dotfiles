@@ -49,9 +49,13 @@ return {
 
       map
         :prefix("<leader>d", "+dir")
-        :set("c", kit.wrap(vim.cmd.cd, "%:p:h"), { desc = "Set cwd to current file directory" })
+        :set("c", function()
+          vim.cmd.cd("%:p:h")
+          vim.notify("Directory: " .. vim.fn.expand("%:p:~:h"))
+        end, { desc = "Set cwd to current file directory" })
         :set("y", function()
           vim.fn.setreg("+", vim.fn.expand("%:p:h"))
+          vim.notify("Copied directory: " .. vim.fn.expand("%:p:~:h"))
         end, { desc = "Yank cwd" })
 
       map:set("<Esc>", vim.cmd.noh)
@@ -1242,94 +1246,94 @@ return {
         :set("<C-a>l", tmux.move_right)
     end,
   },
-  {
-    "ibhagwan/fzf-lua",
-    dependencies = "nvim-tree/nvim-web-devicons",
-    config = function()
-      local fzf = kit.require_on_exported_call("fzf-lua")
+  -- {
+  --   "ibhagwan/fzf-lua",
+  --   dependencies = "nvim-tree/nvim-web-devicons",
+  --   config = function()
+  --     local fzf = kit.require_on_exported_call("fzf-lua")
 
-      map:mode("t"):ft("fzf"):set("<Esc>", vim.cmd.quit)
+  --     map:mode("t"):ft("fzf"):set("<Esc>", vim.cmd.quit)
 
-      map
-        :prefix("<leader>f", "+find")
-        :set("f", fzf.files, { desc = "Find files" })
-        :set("g", fzf.live_grep, { desc = "Grep files" })
-        :set("r", fzf.oldfiles, { desc = "Recent files" })
-        :set("p", fzf.resume, { desc = "Resume last search" })
+  --     map
+  --       :prefix("<leader>f", "+find")
+  --       :set("f", fzf.files, { desc = "Find files" })
+  --       :set("g", fzf.live_grep, { desc = "Grep files" })
+  --       :set("r", fzf.oldfiles, { desc = "Recent files" })
+  --       :set("p", fzf.resume, { desc = "Resume last search" })
 
-      local fzf = require("fzf-lua")
-      fzf.register_ui_select()
+  --     local fzf = require("fzf-lua")
+  --     fzf.register_ui_select()
 
-      local actions = require("fzf-lua.actions")
+  --     local actions = require("fzf-lua.actions")
 
-      fzf.setup({
-        winopts = {
-          preview = {
-            hidden = "hidden",
-          },
-        },
-        winopts_fn = function()
-          return {
-            height = 0.3,
-            row = vim.o.lines - 14,
-            width = vim.o.columns,
-            border = "none",
-          }
-        end,
-        oldfiles = {
-          include_current_session = true,
-          fzf_opts = {
-            ["--history"] = vim.fn.stdpath("data") .. "/fzf-lua-oldfiles-history",
-          },
-        },
-        files = {
-          fzf_opts = {
-            ["--history"] = vim.fn.stdpath("data") .. "/fzf-lua-files-history",
-          },
-        },
-        grep = {
-          fzf_opts = {
-            ["--history"] = vim.fn.stdpath("data") .. "/fzf-lua-grep-history",
-          },
-        },
-        git = {
-          status = {
-            actions = {
-              ["left"] = false,
-              ["right"] = false,
-              ["ctrl-l"] = { actions.git_unstage, actions.resume },
-              ["ctrl-h"] = { actions.git_stage, actions.resume },
-              ["ctrl-x"] = { actions.git_reset, actions.resume },
-            },
-          },
-        },
-        fzf_opts = {
-          ["--ansi"] = "",
-          ["--info"] = "inline",
-          ["--height"] = "100%",
-          ["--layout"] = "reverse",
-          ["--border"] = "none",
-          ["--cycle"] = "",
-          ["--history"] = vim.fn.stdpath("data") .. "/fzf-lua-history",
-        },
-        fzf_colors = {
-          ["fg"] = { "fg", "CursorLine" },
-          ["bg"] = { "bg", "Normal" },
-          ["hl"] = { "bg", "IncSearch" },
-          ["fg+"] = { "fg", "Normal" },
-          ["bg+"] = { "bg", "Visual" },
-          ["hl+"] = { "bg", "IncSearch" },
-          ["info"] = { "fg", "PreProc" },
-          ["prompt"] = { "fg", "Conditional" },
-          ["pointer"] = { "fg", "Exception" },
-          ["marker"] = { "fg", "Keyword" },
-          ["spinner"] = { "fg", "Label" },
-          ["header"] = { "fg", "Comment" },
-          ["gutter"] = { "bg", "Normal" },
-        },
-      })
-    end,
-  },
+  --     fzf.setup({
+  --       winopts = {
+  --         preview = {
+  --           hidden = "hidden",
+  --         },
+  --       },
+  --       winopts_fn = function()
+  --         return {
+  --           height = 0.3,
+  --           row = vim.o.lines - 14,
+  --           width = vim.o.columns,
+  --           border = "none",
+  --         }
+  --       end,
+  --       oldfiles = {
+  --         include_current_session = true,
+  --         fzf_opts = {
+  --           ["--history"] = vim.fn.stdpath("data") .. "/fzf-lua-oldfiles-history",
+  --         },
+  --       },
+  --       files = {
+  --         fzf_opts = {
+  --           ["--history"] = vim.fn.stdpath("data") .. "/fzf-lua-files-history",
+  --         },
+  --       },
+  --       grep = {
+  --         fzf_opts = {
+  --           ["--history"] = vim.fn.stdpath("data") .. "/fzf-lua-grep-history",
+  --         },
+  --       },
+  --       git = {
+  --         status = {
+  --           actions = {
+  --             ["left"] = false,
+  --             ["right"] = false,
+  --             ["ctrl-l"] = { actions.git_unstage, actions.resume },
+  --             ["ctrl-h"] = { actions.git_stage, actions.resume },
+  --             ["ctrl-x"] = { actions.git_reset, actions.resume },
+  --           },
+  --         },
+  --       },
+  --       fzf_opts = {
+  --         ["--ansi"] = "",
+  --         ["--info"] = "inline",
+  --         ["--height"] = "100%",
+  --         ["--layout"] = "reverse",
+  --         ["--border"] = "none",
+  --         ["--cycle"] = "",
+  --         ["--history"] = vim.fn.stdpath("data") .. "/fzf-lua-history",
+  --       },
+  --       fzf_colors = {
+  --         ["fg"] = { "fg", "CursorLine" },
+  --         ["bg"] = { "bg", "Normal" },
+  --         ["hl"] = { "bg", "IncSearch" },
+  --         ["fg+"] = { "fg", "Normal" },
+  --         ["bg+"] = { "bg", "Visual" },
+  --         ["hl+"] = { "bg", "IncSearch" },
+  --         ["info"] = { "fg", "PreProc" },
+  --         ["prompt"] = { "fg", "Conditional" },
+  --         ["pointer"] = { "fg", "Exception" },
+  --         ["marker"] = { "fg", "Keyword" },
+  --         ["spinner"] = { "fg", "Label" },
+  --         ["header"] = { "fg", "Comment" },
+  --         ["gutter"] = { "bg", "Normal" },
+  --       },
+  --     })
+  --   end,
+  -- },
   {
     "ojroques/nvim-osc52",
     config = function()
@@ -1345,32 +1349,6 @@ return {
         :set("cc", "<leader>c_", { remap = true })
         :mode("v")
         :set("c", require("osc52").copy_visual)
-
-      local function copy(lines, _)
-        require("osc52").copy(table.concat(lines, "\n"))
-      end
-
-      local function paste()
-        return { vim.fn.split(vim.fn.getreg(""), "\n"), vim.fn.getregtype("") }
-      end
-
-      vim.g.clipboard = {
-        name = "osc52",
-        copy = { ["+"] = copy, ["*"] = copy },
-        paste = { ["+"] = paste, ["*"] = paste },
-      }
-
-      -- Now the '+' register will copy to system clipboard using OSC52
-      -- vim.keymap.set("n", "<leader>c", '"+y')
-      -- vim.keymap.set("n", "<leader>cc", '"+yy')
-
-      -- function copy()
-      --   if vim.v.event.operator == "y" and vim.v.event.regname == "+" then
-      --     osc.copy_register("+")
-      --   end
-      -- end
-
-      -- vim.api.nvim_create_autocmd("TextYankPost", { callback = copy })
     end,
   },
   {
@@ -1500,74 +1478,74 @@ return {
   {
     "projekt0n/github-nvim-theme",
   },
-  -- {
-  --   "nvim-telescope/telescope.nvim",
-  --   branch = "0.1.x",
-  --   dependencies = {
-  --     "nvim-lua/plenary.nvim",
-  --     { "nvim-telescope/telescope-fzf-native.nvim", build = "make" },
-  --     "nvim-telescope/telescope-ui-select.nvim",
-  --   },
-  --   config = function()
-  --     local telescope = require("telescope")
-  --     local builtin = require("telescope.builtin")
-  --     local actions = require("telescope.actions")
+  {
+    "nvim-telescope/telescope.nvim",
+    branch = "0.1.x",
+    dependencies = {
+      "nvim-lua/plenary.nvim",
+      { "nvim-telescope/telescope-fzf-native.nvim", build = "make" },
+      "nvim-telescope/telescope-ui-select.nvim",
+    },
+    config = function()
+      local telescope = require("telescope")
+      local builtin = require("telescope.builtin")
+      local actions = require("telescope.actions")
 
-  --     map
-  --       :prefix("<leader>f", "+find")
-  --       :set("f", builtin.find_files, { desc = "Find files" })
-  --       :set("g", builtin.live_grep, { desc = "Grep files" })
-  --       :set("r", builtin.oldfiles, { desc = "Recent files" })
-  --       :set("p", builtin.resume, { desc = "Resume last search" })
+      map
+        :prefix("<leader>f", "+find")
+        :set("f", builtin.find_files, { desc = "Find files" })
+        :set("g", builtin.live_grep, { desc = "Grep files" })
+        :set("r", builtin.oldfiles, { desc = "Recent files" })
+        :set("p", builtin.resume, { desc = "Resume last search" })
 
-  --     telescope.setup({
-  --       defaults = {
-  --         preview = false,
-  --         border = true,
-  --         borderchars = {
-  --           preview = { "─", "│", "─", "│", "╭", "╮", "╯", "╰" },
-  --           prompt = { "─", " ", " ", " ", "─", "─", " ", " " },
-  --           results = { " " },
-  --         },
-  --         layout_config = {
-  --           height = 0.35,
-  --         },
-  --         layout_strategy = "bottom_pane",
-  --         sorting_strategy = "ascending",
-  --         theme = "ivy",
-  --         mappings = {
-  --           i = {
-  --             ["<C-j>"] = actions.move_selection_next,
-  --             ["<C-k>"] = actions.move_selection_previous,
-  --             ["<C-n>"] = actions.cycle_history_next,
-  --             ["<C-p>"] = actions.cycle_history_prev,
-  --             ["<C-u>"] = false,
-  --           },
-  --         },
-  --         path_display = function(_, path)
-  --           return path:gsub(vim.env.HOME, "~", 1)
-  --         end,
-  --       },
-  --       pickers = {
-  --         find_files = {
-  --           hidden = true,
-  --         },
-  --       },
-  --       extensions = {
-  --         fzf = {
-  --           fuzzy = true,
-  --           override_generic_sorter = true,
-  --           override_file_sorter = true,
-  --           case_mode = "smart_case",
-  --         },
-  --         ["ui-select"] = {},
-  --       },
-  --     })
+      telescope.setup({
+        defaults = {
+          preview = false,
+          border = true,
+          borderchars = {
+            preview = { "─", "│", "─", "│", "╭", "╮", "╯", "╰" },
+            prompt = { "─", " ", " ", " ", "─", "─", " ", " " },
+            results = { " " },
+          },
+          layout_config = {
+            height = 0.35,
+          },
+          layout_strategy = "bottom_pane",
+          sorting_strategy = "ascending",
+          theme = "ivy",
+          mappings = {
+            i = {
+              ["<C-j>"] = actions.move_selection_next,
+              ["<C-k>"] = actions.move_selection_previous,
+              ["<C-n>"] = actions.cycle_history_next,
+              ["<C-p>"] = actions.cycle_history_prev,
+              ["<C-u>"] = false,
+            },
+          },
+          path_display = function(_, path)
+            return path:gsub(vim.env.HOME, "~", 1)
+          end,
+        },
+        pickers = {
+          find_files = {
+            hidden = true,
+          },
+        },
+        extensions = {
+          fzf = {
+            fuzzy = true,
+            override_generic_sorter = true,
+            override_file_sorter = true,
+            case_mode = "smart_case",
+          },
+          ["ui-select"] = {},
+        },
+      })
 
-  --     telescope.load_extension("fzf")
-  --     telescope.load_extension("ui-select")
-  --   end,
-  -- },
+      telescope.load_extension("fzf")
+      telescope.load_extension("ui-select")
+    end,
+  },
   {
     "lervag/vimtex",
     config = function()
