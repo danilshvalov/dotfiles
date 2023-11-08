@@ -228,14 +228,14 @@ vim.cmd.cabbrev("ц w")
 vim.cmd.cabbrev("й q")
 vim.cmd.cabbrev("цй wq")
 
-vim.g.clipboard = {
-  name = "OSC 52",
-  copy = {
-    ["+"] = require("vim.clipboard.osc52").copy,
-    ["*"] = require("vim.clipboard.osc52").copy,
-  },
-  paste = {
-    ["+"] = require("vim.clipboard.osc52").paste,
-    ["*"] = require("vim.clipboard.osc52").paste,
-  },
-}
+-- vim.g.clipboard = {
+--   name = "OSC 52",
+--   copy = {
+--     ["+"] = require("vim.clipboard.osc52").copy,
+--     ["*"] = require("vim.clipboard.osc52").copy,
+--   },
+--   paste = {
+--     ["+"] = require("vim.clipboard.osc52").paste,
+--     ["*"] = require("vim.clipboard.osc52").paste,
+--   },
+-- }
