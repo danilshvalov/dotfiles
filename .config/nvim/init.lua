@@ -63,7 +63,24 @@ if not vim.loop.fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
-require("lazy").setup("plugins", {
+local plugins = require("plugins")
+
+for _, plug in ipairs(plugins) do
+  local init = plug.init
+  plug.init = function(...)
+    local args = { ... }
+
+    if plug.keymap then
+      plug.keymap(require("keymap").map)
+    end
+
+    if init then
+      init(unpack(args))
+    end
+  end
+end
+
+require("lazy").setup(plugins, {
   colorscheme = { "tokyonight" },
   change_detection = {
     notify = false,
@@ -210,3 +227,15 @@ end)
 vim.cmd.cabbrev("ц w")
 vim.cmd.cabbrev("й q")
 vim.cmd.cabbrev("цй wq")
+
+vim.g.clipboard = {
+  name = "OSC 52",
+  copy = {
+    ["+"] = require("vim.clipboard.osc52").copy,
+    ["*"] = require("vim.clipboard.osc52").copy,
+  },
+  paste = {
+    ["+"] = require("vim.clipboard.osc52").paste,
+    ["*"] = require("vim.clipboard.osc52").paste,
+  },
+}

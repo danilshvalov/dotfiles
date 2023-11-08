@@ -2,17 +2,10 @@ return {
   {
     "danilshvalov/keymap.nvim",
     dependencies = { "anuvyklack/keymap-amend.nvim" },
-    priority = 100000,
-    init = function()
-      _G.map = setmetatable({}, {
-        __index = function(_, key)
-          return require("keymap").map[key]
-        end,
-      })
-    end,
-    config = function()
-      map:set("Y", "y$")
+    keymap = function(map)
       map:set("<leader>l", vim.cmd.Lazy)
+
+      map:set("Y", "y$")
       map:mode({ "i", "n", "t" }):set("<A-j>", vim.cmd.bnext):set("<A-k>", vim.cmd.bprev)
       map:ft("netrw"):set("q", vim.cmd.bdelete, { nowait = true })
       map:prefix("<leader>t"):set("e", vim.cmd.Explore):set("E", function()
@@ -60,6 +53,14 @@ return {
 
       map:set("<Esc>", vim.cmd.noh)
     end,
+    priority = 100000,
+    init = function()
+      _G.map = setmetatable({}, {
+        __index = function(_, key)
+          return require("keymap").map[key]
+        end,
+      })
+    end,
   },
   {
     "Wansmer/langmapper.nvim",
@@ -90,11 +91,12 @@ return {
   {
     "ggandor/leap.nvim",
     dependencies = "tpope/vim-repeat",
-    config = function()
+    keymap = function(map)
       map:mode("nvo"):set("s", function()
         require("leap").leap({ target_windows = { vim.fn.win_getid() } })
       end)
-
+    end,
+    config = function()
       require("leap.util")["get-input"] = function()
         local ok, ch = pcall(vim.fn.getcharstr)
         if ok and ch ~= vim.api.nvim_replace_termcodes("<esc>", true, false, true) then
@@ -163,8 +165,8 @@ return {
       --   root_dir = util.root_pattern(".git", "pom.xml", "settings.gradle"),
       --   on_attach = disable_format,
       -- })
-      lspconfig.pyright.setup({
-        root_dir = util.root_pattern(".git"),
+      lspconfig.pylsp.setup({
+        -- root_dir = util.root_pattern(".git"),
       })
 
       lspconfig.lua_ls.setup({
@@ -277,6 +279,16 @@ return {
       "nvim-lua/plenary.nvim",
       "lukas-reineke/lsp-format.nvim",
     },
+    keymap = function(map)
+      map:set("<leader>tf", function()
+        vim.cmd.FormatToggle()
+        if require("lsp-format").disabled then
+          vim.notify("Formatting disabled")
+        else
+          vim.notify("Formatting enabled")
+        end
+      end)
+    end,
     config = function()
       local null_ls = require("null-ls")
       local builtins = null_ls.builtins
@@ -285,7 +297,6 @@ return {
       local lsp_format = require("lsp-format")
 
       lsp_format.setup()
-      map:set("<leader>tf", vim.cmd.FormatToggle)
 
       null_ls.setup({
         default_timeout = 5000,
@@ -400,6 +411,10 @@ return {
       "hrsh7th/cmp-cmdline",
       "saadparwaiz1/cmp_luasnip",
     },
+    keymap = function(map)
+      --- see https://vi.stackexchange.com/questions/5605/how-to-fix-cmap-breaking-cabbrev
+      map:mode("c"):set("<CR>", "<C-]><CR>")
+    end,
     config = function()
       local cmp = require("cmp")
       local cmp_autopairs = require("nvim-autopairs.completion.cmp")
@@ -432,9 +447,6 @@ return {
         Operator = "󰆕",
         TypeParameter = "󰅲",
       }
-
-      --- see https://vi.stackexchange.com/questions/5605/how-to-fix-cmap-breaking-cabbrev
-      map:mode("c"):set("<CR>", "<C-]><CR>")
 
       local mappings = {
         ["<C-n>"] = cmp.mapping(cmp.mapping.complete(), { "i", "c" }),
@@ -841,18 +853,22 @@ return {
   },
   {
     "akinsho/toggleterm.nvim",
-    config = function()
+    lazy = true,
+    keymap = function(map)
+      local toggleterm = kit.require_on_exported_call("toggleterm")
+
       map
         :prefix("<leader>t", "+toggle")
         :set("t", function()
-          require("toggleterm").toggle(vim.v.count, nil, nil, "horizontal")
+          toggleterm.toggle(vim.v.count, nil, nil, "horizontal")
         end)
         :set("T", function()
-          require("toggleterm").toggle(vim.v.count, nil, nil, "tab")
+          toggleterm.toggle(vim.v.count, nil, nil, "tab")
         end)
 
       map:ft("toggleterm"):mode("t"):set("<Esc><Esc>", "<C-\\><C-n>")
-
+    end,
+    config = function()
       local toggleterm = require("toggleterm")
       local Terminal = require("toggleterm.terminal").Terminal
 
@@ -968,6 +984,46 @@ return {
       "danilshvalov/org-modern.nvim",
       "nvim-treesitter/nvim-treesitter",
     },
+    keymap = function(map)
+      local function find_org_files()
+        local config = require("orgmode.config")
+        local paths = config.org_agenda_files
+        if type(paths) == "string" then
+          paths = { paths }
+        end
+
+        local items = {}
+        for _, path in ipairs(paths) do
+          local files = vim.split(vim.fn.expand(path), "\n")
+          for _, file in ipairs(files) do
+            if not file:match("%.org_archive$") then
+              table.insert(items, file)
+            end
+          end
+        end
+
+        vim.ui.select(items, { prompt = "Select: " }, function(result)
+          if result then
+            vim.cmd.edit(result)
+          end
+        end)
+      end
+      map:prefix("<leader>o"):set("f", find_org_files)
+
+      map:ft("org"):mode("i"):set("<A-CR>", function()
+        local line = vim.api.nvim_get_current_line()
+        local indent_size = line:match("^%s*"):len()
+        local pos = vim.api.nvim_win_get_cursor(0)
+        vim.api.nvim_buf_set_lines(
+          0,
+          pos[1],
+          pos[1],
+          true,
+          { string.rep(" ", indent_size) .. "- " }
+        )
+        vim.api.nvim_win_set_cursor(0, { pos[1] + 1, pos[2] })
+      end)
+    end,
     config = function()
       local VirtualIndent = require("virtual-indent")
 
@@ -1008,20 +1064,6 @@ return {
 
       local org_dir = vim.fs.normalize("~/org")
 
-      map:ft("org"):mode("i"):set("<A-CR>", function()
-        local line = vim.api.nvim_get_current_line()
-        local indent_size = line:match("^%s*"):len()
-        local pos = vim.api.nvim_win_get_cursor(0)
-        vim.api.nvim_buf_set_lines(
-          0,
-          pos[1],
-          pos[1],
-          true,
-          { string.rep(" ", indent_size) .. "- " }
-        )
-        vim.api.nvim_win_set_cursor(0, { pos[1] + 1, pos[2] })
-      end)
-
       local function itmo_capture(headline)
         return {
           description = headline,
@@ -1034,34 +1076,9 @@ return {
         }
       end
 
-      local function find_org_files()
-        local config = require("orgmode.config")
-        local paths = config.org_agenda_files
-        if type(paths) == "string" then
-          paths = { paths }
-        end
-
-        local items = {}
-        for _, path in ipairs(paths) do
-          local files = vim.split(vim.fn.expand(path), "\n")
-          for _, file in ipairs(files) do
-            if not file:match("%.org_archive$") then
-              table.insert(items, file)
-            end
-          end
-        end
-
-        vim.ui.select(items, { prompt = "Select: " }, function(result)
-          if result then
-            vim.cmd.edit(result)
-          end
-        end)
-      end
-
-      map:prefix("<leader>o"):set("f", find_org_files)
-
       require("orgmode").setup_ts_grammar()
       require("orgmode").setup({
+        org_todo_keywords = { "TODO", "WAITING", "|", "DONE", "DELEGATED" },
         org_agenda_files = vim.fs.joinpath(org_dir, "**", "*"),
         org_indent_mode = "noindent",
         org_startup_folded = "showeverything",
@@ -1432,51 +1449,29 @@ return {
       })
     end,
   },
-  -- {
-  --   dir = "~/.local/share/nvim/lazy/denote.nvim",
-  --   dependencies = {
-  --     "ibhagwan/fzf-lua",
-  --     -- "nvim-telescope/telescope.nvim",
-  --     "starwing/luautf8",
-  --   },
-  --   config = function()
-  --     local denote = require("denote")
-  --     map
-  --       :prefix("<leader>n")
-  --       :set("c", denote.new_note)
-  --       :set("f", denote.select_note)
-  --       :set("i", denote.create_link)
-
-  --     vim.keymap.set("n", "gf", function()
-  --       if denote.get_link_under_cursor() then
-  --         return denote.goto_link_under_cursor()
-  --       else
-  --         return "gf"
-  --       end
-  --     end, { noremap = false })
-  --   end,
-  -- },
-  -- {
-  --   dir = "~/.local/share/nvim/lazy/mu.nvim",
-  --   dependencies = {
-  --     "ibhagwan/fzf-lua",
-  --     "starwing/luautf8",
-  --   },
-  --   config = function()
-  --     -- local denote = require("denote")
-  --     -- map:prefix("<leader>n"):set("c", denote.new_note):set("f", denote.select_note)
-
-  --     -- vim.keymap.set("n", "gf", function()
-  --     --   if denote.get_link_under_cursor() then
-  --     --     return denote.goto_link_under_cursor()
-  --     --   else
-  --     --     return "gf"
-  --     --   end
-  --     -- end, { noremap = false })
-  --   end,
-  -- },
   {
-    "projekt0n/github-nvim-theme",
+    "danilshvalov/denote.nvim",
+    dependencies = {
+      -- "ibhagwan/fzf-lua",
+      "nvim-telescope/telescope.nvim",
+      "starwing/luautf8",
+    },
+    config = function()
+      local denote = require("denote")
+      map
+        :prefix("<leader>n")
+        :set("c", denote.new_note)
+        :set("f", denote.select_note)
+        :set("i", denote.create_link)
+
+      vim.keymap.set("n", "gf", function()
+        if denote.get_link_under_cursor() then
+          return denote.goto_link_under_cursor()
+        else
+          return "gf"
+        end
+      end, { noremap = false })
+    end,
   },
   {
     "nvim-telescope/telescope.nvim",
@@ -1496,6 +1491,7 @@ return {
         :set("f", builtin.find_files, { desc = "Find files" })
         :set("g", builtin.live_grep, { desc = "Grep files" })
         :set("r", builtin.oldfiles, { desc = "Recent files" })
+        :set("h", builtin.help_tags, { desc = "Help tags" })
         :set("p", builtin.resume, { desc = "Resume last search" })
 
       telescope.setup({
@@ -1519,10 +1515,15 @@ return {
               ["<C-k>"] = actions.move_selection_previous,
               ["<C-n>"] = actions.cycle_history_next,
               ["<C-p>"] = actions.cycle_history_prev,
+              ["<C-f>"] = actions.to_fuzzy_refine,
               ["<C-u>"] = false,
             },
           },
           path_display = function(_, path)
+            local cwd = vim.uv.cwd() .. "/"
+            if path:sub(1, #cwd) == cwd then
+              path = path:sub(#cwd + 1)
+            end
             return path:gsub(vim.env.HOME, "~", 1)
           end,
         },
