@@ -1367,7 +1367,7 @@ return {
         :mode("v")
         :set("c", require("osc52").copy_visual)
 
-      function copy()
+      local function copy()
         if vim.v.event.operator == "y" and vim.v.event.regname == "+" then
           require("osc52").copy_register("+")
         end
@@ -1568,6 +1568,32 @@ return {
       vim.g.vimtex_format_enabled = 1
       vim.g.vimtex_imaps_enabled = 0
       vim.g.vimtex_include_search_enabled = 0
+    end,
+  },
+  {
+    "williamboman/mason.nvim",
+    dependencies = {
+      "williamboman/mason-lspconfig.nvim",
+      "WhoIsSethDaniel/mason-tool-installer.nvim",
+    },
+    config = function()
+      require("mason").setup()
+
+      require("mason-lspconfig").setup()
+
+      require("mason-tool-installer").setup({
+        ensure_installed = {
+          -- cpp
+          "clang-format",
+          "clangd",
+          -- python
+          "black",
+          "pylsp",
+          -- lua
+          "stylua",
+          "lua_ls",
+        },
+      })
     end,
   },
 }
