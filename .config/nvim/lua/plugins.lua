@@ -114,7 +114,6 @@ return {
     dependencies = { "mfussenegger/nvim-jdtls", "folke/neodev.nvim" },
     config = function()
       local lspconfig = require("lspconfig")
-      local util = require("lspconfig/util")
 
       local signs = { Error = " ", Warn = " ", Hint = " ", Info = " " }
       for type, icon in pairs(signs) do
@@ -122,7 +121,7 @@ return {
         vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = hl })
       end
 
-      local disable_format = function(client, bufnr)
+      local disable_format = function(client)
         local caps = client.server_capabilities
         caps.document_formatting = false
         caps.document_range_formatting = false
@@ -288,6 +287,9 @@ return {
           vim.notify("Formatting enabled")
         end
       end)
+      map:set("<leader>cf", function()
+        vim.lsp.buf.format({async = true})
+      end)
     end,
     config = function()
       local null_ls = require("null-ls")
@@ -297,6 +299,8 @@ return {
       local lsp_format = require("lsp-format")
 
       lsp_format.setup()
+
+      vim.cmd.FormatDisable()
 
       null_ls.setup({
         default_timeout = 5000,
@@ -311,7 +315,9 @@ return {
           }),
           formatting.phpcsfixer,
           formatting.clang_format,
-          formatting.black,
+          formatting.black.with({
+            extra_args = { "--line-length", "80" },
+          }),
           formatting.latexindent.with({
             extra_args = { "-g", "/dev/null", "--local" },
           }),
