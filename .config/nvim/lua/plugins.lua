@@ -1589,6 +1589,7 @@ return {
       require("mason-lspconfig").setup()
 
       require("mason-tool-installer").setup({
+        run_on_start = false,
         ensure_installed = {
           -- cpp
           "clang-format",
