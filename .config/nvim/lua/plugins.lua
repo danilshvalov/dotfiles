@@ -142,7 +142,8 @@ return {
         cmd = {
           "clangd",
           "--background-index",
-          "--compile-commands-dir=build_debug",
+          "--compile-commands-dir=build",
+          -- "--compile-commands-dir=build/Debug",
           -- "--query-driver=*gcc*",
           "-j=16",
           "--completion-style=detailed",
@@ -709,39 +710,39 @@ return {
       require("git-conflict").setup()
     end,
   },
-  {
-    "luukvbaal/statuscol.nvim",
-    config = function()
-      local builtin = require("statuscol.builtin")
-      require("statuscol").setup({
-        relculright = true,
-        ft_ignore = { "NvimTree", "netrw" },
-        segments = {
-          { text = { builtin.foldfunc } },
-          {
-            sign = {
-              name = { ".*" },
-              maxwidth = 1,
-              colwidth = 1,
-            },
-          },
-          {
-            sign = {
-              name = { "Diagnostic" },
-              maxwidth = 1,
-              colwidth = 2,
-            },
-          },
-          { text = { builtin.lnumfunc } },
-          {
-            text = {
-              " ",
-            },
-          },
-        },
-      })
-    end,
-  },
+  -- {
+  --   "luukvbaal/statuscol.nvim",
+  --   config = function()
+  --     local builtin = require("statuscol.builtin")
+  --     require("statuscol").setup({
+  --       relculright = true,
+  --       ft_ignore = { "NvimTree", "netrw" },
+  --       segments = {
+  --         { text = { builtin.foldfunc } },
+  --         {
+  --           sign = {
+  --             name = { ".*" },
+  --             maxwidth = 1,
+  --             colwidth = 1,
+  --           },
+  --         },
+  --         {
+  --           sign = {
+  --             name = { "Diagnostic" },
+  --             maxwidth = 1,
+  --             colwidth = 2,
+  --           },
+  --         },
+  --         { text = { builtin.lnumfunc } },
+  --         {
+  --           text = {
+  --             " ",
+  --           },
+  --         },
+  --       },
+  --     })
+  --   end,
+  -- },
   {
     "folke/neodev.nvim",
     config = function()
@@ -1070,11 +1071,11 @@ return {
 
       local org_dir = vim.fs.normalize("~/org")
 
-      local function itmo_capture(headline)
+      local function itmo_capture(headline, file)
         return {
           description = headline,
-          template = "* TODO %?",
-          target = "~/org/gtd.org",
+          template = "** TODO %?",
+          target = string.format("~/org/itmo/%s.org", file),
           headline = headline,
           properties = {
             empty_lines = 1,
@@ -1097,11 +1098,11 @@ return {
           i = {
             description = "ИТМО",
             subtemplates = {
-              a = itmo_capture("Английский язык"),
-              w = itmo_capture("Web-программирование"),
-              n = itmo_capture("Компьютерные сети"),
-              s = itmo_capture("Навыки обучения"),
-              t = itmo_capture("Теория электрической связи"),
+              a = itmo_capture("Английский язык", "english"),
+              w = itmo_capture("Web-программирование", "web-programming"),
+              n = itmo_capture("Компьютерные сети", "computer-networks"),
+              s = itmo_capture("Навыки обучения", "learning-skills"),
+              t = itmo_capture("Теория электрической связи", "tec"),
             },
           },
           t = {

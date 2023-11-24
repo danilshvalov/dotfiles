@@ -112,8 +112,8 @@ vim.o.hlsearch = true
 vim.o.scrolloff = 10
 vim.o.sidescrolloff = 20
 vim.o.signcolumn = "yes"
-vim.o.number = true
-vim.o.relativenumber = true
+-- vim.o.number = true
+-- vim.o.relativenumber = true
 
 kit.autocmd("TextYankPost", {
   callback = function()
@@ -231,11 +231,11 @@ vim.cmd.cabbrev("цй wq")
 -- vim.g.clipboard = {
 --   name = "OSC 52",
 --   copy = {
---     ["+"] = require("vim.clipboard.osc52").copy,
---     ["*"] = require("vim.clipboard.osc52").copy,
+--     ["+"] = require("vim.ui.clipboard.osc52").copy,
+--     ["*"] = require("vim.ui.clipboard.osc52").copy,
 --   },
 --   paste = {
---     ["+"] = require("vim.clipboard.osc52").paste,
---     ["*"] = require("vim.clipboard.osc52").paste,
+--     ["+"] = require("vim.ui.clipboard.osc52").paste,
+--     ["*"] = require("vim.ui.clipboard.osc52").paste,
 --   },
 -- }
