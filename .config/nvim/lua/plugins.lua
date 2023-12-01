@@ -1533,6 +1533,7 @@ return {
               ["<C-n>"] = actions.cycle_history_next,
               ["<C-p>"] = actions.cycle_history_prev,
               ["<C-f>"] = actions.to_fuzzy_refine,
+              ["<C-q>"] = actions.send_selected_to_qflist + actions.open_qflist,
               ["<C-u>"] = false,
             },
           },
