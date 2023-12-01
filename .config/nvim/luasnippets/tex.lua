@@ -9,7 +9,7 @@ local fmta = require("luasnip.extras.fmt").fmta
 local postfix = require("luasnip.extras.postfix").postfix
 
 local function text(trig, value)
-  return s({ trig = trig, wordTrig = false }, t(value))
+  return s({ trig = trig, wordTrig = true }, t(value))
 end
 
 local function const(trig, value)
@@ -17,7 +17,7 @@ local function const(trig, value)
 end
 
 local function wrap_with(trig, lhs, rhs, exit)
-  return s({ trig = trig, wordTrig = false }, { t(lhs), i(exit and 0 or 1), t(rhs) })
+  return s({ trig = trig, wordTrig = true }, { t(lhs), i(exit and 0 or 1), t(rhs) })
 end
 
 local function cmd(trig, value)
@@ -80,6 +80,17 @@ return {
         \end{frame}
       ]],
       { i(1), i(0) }
+    )
+  ),
+  s(
+    "minted",
+    fmta(
+      [[
+        \begin{minted}{<>}
+          <>
+        \end{minted}
+      ]],
+      { i(1, "text"), i(0) }
     )
   ),
   s(

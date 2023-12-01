@@ -1375,7 +1375,9 @@ return {
         :set("c", require("osc52").copy_visual)
 
       local function copy()
-        if vim.v.event.operator == "y" and vim.v.event.regname == "+" then
+        local event = vim.v.event
+        local regname = event.regname
+        if event.operator == "y" and (regname == "+" or regname == "") then
           require("osc52").copy_register("+")
         end
       end
