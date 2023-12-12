@@ -2,10 +2,6 @@ vim.loader.enable()
 
 require("kit.core")
 
-_G.setup = function(name, opts)
-  return require(name).setup(opts)
-end
-
 -- disable any backup
 vim.o.swapfile = false
 vim.o.backup = false
@@ -15,15 +11,13 @@ vim.o.autoread = true
 
 vim.o.shada = "!,'10000,<50,s10,h"
 
--- enable undo after closing vim
 vim.o.undofile = true
 
 vim.o.smoothscroll = true
 
 vim.o.termguicolors = true
 
--- enable line to control text width
-vim.o.colorcolumn = "80,120"
+vim.o.colorcolumn = "80"
 
 -- show tabs
 vim.o.list = true
@@ -31,13 +25,10 @@ vim.opt.listchars = {
   tab = ">-",
 }
 
--- vim.o.ttimeoutlen = 10
-
 vim.o.wrap = true
 vim.o.breakindent = true
 vim.o.lbr = true
 vim.o.history = 10000
--- vim.o.updatetime = 100
 vim.o.mouse = "nv"
 
 vim.o.pumheight = 5
@@ -57,7 +48,7 @@ if not vim.loop.fs_stat(lazypath) then
     "clone",
     "--filter=blob:none",
     "https://github.com/folke/lazy.nvim.git",
-    "--branch=stable", -- latest stable release
+    "--branch=stable",
     lazypath,
   })
 end
@@ -92,12 +83,6 @@ require("lazy").setup(plugins, {
   },
 })
 
-_G.map = setmetatable({}, {
-  __index = function(_, key)
-    return require("keymap").map[key]
-  end,
-})
-
 vim.o.spell = true
 vim.o.spelllang = "en,ru"
 vim.o.spellcapcheck = ""
@@ -117,8 +102,6 @@ vim.o.hlsearch = true
 vim.o.scrolloff = 10
 vim.o.sidescrolloff = 20
 vim.o.signcolumn = "yes"
--- vim.o.number = true
--- vim.o.relativenumber = true
 
 kit.autocmd("TextYankPost", {
   callback = function()

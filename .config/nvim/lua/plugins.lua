@@ -39,9 +39,9 @@ return {
       map:set("<C-g>", "2<C-g>")
 
       map
-        :mode("nvo")
-        :set("H", "^", { desc = "Start of line" })
-        :set("L", "$", { desc = "End of line" })
+          :mode("nvo")
+          :set("H", "^", { desc = "Start of line" })
+          :set("L", "$", { desc = "End of line" })
 
       map:prefix("<leader>t", "+toggle"):set("w", function()
         if not vim.opt_local.formatoptions:get().a then
@@ -52,24 +52,24 @@ return {
       end, { desc = "Toggle wrap" })
 
       map
-        :new({ mode = "nv", expr = true })
-        :set("k", "(v:count? 'k' : 'gk')")
-        :set("j", "(v:count? 'j' : 'gj')")
+          :new({ mode = "nv", expr = true })
+          :set("k", "(v:count? 'k' : 'gk')")
+          :set("j", "(v:count? 'j' : 'gj')")
 
       map
-        :prefix("<leader>o", "+open")
-        :set("f", kit.wrap(vim.fn.system, "open ."), { desc = "Open in finder" })
+          :prefix("<leader>o", "+open")
+          :set("f", kit.wrap(vim.fn.system, "open ."), { desc = "Open in finder" })
 
       map
-        :prefix("<leader>d", "+dir")
-        :set("c", function()
-          vim.cmd.cd("%:p:h")
-          vim.notify("Directory: " .. vim.fn.expand("%:p:~:h"))
-        end, { desc = "Set cwd to current file directory" })
-        :set("y", function()
-          vim.fn.setreg("+", vim.fn.expand("%:p:h"))
-          vim.notify("Copied directory: " .. vim.fn.expand("%:p:~:h"))
-        end, { desc = "Yank cwd" })
+          :prefix("<leader>d", "+dir")
+          :set("c", function()
+            vim.cmd.cd("%:p:h")
+            vim.notify("Directory: " .. vim.fn.expand("%:p:~:h"))
+          end, { desc = "Set cwd to current file directory" })
+          :set("y", function()
+            vim.fn.setreg("+", vim.fn.expand("%:p:h"))
+            vim.notify("Copied directory: " .. vim.fn.expand("%:p:~:h"))
+          end, { desc = "Yank cwd" })
 
       map:set("<Esc>", vim.cmd.noh)
     end,
@@ -617,24 +617,24 @@ return {
       end
 
       map
-        :prefix("<leader>x")
-        :set("q", open("quickfix"))
-        :set("x", open("workspace_diagnostics"), { desc = "Show code errors" })
+          :prefix("<leader>x")
+          :set("q", open("quickfix"))
+          :set("x", open("workspace_diagnostics"), { desc = "Show code errors" })
 
       map
-        :new({ prefix = "<leader>c" })
-        :set("r", vim.lsp.buf.rename)
-        :set("h", vim.diagnostic.open_float)
-        :set("a", vim.lsp.buf.code_action)
+          :new({ prefix = "<leader>c" })
+          :set("r", vim.lsp.buf.rename)
+          :set("h", vim.diagnostic.open_float)
+          :set("a", vim.lsp.buf.code_action)
 
       map
-        :prefix("g", "+goto")
-        :set("d", open("lsp_definitions"), { desc = "Go definitions" })
-        :set("D", vim.lsp.buf.declaration, { desc = "Go declaration" })
-        :set("r", open("lsp_references"), { desc = "Go references" })
-        :set("i", open("lsp_implementations"), { desc = "Go implementations" })
-        :set("n", vim.diagnostic.goto_next, { desc = "Go next error" })
-        :set("p", vim.diagnostic.goto_prev, { desc = "Go prev error" })
+          :prefix("g", "+goto")
+          :set("d", open("lsp_definitions"), { desc = "Go definitions" })
+          :set("D", vim.lsp.buf.declaration, { desc = "Go declaration" })
+          :set("r", open("lsp_references"), { desc = "Go references" })
+          :set("i", open("lsp_implementations"), { desc = "Go implementations" })
+          :set("n", vim.diagnostic.goto_next, { desc = "Go next error" })
+          :set("p", vim.diagnostic.goto_prev, { desc = "Go prev error" })
 
       require("trouble").setup()
     end,
@@ -668,12 +668,12 @@ return {
       })
 
       map
-        :new({ prefix = "<leader>g" })
-        :set("p", gs.prev_hunk, { desc = "Previous hunk" })
-        :set("n", gs.next_hunk, { desc = "Next hunk" })
-        :set("r", gs.reset_hunk, { desc = "Reset hunk" })
-        :set("s", gs.stage_hunk, { desc = "Stage hunk" })
-        :set("h", gs.preview_hunk_inline, { desc = "Preview hunk" })
+          :new({ prefix = "<leader>g" })
+          :set("p", gs.prev_hunk, { desc = "Previous hunk" })
+          :set("n", gs.next_hunk, { desc = "Next hunk" })
+          :set("r", gs.reset_hunk, { desc = "Reset hunk" })
+          :set("s", gs.stage_hunk, { desc = "Stage hunk" })
+          :set("h", gs.preview_hunk_inline, { desc = "Preview hunk" })
     end,
   },
   {
@@ -740,8 +740,8 @@ return {
       local neogen = kit.require_on_exported_call("neogen")
 
       map
-        :prefix("<leader>c", "+code")
-        :set("g", neogen.generate, { desc = "Generate documentation" })
+          :prefix("<leader>c", "+code")
+          :set("g", neogen.generate, { desc = "Generate documentation" })
 
       local i = require("neogen.types.template").item
 
@@ -751,19 +751,19 @@ return {
             template = {
               annotation_convention = "custom",
               custom = {
-                { nil, "/// @file", { no_results = true, type = { "file" } } },
+                { nil,         "/// @file",        { no_results = true, type = { "file" } } },
                 {
                   nil,
                   "/// @brief $1",
                   { no_results = true, type = { "func", "file", "class" } },
                 },
-                { nil, "", { no_results = true, type = { "file" } } },
-                { i.ClassName, "/// @class %s", { type = { "class" } } },
-                { i.Type, "/// @typedef %s", { type = { "type" } } },
-                { nil, "/// @brief $1", { type = { "func", "class", "type" } } },
-                { i.Tparam, "/// @tparam %s $1" },
+                { nil,         "",                 { no_results = true, type = { "file" } } },
+                { i.ClassName, "/// @class %s",    { type = { "class" } } },
+                { i.Type,      "/// @typedef %s",  { type = { "type" } } },
+                { nil,         "/// @brief $1",    { type = { "func", "class", "type" } } },
+                { i.Tparam,    "/// @tparam %s $1" },
                 { i.Parameter, "/// @param %s $1" },
-                { i.Return, "/// @return $1" },
+                { i.Return,    "/// @return $1" },
               },
             },
           },
@@ -803,13 +803,13 @@ return {
       local toggleterm = kit.require_on_exported_call("toggleterm")
 
       map
-        :prefix("<leader>t", "+toggle")
-        :set("t", function()
-          toggleterm.toggle(vim.v.count, nil, nil, "horizontal")
-        end)
-        :set("T", function()
-          toggleterm.toggle(vim.v.count, nil, nil, "tab")
-        end)
+          :prefix("<leader>t", "+toggle")
+          :set("t", function()
+            toggleterm.toggle(vim.v.count, nil, nil, "horizontal")
+          end)
+          :set("T", function()
+            toggleterm.toggle(vim.v.count, nil, nil, "tab")
+          end)
 
       map:ft("toggleterm"):mode("t"):set("<Esc><Esc>", "<C-\\><C-n>")
     end,
@@ -841,7 +841,7 @@ return {
     config = function()
       local get_input = function(prompt, default)
         local ok, result =
-          pcall(vim.fn.input, { prompt = prompt, default = default, cancelreturn = vim.NIL })
+            pcall(vim.fn.input, { prompt = prompt, default = default, cancelreturn = vim.NIL })
         if ok and result ~= vim.NIL then
           return result
         end
@@ -1202,10 +1202,10 @@ return {
       })
 
       map
-        :set("<C-a>h", tmux.move_left)
-        :set("<C-a>j", tmux.move_bottom)
-        :set("<C-a>k", tmux.move_top)
-        :set("<C-a>l", tmux.move_right)
+          :set("<C-a>h", tmux.move_left)
+          :set("<C-a>j", tmux.move_bottom)
+          :set("<C-a>k", tmux.move_top)
+          :set("<C-a>l", tmux.move_right)
     end,
   },
   -- {
@@ -1306,11 +1306,11 @@ return {
       })
 
       map
-        :prefix("<leader>")
-        :set("c", osc.copy_operator, { expr = true })
-        :set("cc", "<leader>c_", { remap = true })
-        :mode("v")
-        :set("c", require("osc52").copy_visual)
+          :prefix("<leader>")
+          :set("c", osc.copy_operator, { expr = true })
+          :set("cc", "<leader>c_", { remap = true })
+          :mode("v")
+          :set("c", require("osc52").copy_visual)
 
       local function copy()
         local event = vim.v.event
@@ -1348,30 +1348,30 @@ return {
       })
     end,
   },
-  {
-    "theHamsta/nvim_rocks",
-    build = "pip3 install --user hererocks && python3 -mhererocks . -j2.1.0-beta3 -r3.0.0 && cp nvim_rocks.lua lua",
-    init = function()
-      local rocks = require("nvim_rocks")
-      rocks.ensure_installed("luautf8")
-    end,
-  },
-  {
-    "starwing/luautf8",
-    dependencies = "theHamsta/nvim_rocks",
-    config = function()
-      _G.utf8 = require("lua-utf8")
-    end,
-  },
-  {
-    "danilshvalov/text-case.nvim",
-    branch = "feat-unicode",
-    config = function()
-      require("textcase").setup({
-        prefix = "cr",
-      })
-    end,
-  },
+  -- {
+  --   "theHamsta/nvim_rocks",
+  --   build = "pip3 install --user hererocks && python3 -mhererocks . -j2.1.0-beta3 -r3.0.0 && cp nvim_rocks.lua lua",
+  --   init = function()
+  --     local rocks = require("nvim_rocks")
+  --     rocks.ensure_installed("luautf8")
+  --   end,
+  -- },
+  -- {
+  --   "starwing/luautf8",
+  --   dependencies = "theHamsta/nvim_rocks",
+  --   config = function()
+  --     _G.utf8 = require("lua-utf8")
+  --   end,
+  -- },
+  -- {
+  --   "danilshvalov/text-case.nvim",
+  --   branch = "feat-unicode",
+  --   config = function()
+  --     require("textcase").setup({
+  --       prefix = "cr",
+  --     })
+  --   end,
+  -- },
   {
     "chomosuke/term-edit.nvim",
     config = function()
@@ -1418,21 +1418,23 @@ return {
       local actions = require("telescope.actions")
 
       map
-        :prefix("<leader>f", "+find")
-        :set("f", builtin.find_files, { desc = "Find files" })
-        :set("g", builtin.live_grep, { desc = "Grep files" })
-        :set("r", builtin.oldfiles, { desc = "Recent files" })
-        :set("h", builtin.help_tags, { desc = "Help tags" })
-        :set("p", builtin.resume, { desc = "Resume last search" })
+          :prefix("<leader>f", "+find")
+          :set("f", builtin.find_files, { desc = "Find files" })
+          :set("g", builtin.live_grep, { desc = "Grep files" })
+          :set("r", builtin.oldfiles, { desc = "Recent files" })
+          :set("h", builtin.help_tags, { desc = "Help tags" })
+          :set("p", builtin.resume, { desc = "Resume last search" })
+
+      map:set("z=", builtin.spell_suggest)
 
       map
-        :prefix("<leader>n", "+notes")
-        :set("f", function()
-          builtin.find_files({ cwd = "~/obsidian" })
-        end)
-        :set("o", function()
-          vim.cmd.edit("~/obsidian")
-        end)
+          :prefix("<leader>n", "+notes")
+          :set("f", function()
+            builtin.find_files({ cwd = "~/obsidian" })
+          end)
+          :set("o", function()
+            vim.cmd.edit("~/obsidian")
+          end)
 
       telescope.setup({
         defaults = {
