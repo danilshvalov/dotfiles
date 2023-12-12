@@ -71,7 +71,12 @@ for _, plug in ipairs(plugins) do
     local args = { ... }
 
     if plug.keymap then
-      plug.keymap(require("keymap").map)
+      -- try to load langmapper first
+      pcall(require, "langmapper")
+      local ok, keymap = pcall(require, "keymap")
+      if ok then
+        plug.keymap(keymap.map)
+      end
     end
 
     if init then
@@ -201,24 +206,7 @@ function _G.make_comment(str)
   return vim.bo.commentstring:gsub("%%s", str)
 end
 
--- local function uuidgen()
---   return vim.trim(vim.system({ "uuidgen" }, { text = true }):wait().stdout)
--- end
-
--- local function insert_uuid()
---   local pos = vim.api.nvim_win_get_cursor(0)
---   vim.api.nvim_buf_set_text(0, pos[1] - 1, pos[2] + 1, pos[1] - 1, pos[2] + 1, { uuidgen() })
--- end
-
 map:ft("tex"):mode("i"):set("<A-CR>", insert_item)
---       map:prefix("<leader>i"):set("u", insert_uuid)
-
-vim.g.netrw_keepdir = 0
-vim.g.netrw_winsize = 30
-vim.g.netrw_altv = 1
-vim.g.netrw_banner = 0
-
-vim.g.netrw_list_hide = [[^\.\.\=/\=$]]
 
 kit.call_at_ft({ "markdown", "org", "tex" }, function()
   vim.bo.textwidth = 80
@@ -227,15 +215,3 @@ end)
 vim.cmd.cabbrev("ц w")
 vim.cmd.cabbrev("й q")
 vim.cmd.cabbrev("цй wq")
-
--- vim.g.clipboard = {
---   name = "OSC 52",
---   copy = {
---     ["+"] = require("vim.ui.clipboard.osc52").copy,
---     ["*"] = require("vim.ui.clipboard.osc52").copy,
---   },
---   paste = {
---     ["+"] = require("vim.ui.clipboard.osc52").paste,
---     ["*"] = require("vim.ui.clipboard.osc52").paste,
---   },
--- }

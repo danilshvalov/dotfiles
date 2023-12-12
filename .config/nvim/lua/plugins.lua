@@ -1,5 +1,30 @@
 return {
   {
+    "Wansmer/langmapper.nvim",
+    config = function()
+      local langmapper = require("langmapper")
+      langmapper.setup({
+        hack_keymap = true,
+      })
+      langmapper.hack_get_keymap()
+
+      local function escape(str)
+        local escape_chars = [[;,."|\]]
+        return vim.fn.escape(str, escape_chars)
+      end
+
+      local en = [[`qwertyuiop[]asdfghjkl;'zxcvbnm]]
+      local ru = [[ёйцукенгшщзхъфывапролджэячсмить]]
+      local en_shift = [[~QWERTYUIOP{}ASDFGHJKL:"ZXCVBNM<>]]
+      local ru_shift = [[ËЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ]]
+
+      vim.opt.langmap = vim.fn.join({
+        escape(ru_shift) .. ";" .. escape(en_shift),
+        escape(ru) .. ";" .. escape(en),
+      }, ",")
+    end,
+  },
+  {
     "danilshvalov/keymap.nvim",
     dependencies = { "anuvyklack/keymap-amend.nvim" },
     keymap = function(map)
@@ -7,10 +32,6 @@ return {
 
       map:set("Y", "y$")
       map:mode({ "i", "n", "t" }):set("<A-j>", vim.cmd.bnext):set("<A-k>", vim.cmd.bprev)
-      map:ft("netrw"):set("q", vim.cmd.bdelete, { nowait = true })
-      map:prefix("<leader>t"):set("e", vim.cmd.Explore):set("E", function()
-        vim.cmd("Lexplore!")
-      end)
       map:set("<C-b>", "<Cmd>b#<CR>")
 
       map:ft("help"):set("q", vim.cmd.bd)
@@ -23,7 +44,6 @@ return {
         :set("L", "$", { desc = "End of line" })
 
       map:prefix("<leader>t", "+toggle"):set("w", function()
-        -- vim.wo.wrap = not vim.wo.wrap
         if not vim.opt_local.formatoptions:get().a then
           vim.opt_local.formatoptions:append("a")
         else
@@ -53,39 +73,12 @@ return {
 
       map:set("<Esc>", vim.cmd.noh)
     end,
-    priority = 100000,
     init = function()
       _G.map = setmetatable({}, {
         __index = function(_, key)
           return require("keymap").map[key]
         end,
       })
-    end,
-  },
-  {
-    "Wansmer/langmapper.nvim",
-    priority = 10000,
-    init = function()
-      local langmapper = require("langmapper")
-      langmapper.setup({
-        hack_keymap = true,
-      })
-      langmapper.hack_get_keymap()
-
-      local function escape(str)
-        local escape_chars = [[;,."|\]]
-        return vim.fn.escape(str, escape_chars)
-      end
-
-      local en = [[`qwertyuiop[]asdfghjkl;'zxcvbnm]]
-      local ru = [[ёйцукенгшщзхъфывапролджэячсмить]]
-      local en_shift = [[~QWERTYUIOP{}ASDFGHJKL:"ZXCVBNM<>]]
-      local ru_shift = [[ËЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ]]
-
-      vim.opt.langmap = vim.fn.join({
-        escape(ru_shift) .. ";" .. escape(en_shift),
-        escape(ru) .. ";" .. escape(en),
-      }, ",")
     end,
   },
   {
@@ -142,16 +135,11 @@ return {
         cmd = {
           "clangd",
           "--background-index",
-          "--compile-commands-dir=build",
-          -- "--compile-commands-dir=build/Debug",
-          -- "--query-driver=*gcc*",
-          "-j=16",
+          "-j=8",
           "--completion-style=detailed",
           "--clang-tidy",
           "--all-scopes-completion",
         },
-        -- init_options = { compilationDatabasePath = "build" },
-        -- root_dir = util.root_pattern("build/compile_commands.json"),
         capabilities = caps,
         on_attach = disable_format,
       })
@@ -161,13 +149,7 @@ return {
       lspconfig.texlab.setup({ on_attach = disable_format })
       lspconfig.clojure_lsp.setup({})
       lspconfig.cmake.setup({ on_attach = disable_format })
-      -- lspconfig.jdtls.setup({
-      --   root_dir = util.root_pattern(".git", "pom.xml", "settings.gradle"),
-      --   on_attach = disable_format,
-      -- })
-      lspconfig.pylsp.setup({
-        -- root_dir = util.root_pattern(".git"),
-      })
+      lspconfig.pylsp.setup({})
 
       lspconfig.lua_ls.setup({
         settings = {
@@ -224,22 +206,6 @@ return {
     config = function()
       local treesitter = require("nvim-treesitter.configs")
 
-      -- local parser_config = require("nvim-treesitter.parsers").get_parser_configs()
-      -- parser_config.doxygen = {
-      --   install_info = {
-      --     url = "~/projects/tree-sitter-doxygen", -- local path or git repo
-      --     files = { "src/parser.c", "src/scanner.c" }, -- note that some parsers also require src/scanner.c or src/scanner.cc
-      --     -- optional entries:
-      --     -- branch = "main", -- default branch in case of git repo if different from master
-      --     -- generate_requires_npm = false, -- if stand-alone parser without npm dependencies
-      --     -- requires_generate_from_grammar = false, -- if folder contains pre-generated src/parser.c
-      --   },
-      -- }
-
-      -- vim.treesitter.language.register("cpp", "doxygen")
-
-      -- require("nvim-treesitter.indent").comment_parsers.doxygen = true
-
       vim.o.foldlevel = 99
       vim.o.foldlevelstart = 99
 
@@ -277,35 +243,46 @@ return {
     "nvimtools/none-ls.nvim",
     dependencies = {
       "nvim-lua/plenary.nvim",
-      "lukas-reineke/lsp-format.nvim",
     },
     keymap = function(map)
-      map:set("<leader>tf", function()
-        vim.cmd.FormatToggle()
-        if require("lsp-format").disabled then
-          vim.notify("Formatting disabled")
-        else
-          vim.notify("Formatting enabled")
-        end
-      end)
       map:set("<leader>cf", function()
-        vim.lsp.buf.format({async = true})
+        vim.lsp.buf.format({ async = false })
       end)
     end,
     config = function()
       local null_ls = require("null-ls")
       local builtins = null_ls.builtins
       local formatting = builtins.formatting
+      local helpers = require("null-ls.helpers")
 
-      local lsp_format = require("lsp-format")
-
-      lsp_format.setup()
-
-      vim.cmd.FormatDisable()
+      local black
+      if vim.fn.executable("taxi-black") then
+        black = helpers.make_builtin({
+          name = "taxi-black",
+          method = { null_ls.methods.FORMATTING },
+          filetypes = { "python" },
+          generator_opts = {
+            command = "taxi-black",
+            to_temp_file = true,
+            args = function()
+              return {
+                "--quiet",
+                "--force",
+                "$FILENAME",
+                "-",
+              }
+            end,
+          },
+          factory = helpers.formatter_factory,
+        })
+      else
+        black = formatting.black.with({
+          extra_args = { "--line-length", "80" },
+        })
+      end
 
       null_ls.setup({
         default_timeout = 5000,
-        on_attach = lsp_format.on_attach,
         sources = {
           builtins.code_actions.gitsigns,
           formatting.stylua,
@@ -316,18 +293,13 @@ return {
           }),
           formatting.phpcsfixer,
           formatting.clang_format,
-          formatting.black.with({
-            extra_args = { "--line-length", "80" },
-          }),
+          black,
           formatting.latexindent.with({
             extra_args = { "-g", "/dev/null", "--local" },
           }),
           formatting.taplo,
           formatting.fnlfmt,
           formatting.csharpier,
-          -- formatting.trim_whitespace.with({
-          --   disabled_filetypes = { "snippets" },
-          -- }),
           null_ls.builtins.diagnostics.sqlfluff.with({
             extra_args = { "--dialect", "postgres" },
           }),
@@ -710,39 +682,6 @@ return {
       require("git-conflict").setup()
     end,
   },
-  -- {
-  --   "luukvbaal/statuscol.nvim",
-  --   config = function()
-  --     local builtin = require("statuscol.builtin")
-  --     require("statuscol").setup({
-  --       relculright = true,
-  --       ft_ignore = { "NvimTree", "netrw" },
-  --       segments = {
-  --         { text = { builtin.foldfunc } },
-  --         {
-  --           sign = {
-  --             name = { ".*" },
-  --             maxwidth = 1,
-  --             colwidth = 1,
-  --           },
-  --         },
-  --         {
-  --           sign = {
-  --             name = { "Diagnostic" },
-  --             maxwidth = 1,
-  --             colwidth = 2,
-  --           },
-  --         },
-  --         { text = { builtin.lnumfunc } },
-  --         {
-  --           text = {
-  --             " ",
-  --           },
-  --         },
-  --       },
-  --     })
-  --   end,
-  -- },
   {
     "folke/neodev.nvim",
     config = function()
@@ -819,7 +758,6 @@ return {
                   { no_results = true, type = { "func", "file", "class" } },
                 },
                 { nil, "", { no_results = true, type = { "file" } } },
-
                 { i.ClassName, "/// @class %s", { type = { "class" } } },
                 { i.Type, "/// @typedef %s", { type = { "type" } } },
                 { nil, "/// @brief $1", { type = { "func", "class", "type" } } },
@@ -1467,30 +1405,6 @@ return {
     end,
   },
   {
-    "danilshvalov/denote.nvim",
-    dependencies = {
-      -- "ibhagwan/fzf-lua",
-      "nvim-telescope/telescope.nvim",
-      "starwing/luautf8",
-    },
-    config = function()
-      local denote = require("denote")
-      map
-        :prefix("<leader>n")
-        :set("c", denote.new_note)
-        :set("f", denote.select_note)
-        :set("i", denote.create_link)
-
-      vim.keymap.set("n", "gf", function()
-        if denote.get_link_under_cursor() then
-          return denote.goto_link_under_cursor()
-        else
-          return "gf"
-        end
-      end, { noremap = false })
-    end,
-  },
-  {
     "nvim-telescope/telescope.nvim",
     branch = "0.1.x",
     dependencies = {
@@ -1511,6 +1425,15 @@ return {
         :set("h", builtin.help_tags, { desc = "Help tags" })
         :set("p", builtin.resume, { desc = "Resume last search" })
 
+      map
+        :prefix("<leader>n", "+notes")
+        :set("f", function()
+          builtin.find_files({ cwd = "~/obsidian" })
+        end)
+        :set("o", function()
+          vim.cmd.edit("~/obsidian")
+        end)
+
       telescope.setup({
         defaults = {
           preview = false,
@@ -1522,6 +1445,11 @@ return {
           },
           layout_config = {
             height = 0.35,
+          },
+          file_ignore_patterns = {
+            "%.obsidian/",
+            "%.git/",
+            "build/",
           },
           layout_strategy = "bottom_pane",
           sorting_strategy = "ascending",
@@ -1603,6 +1531,25 @@ return {
           -- lua
           "stylua",
           "lua_ls",
+        },
+      })
+    end,
+  },
+  {
+    "stevearc/oil.nvim",
+    dependencies = { "nvim-tree/nvim-web-devicons" },
+    keymap = function(map)
+      map:ft("oil"):set("q", vim.cmd.bdelete, { nowait = true })
+      map:prefix("<leader>t"):set("e", function()
+        require("oil").open(".")
+      end)
+    end,
+    config = function()
+      require("oil").setup({
+        columns = {},
+        win_options = {
+          signcolumn = "yes",
+          cursorcolumn = false,
         },
       })
     end,
