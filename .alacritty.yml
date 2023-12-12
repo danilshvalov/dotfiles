@@ -11,37 +11,20 @@ cursor:
     shape: Block
     blinking: Never
 key_bindings:
-  # - { key: Return, mods: Shift, chars: "\x1b[13;2u" }
-  # - { key: Return, mods: Alt, chars: "\x1b[13;2u" }
   - {key: Space, mods: Control, chars: "\0"}
-  - {key: J, mods: Alt, chars: "\ej"}
-  - {key: K, mods: Alt, chars: "\ek"}
-  - {key: H, mods: Alt, chars: "\eh"}
-  - {key: L, mods: Alt, chars: "\el"}
-  - {key: X, mods: Alt, chars: "\ex"}
-  - {key: W, mods: Alt, chars: "\ew"}
-  - {key: N, mods: Alt, chars: "\en"}
-  - {key: V, mods: Alt, chars: "\ev"}
-  - {key: Key1, mods: Alt, chars: "\e1"}
-  - {key: Key2, mods: Alt, chars: "\e2"}
-  - {key: Key3, mods: Alt, chars: "\e3"}
-  - {key: 30, mods: Alt|Shift, chars: "\e}"}
-  - {key: 33, mods: Alt|Shift, chars: "\e{"}
-  - {key: LBracket, mods: Alt, chars: "\e["}
-  - {key: RBracket, mods: Alt, chars: "\e]"}
   - {key: PageUp, action: ScrollPageUp}
   - {key: PageDown, action: ScrollPageDown}
   - {key: Home, action: ScrollToTop}
   - {key: End, action: ScrollToBottom}
+  - {key: N, mods: Command, action: SpawnNewInstance}
 selection:
   semantic_escape_chars: ',‚îÇ`|:"'' ()[]{}<>'
+
 # TokyoNight Alacritty Colors
 colors:
-  # Default colors
   primary:
     background: '0x24283b'
     foreground: '0xc0caf5'
-  # Normal colors
   normal:
     black: '0x1d202f'
     red: '0xf7768e'
@@ -51,7 +34,6 @@ colors:
     magenta: '0xbb9af7'
     cyan: '0x7dcfff'
     white: '0xa9b1d6'
-  # Bright colors
   bright:
     black: '0x414868'
     red: '0xf7768e'
