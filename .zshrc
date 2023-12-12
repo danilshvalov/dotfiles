@@ -71,7 +71,7 @@ ZSH_CUSTOM=$HOME/.config/oh-my-zsh
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git zsh-syntax-highlighting web-search)
+plugins=(git zsh-syntax-highlighting)
 
 fpath=(~/.zsh $fpath)
 
@@ -83,23 +83,9 @@ export LANG=en_US.UTF-8
 
 alias v=nvim
 
-function e() {
-    if [[ "$1" == "-" ]]; then
-        TMP="$(mktemp /tmp/stdin-XXX)"
-        cat >$TMP
-        emacs -nw $TMP < /dev/tty
-        rm $TMP
-    else
-        emacs -nw "$@"
-    fi
-    printf "\e[0 q"
-}
-
-# export EDITOR="emacs -nw"
+alias cls='printf "\ec\e[3J"'
 
 export EDITOR=nvim
-
-export DOT=$HOME/dotfiles
 
 alias cfg='/usr/bin/git --git-dir=$HOME/dotfiles/ --work-tree=$HOME'
 
