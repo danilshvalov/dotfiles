@@ -1155,7 +1155,6 @@ return {
           for i = 2, 39 do
             highlights["OrgHeadlineLevel" .. tostring(i)] = highlights.OrgHeadlineLevel1
           end
-          -- highlights.OrgAgendaScheduledPast = { fg = colors.fg_dark }
         end,
       })
       vim.cmd.colorscheme("tokyonight")
