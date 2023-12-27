@@ -1,3 +1,7 @@
+local function is_local_session()
+  return vim.env["SSH_TTY"] == nil
+end
+
 return {
   {
     "Wansmer/langmapper.nvim",
@@ -39,9 +43,9 @@ return {
       map:set("<C-g>", "2<C-g>")
 
       map
-          :mode("nvo")
-          :set("H", "^", { desc = "Start of line" })
-          :set("L", "$", { desc = "End of line" })
+        :mode("nvo")
+        :set("H", "^", { desc = "Start of line" })
+        :set("L", "$", { desc = "End of line" })
 
       map:prefix("<leader>t", "+toggle"):set("w", function()
         if not vim.opt_local.formatoptions:get().a then
@@ -52,24 +56,25 @@ return {
       end, { desc = "Toggle wrap" })
 
       map
-          :new({ mode = "nv", expr = true })
-          :set("k", "(v:count? 'k' : 'gk')")
-          :set("j", "(v:count? 'j' : 'gj')")
+        :new({ mode = "nv", expr = true })
+        :set("k", "(v:count? 'k' : 'gk')")
+        :set("j", "(v:count? 'j' : 'gj')")
 
       map
-          :prefix("<leader>o", "+open")
-          :set("f", kit.wrap(vim.fn.system, "open ."), { desc = "Open in finder" })
+        :prefix("<leader>o", "+open")
+        :set("f", kit.wrap(vim.fn.system, "open ."), { desc = "Open in finder" })
 
       map
-          :prefix("<leader>d", "+dir")
-          :set("c", function()
-            vim.cmd.cd("%:p:h")
-            vim.notify("Directory: " .. vim.fn.expand("%:p:~:h"))
-          end, { desc = "Set cwd to current file directory" })
-          :set("y", function()
-            vim.fn.setreg("+", vim.fn.expand("%:p:h"))
-            vim.notify("Copied directory: " .. vim.fn.expand("%:p:~:h"))
-          end, { desc = "Yank cwd" })
+        :prefix("<leader>d", "+dir")
+        :set("c", function()
+          local path, _ = vim.fn.expand("%:p:h"):gsub("oil://", "")
+          vim.cmd.cd(path)
+          vim.notify("Directory: " .. vim.fn.expand("%:p:~:h"):gsub("oil://", ""))
+        end, { desc = "Set cwd to current file directory" })
+        :set("y", function()
+          vim.fn.setreg("+", vim.fn.expand("%:p:h"))
+          vim.notify("Copied directory: " .. vim.fn.expand("%:p:~:h"))
+        end, { desc = "Yank cwd" })
 
       map:set("<Esc>", vim.cmd.noh)
     end,
@@ -256,7 +261,7 @@ return {
       local helpers = require("null-ls.helpers")
 
       local black
-      if vim.fn.executable("taxi-black") then
+      if vim.fn.executable("taxi-black") == 1 then
         black = helpers.make_builtin({
           name = "taxi-black",
           method = { null_ls.methods.FORMATTING },
@@ -617,24 +622,24 @@ return {
       end
 
       map
-          :prefix("<leader>x")
-          :set("q", open("quickfix"))
-          :set("x", open("workspace_diagnostics"), { desc = "Show code errors" })
+        :prefix("<leader>x")
+        :set("q", open("quickfix"))
+        :set("x", open("workspace_diagnostics"), { desc = "Show code errors" })
 
       map
-          :new({ prefix = "<leader>c" })
-          :set("r", vim.lsp.buf.rename)
-          :set("h", vim.diagnostic.open_float)
-          :set("a", vim.lsp.buf.code_action)
+        :new({ prefix = "<leader>c" })
+        :set("r", vim.lsp.buf.rename)
+        :set("h", vim.diagnostic.open_float)
+        :set("a", vim.lsp.buf.code_action)
 
       map
-          :prefix("g", "+goto")
-          :set("d", open("lsp_definitions"), { desc = "Go definitions" })
-          :set("D", vim.lsp.buf.declaration, { desc = "Go declaration" })
-          :set("r", open("lsp_references"), { desc = "Go references" })
-          :set("i", open("lsp_implementations"), { desc = "Go implementations" })
-          :set("n", vim.diagnostic.goto_next, { desc = "Go next error" })
-          :set("p", vim.diagnostic.goto_prev, { desc = "Go prev error" })
+        :prefix("g", "+goto")
+        :set("d", open("lsp_definitions"), { desc = "Go definitions" })
+        :set("D", vim.lsp.buf.declaration, { desc = "Go declaration" })
+        :set("r", open("lsp_references"), { desc = "Go references" })
+        :set("i", open("lsp_implementations"), { desc = "Go implementations" })
+        :set("n", vim.diagnostic.goto_next, { desc = "Go next error" })
+        :set("p", vim.diagnostic.goto_prev, { desc = "Go prev error" })
 
       require("trouble").setup()
     end,
@@ -668,12 +673,12 @@ return {
       })
 
       map
-          :new({ prefix = "<leader>g" })
-          :set("p", gs.prev_hunk, { desc = "Previous hunk" })
-          :set("n", gs.next_hunk, { desc = "Next hunk" })
-          :set("r", gs.reset_hunk, { desc = "Reset hunk" })
-          :set("s", gs.stage_hunk, { desc = "Stage hunk" })
-          :set("h", gs.preview_hunk_inline, { desc = "Preview hunk" })
+        :new({ prefix = "<leader>g" })
+        :set("p", gs.prev_hunk, { desc = "Previous hunk" })
+        :set("n", gs.next_hunk, { desc = "Next hunk" })
+        :set("r", gs.reset_hunk, { desc = "Reset hunk" })
+        :set("s", gs.stage_hunk, { desc = "Stage hunk" })
+        :set("h", gs.preview_hunk_inline, { desc = "Preview hunk" })
     end,
   },
   {
@@ -740,8 +745,8 @@ return {
       local neogen = kit.require_on_exported_call("neogen")
 
       map
-          :prefix("<leader>c", "+code")
-          :set("g", neogen.generate, { desc = "Generate documentation" })
+        :prefix("<leader>c", "+code")
+        :set("g", neogen.generate, { desc = "Generate documentation" })
 
       local i = require("neogen.types.template").item
 
@@ -751,19 +756,19 @@ return {
             template = {
               annotation_convention = "custom",
               custom = {
-                { nil,         "/// @file",        { no_results = true, type = { "file" } } },
+                { nil, "/// @file", { no_results = true, type = { "file" } } },
                 {
                   nil,
                   "/// @brief $1",
                   { no_results = true, type = { "func", "file", "class" } },
                 },
-                { nil,         "",                 { no_results = true, type = { "file" } } },
-                { i.ClassName, "/// @class %s",    { type = { "class" } } },
-                { i.Type,      "/// @typedef %s",  { type = { "type" } } },
-                { nil,         "/// @brief $1",    { type = { "func", "class", "type" } } },
-                { i.Tparam,    "/// @tparam %s $1" },
+                { nil, "", { no_results = true, type = { "file" } } },
+                { i.ClassName, "/// @class %s", { type = { "class" } } },
+                { i.Type, "/// @typedef %s", { type = { "type" } } },
+                { nil, "/// @brief $1", { type = { "func", "class", "type" } } },
+                { i.Tparam, "/// @tparam %s $1" },
                 { i.Parameter, "/// @param %s $1" },
-                { i.Return,    "/// @return $1" },
+                { i.Return, "/// @return $1" },
               },
             },
           },
@@ -803,13 +808,13 @@ return {
       local toggleterm = kit.require_on_exported_call("toggleterm")
 
       map
-          :prefix("<leader>t", "+toggle")
-          :set("t", function()
-            toggleterm.toggle(vim.v.count, nil, nil, "horizontal")
-          end)
-          :set("T", function()
-            toggleterm.toggle(vim.v.count, nil, nil, "tab")
-          end)
+        :prefix("<leader>t", "+toggle")
+        :set("t", function()
+          toggleterm.toggle(vim.v.count, nil, nil, "horizontal")
+        end)
+        :set("T", function()
+          toggleterm.toggle(vim.v.count, nil, nil, "tab")
+        end)
 
       map:ft("toggleterm"):mode("t"):set("<Esc><Esc>", "<C-\\><C-n>")
     end,
@@ -841,7 +846,7 @@ return {
     config = function()
       local get_input = function(prompt, default)
         local ok, result =
-            pcall(vim.fn.input, { prompt = prompt, default = default, cancelreturn = vim.NIL })
+          pcall(vim.fn.input, { prompt = prompt, default = default, cancelreturn = vim.NIL })
         if ok and result ~= vim.NIL then
           return result
         end
@@ -1201,100 +1206,102 @@ return {
       })
 
       map
-          :set("<C-a>h", tmux.move_left)
-          :set("<C-a>j", tmux.move_bottom)
-          :set("<C-a>k", tmux.move_top)
-          :set("<C-a>l", tmux.move_right)
+        :set("<C-a>h", tmux.move_left)
+        :set("<C-a>j", tmux.move_bottom)
+        :set("<C-a>k", tmux.move_top)
+        :set("<C-a>l", tmux.move_right)
     end,
   },
-  -- {
-  --   "ibhagwan/fzf-lua",
-  --   dependencies = "nvim-tree/nvim-web-devicons",
-  --   config = function()
-  --     local fzf = kit.require_on_exported_call("fzf-lua")
+  {
+    "ibhagwan/fzf-lua",
+    dependencies = "nvim-tree/nvim-web-devicons",
+    config = function()
+      local fzf = kit.require_on_exported_call("fzf-lua")
 
-  --     map:mode("t"):ft("fzf"):set("<Esc>", vim.cmd.quit)
+      map:mode("t"):ft("fzf"):set("<Esc>", vim.cmd.quit)
 
-  --     map
-  --       :prefix("<leader>f", "+find")
-  --       :set("f", fzf.files, { desc = "Find files" })
-  --       :set("g", fzf.live_grep, { desc = "Grep files" })
-  --       :set("r", fzf.oldfiles, { desc = "Recent files" })
-  --       :set("p", fzf.resume, { desc = "Resume last search" })
+      map
+        :prefix("<leader>f", "+find")
+        :set("f", fzf.files, { desc = "Find files" })
+        :set("g", fzf.live_grep, { desc = "Grep files" })
+        :set("r", fzf.oldfiles, { desc = "Recent files" })
+        :set("p", fzf.resume, { desc = "Resume last search" })
 
-  --     local fzf = require("fzf-lua")
-  --     fzf.register_ui_select()
+      map:set("z=", fzf.spell_suggest)
 
-  --     local actions = require("fzf-lua.actions")
+      fzf.register_ui_select()
 
-  --     fzf.setup({
-  --       winopts = {
-  --         preview = {
-  --           hidden = "hidden",
-  --         },
-  --       },
-  --       winopts_fn = function()
-  --         return {
-  --           height = 0.3,
-  --           row = vim.o.lines - 14,
-  --           width = vim.o.columns,
-  --           border = "none",
-  --         }
-  --       end,
-  --       oldfiles = {
-  --         include_current_session = true,
-  --         fzf_opts = {
-  --           ["--history"] = vim.fn.stdpath("data") .. "/fzf-lua-oldfiles-history",
-  --         },
-  --       },
-  --       files = {
-  --         fzf_opts = {
-  --           ["--history"] = vim.fn.stdpath("data") .. "/fzf-lua-files-history",
-  --         },
-  --       },
-  --       grep = {
-  --         fzf_opts = {
-  --           ["--history"] = vim.fn.stdpath("data") .. "/fzf-lua-grep-history",
-  --         },
-  --       },
-  --       git = {
-  --         status = {
-  --           actions = {
-  --             ["left"] = false,
-  --             ["right"] = false,
-  --             ["ctrl-l"] = { actions.git_unstage, actions.resume },
-  --             ["ctrl-h"] = { actions.git_stage, actions.resume },
-  --             ["ctrl-x"] = { actions.git_reset, actions.resume },
-  --           },
-  --         },
-  --       },
-  --       fzf_opts = {
-  --         ["--ansi"] = "",
-  --         ["--info"] = "inline",
-  --         ["--height"] = "100%",
-  --         ["--layout"] = "reverse",
-  --         ["--border"] = "none",
-  --         ["--cycle"] = "",
-  --         ["--history"] = vim.fn.stdpath("data") .. "/fzf-lua-history",
-  --       },
-  --       fzf_colors = {
-  --         ["fg"] = { "fg", "CursorLine" },
-  --         ["bg"] = { "bg", "Normal" },
-  --         ["hl"] = { "bg", "IncSearch" },
-  --         ["fg+"] = { "fg", "Normal" },
-  --         ["bg+"] = { "bg", "Visual" },
-  --         ["hl+"] = { "bg", "IncSearch" },
-  --         ["info"] = { "fg", "PreProc" },
-  --         ["prompt"] = { "fg", "Conditional" },
-  --         ["pointer"] = { "fg", "Exception" },
-  --         ["marker"] = { "fg", "Keyword" },
-  --         ["spinner"] = { "fg", "Label" },
-  --         ["header"] = { "fg", "Comment" },
-  --         ["gutter"] = { "bg", "Normal" },
-  --       },
-  --     })
-  --   end,
-  -- },
+      local actions = require("fzf-lua.actions")
+
+      fzf.setup({
+        winopts = {
+          preview = {
+            hidden = "hidden",
+          },
+        },
+        winopts_fn = function()
+          return {
+            height = 0.3,
+            row = vim.o.lines - 14,
+            width = vim.o.columns,
+            border = "none",
+          }
+        end,
+        oldfiles = {
+          include_current_session = true,
+          fzf_opts = {
+            ["--history"] = vim.fn.stdpath("data") .. "/fzf-lua-oldfiles-history",
+          },
+        },
+        files = {
+          fd_opts = "--color=never --type f --hidden --follow --exclude .git --exclude .obsidian --exclude build --exclude .DS_Store --exclude Вложения",
+          fzf_opts = {
+            ["--history"] = vim.fn.stdpath("data") .. "/fzf-lua-files-history",
+          },
+        },
+        grep = {
+          fzf_opts = {
+            ["--history"] = vim.fn.stdpath("data") .. "/fzf-lua-grep-history",
+          },
+        },
+        git = {
+          status = {
+            actions = {
+              ["left"] = false,
+              ["right"] = false,
+              ["ctrl-l"] = { actions.git_unstage, actions.resume },
+              ["ctrl-h"] = { actions.git_stage, actions.resume },
+              ["ctrl-x"] = { actions.git_reset, actions.resume },
+            },
+          },
+        },
+        fzf_opts = {
+          ["--ansi"] = "",
+          ["--info"] = "inline",
+          ["--height"] = "100%",
+          ["--layout"] = "reverse",
+          ["--border"] = "none",
+          ["--cycle"] = "",
+          ["--history"] = vim.fn.stdpath("data") .. "/fzf-lua-history",
+        },
+        fzf_colors = {
+          ["fg"] = { "fg", "CursorLine" },
+          ["bg"] = { "bg", "Normal" },
+          ["hl"] = { "bg", "IncSearch" },
+          ["fg+"] = { "fg", "Normal" },
+          ["bg+"] = { "bg", "Visual" },
+          ["hl+"] = { "bg", "IncSearch" },
+          ["info"] = { "fg", "PreProc" },
+          ["prompt"] = { "fg", "Conditional" },
+          ["pointer"] = { "fg", "Exception" },
+          ["marker"] = { "fg", "Keyword" },
+          ["spinner"] = { "fg", "Label" },
+          ["header"] = { "fg", "Comment" },
+          ["gutter"] = { "bg", "Normal" },
+        },
+      })
+    end,
+  },
   {
     "ojroques/nvim-osc52",
     config = function()
@@ -1305,11 +1312,11 @@ return {
       })
 
       map
-          :prefix("<leader>")
-          :set("c", osc.copy_operator, { expr = true })
-          :set("cc", "<leader>c_", { remap = true })
-          :mode("v")
-          :set("c", require("osc52").copy_visual)
+        :prefix("<leader>")
+        :set("c", osc.copy_operator, { expr = true })
+        :set("cc", "<leader>c_", { remap = true })
+        :mode("v")
+        :set("c", require("osc52").copy_visual)
 
       local function copy()
         local event = vim.v.event
@@ -1347,21 +1354,23 @@ return {
       })
     end,
   },
-  -- {
-  --   "theHamsta/nvim_rocks",
-  --   build = "pip3 install --user hererocks && python3 -mhererocks . -j2.1.0-beta3 -r3.0.0 && cp nvim_rocks.lua lua",
-  --   init = function()
-  --     local rocks = require("nvim_rocks")
-  --     rocks.ensure_installed("luautf8")
-  --   end,
-  -- },
-  -- {
-  --   "starwing/luautf8",
-  --   dependencies = "theHamsta/nvim_rocks",
-  --   config = function()
-  --     _G.utf8 = require("lua-utf8")
-  --   end,
-  -- },
+  {
+    "theHamsta/nvim_rocks",
+    build = "pip3 install --user hererocks && python3 -mhererocks . -j2.1.0-beta3 -r3.0.0 && cp nvim_rocks.lua lua",
+    enabled = is_local_session,
+    init = function()
+      local rocks = require("nvim_rocks")
+      rocks.ensure_installed("luautf8")
+    end,
+  },
+  {
+    "starwing/luautf8",
+    dependencies = "theHamsta/nvim_rocks",
+    enabled = is_local_session,
+    config = function()
+      _G.utf8 = require("lua-utf8")
+    end,
+  },
   -- {
   --   "danilshvalov/text-case.nvim",
   --   branch = "feat-unicode",
@@ -1382,10 +1391,14 @@ return {
   {
     "toppair/peek.nvim",
     build = "deno task --quiet build:fast",
-    opts = {
-      app = "browser",
-      theme = "light",
-    },
+    config = function()
+      require("peek").setup({
+        app = "browser",
+        theme = "light",
+      })
+      vim.api.nvim_create_user_command("PeekOpen", require("peek").open, {})
+      vim.api.nvim_create_user_command("PeekClose", require("peek").close, {})
+    end,
   },
   {
     "lukas-reineke/indent-blankline.nvim",
@@ -1404,96 +1417,144 @@ return {
     end,
   },
   {
-    "nvim-telescope/telescope.nvim",
-    branch = "0.1.x",
+    "epwalsh/obsidian.nvim",
     dependencies = {
       "nvim-lua/plenary.nvim",
-      { "nvim-telescope/telescope-fzf-native.nvim", build = "make" },
-      "nvim-telescope/telescope-ui-select.nvim",
     },
-    config = function()
-      local telescope = require("telescope")
-      local builtin = require("telescope.builtin")
-      local actions = require("telescope.actions")
-
-      map
-          :prefix("<leader>f", "+find")
-          :set("f", builtin.find_files, { desc = "Find files" })
-          :set("g", builtin.live_grep, { desc = "Grep files" })
-          :set("r", builtin.oldfiles, { desc = "Recent files" })
-          :set("h", builtin.help_tags, { desc = "Help tags" })
-          :set("p", builtin.resume, { desc = "Resume last search" })
-
-      map:set("z=", builtin.spell_suggest)
-
-      map
-          :prefix("<leader>n", "+notes")
-          :set("f", function()
-            builtin.find_files({ cwd = "~/obsidian" })
-          end)
-          :set("o", function()
-            vim.cmd.edit("~/obsidian")
-          end)
-
-      telescope.setup({
-        defaults = {
-          preview = false,
-          border = true,
-          borderchars = {
-            preview = { "─", "│", "─", "│", "╭", "╮", "╯", "╰" },
-            prompt = { "─", " ", " ", " ", "─", "─", " ", " " },
-            results = { " " },
-          },
-          layout_config = {
-            height = 0.35,
-          },
-          file_ignore_patterns = {
-            "%.obsidian/",
-            "%.git/",
-            "build/",
-          },
-          layout_strategy = "bottom_pane",
-          sorting_strategy = "ascending",
-          theme = "ivy",
-          mappings = {
-            i = {
-              ["<C-j>"] = actions.move_selection_next,
-              ["<C-k>"] = actions.move_selection_previous,
-              ["<C-n>"] = actions.cycle_history_next,
-              ["<C-p>"] = actions.cycle_history_prev,
-              ["<C-f>"] = actions.to_fuzzy_refine,
-              ["<C-q>"] = actions.send_selected_to_qflist + actions.open_qflist,
-              ["<C-u>"] = false,
-            },
-          },
-          path_display = function(_, path)
-            local cwd = vim.uv.cwd() .. "/"
-            if path:sub(1, #cwd) == cwd then
-              path = path:sub(#cwd + 1)
-            end
-            return path:gsub(vim.env.HOME, "~", 1)
-          end,
-        },
-        pickers = {
-          find_files = {
-            hidden = true,
-          },
-        },
-        extensions = {
-          fzf = {
-            fuzzy = true,
-            override_generic_sorter = true,
-            override_file_sorter = true,
-            case_mode = "smart_case",
-          },
-          ["ui-select"] = {},
-        },
-      })
-
-      telescope.load_extension("fzf")
-      telescope.load_extension("ui-select")
+    enabled = is_local_session,
+    keymap = function(map)
+      map:ft("markdown"):prefix("<leader>o"):set("o", vim.cmd.ObsidianOpen)
     end,
+    opts = {
+      disable_frontmatter = false,
+      open_app_foreground = true,
+      workspaces = {
+        {
+          name = "personal",
+          path = "/Users/danilshvalov/Library/Mobile Documents/iCloud~md~obsidian/Documents/notes",
+        },
+      },
+      notes_subdir = "Заметки/неотсортированное",
+      attachments = {
+        img_folder = "вложения",
+      },
+      daily_notes = {
+        folder = "Ежедневник",
+        date_format = "%Y-%m-%d",
+        alias_format = "%Y-%m-%d",
+        template = "Ежедневник.md",
+      },
+      templates = {
+        subdir = "Шаблоны",
+        date_format = "%Y-%m-%d",
+        time_format = "%H:%M",
+        substitutions = {},
+      },
+      note_id_func = function(title)
+        local suffix = ""
+        if title ~= nil then
+          suffix = utf8.lower(utf8.gsub(title:gsub(" ", "-"), "[^%w%d-]", ""))
+        else
+          for _ = 1, 4 do
+            suffix = suffix .. string.char(math.random(65, 90))
+          end
+        end
+        return tostring(os.time()) .. "-" .. suffix
+      end,
+      finder = "fzf-lua",
+    },
   },
+  -- {
+  --   "nvim-telescope/telescope.nvim",
+  --   branch = "0.1.x",
+  --   dependencies = {
+  --     "nvim-lua/plenary.nvim",
+  --     { "nvim-telescope/telescope-fzf-native.nvim", build = "make" },
+  --     "nvim-telescope/telescope-ui-select.nvim",
+  --   },
+  --   config = function()
+  --     local telescope = require("telescope")
+  --     local builtin = require("telescope.builtin")
+  --     local actions = require("telescope.actions")
+
+  --     map
+  --         :prefix("<leader>f", "+find")
+  --         :set("f", builtin.find_files, { desc = "Find files" })
+  --         :set("g", builtin.live_grep, { desc = "Grep files" })
+  --         :set("r", builtin.oldfiles, { desc = "Recent files" })
+  --         :set("h", builtin.help_tags, { desc = "Help tags" })
+  --         :set("p", builtin.resume, { desc = "Resume last search" })
+
+  --     map:set("z=", builtin.spell_suggest)
+
+  --     map
+  --         :prefix("<leader>n", "+notes")
+  --         :set("f", function()
+  --           builtin.find_files({ cwd = "~/obsidian" })
+  --         end)
+  --         :set("o", function()
+  --           vim.cmd.edit("~/obsidian")
+  --         end)
+
+  --     telescope.setup({
+  --       defaults = {
+  --         preview = false,
+  --         border = true,
+  --         borderchars = {
+  --           preview = { "─", "│", "─", "│", "╭", "╮", "╯", "╰" },
+  --           prompt = { "─", " ", " ", " ", "─", "─", " ", " " },
+  --           results = { " " },
+  --         },
+  --         layout_config = {
+  --           height = 0.35,
+  --         },
+  --         file_ignore_patterns = {
+  --           "%.obsidian/",
+  --           "%.git/",
+  --           "build/",
+  --         },
+  --         layout_strategy = "bottom_pane",
+  --         sorting_strategy = "ascending",
+  --         theme = "ivy",
+  --         mappings = {
+  --           i = {
+  --             ["<C-j>"] = actions.move_selection_next,
+  --             ["<C-k>"] = actions.move_selection_previous,
+  --             ["<C-n>"] = actions.cycle_history_next,
+  --             ["<C-p>"] = actions.cycle_history_prev,
+  --             ["<C-f>"] = actions.to_fuzzy_refine,
+  --             ["<C-q>"] = actions.send_selected_to_qflist + actions.open_qflist,
+  --             ["<C-u>"] = false,
+  --           },
+  --         },
+  --         path_display = function(_, path)
+  --           local cwd = vim.uv.cwd() .. "/"
+  --           if path:sub(1, #cwd) == cwd then
+  --             path = path:sub(#cwd + 1)
+  --           end
+  --           return path:gsub(vim.env.HOME, "~", 1)
+  --         end,
+  --       },
+  --       pickers = {
+  --         find_files = {
+  --           hidden = true,
+  --         },
+  --       },
+  --       extensions = {
+  --         fzf = {
+  --           fuzzy = true,
+  --           override_generic_sorter = true,
+  --           override_file_sorter = true,
+  --           case_mode = "smart_case",
+  --         },
+  --         ["ui-select"] = {},
+  --       },
+  --     })
+
+  --     telescope.load_extension("fzf")
+  --     telescope.load_extension("ui-select")
+  --   end,
+  -- },
   {
     "lervag/vimtex",
     config = function()
