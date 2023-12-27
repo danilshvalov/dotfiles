@@ -92,3 +92,5 @@ alias cfg='/usr/bin/git --git-dir=$HOME/dotfiles/ --work-tree=$HOME'
 if [[ "$OSTYPE" == "darwin"* ]]; then
     eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
+
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
