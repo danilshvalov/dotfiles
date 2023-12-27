@@ -136,9 +136,19 @@ return {
 
       local caps = vim.lsp.protocol.make_client_capabilities()
       caps.offsetEncoding = { "utf-16" }
+
+      local clangd_possible_executables = {"clangd", "clangd-10"}
+      local clangd_executable = "clangd"
+      for _, clangd in ipairs(clangd_possible_executables) do
+        if vim.fn.executable(clangd) == 1 then
+          clangd_executable = clangd
+          break
+        end
+      end
+
       lspconfig.clangd.setup({
         cmd = {
-          "clangd",
+          clangd_executable,
           "--background-index",
           "-j=8",
           "--completion-style=detailed",
@@ -286,6 +296,30 @@ return {
         })
       end
 
+      local clang_format
+      if vim.fn.executable("taxi-clang-format") == 1 then
+        clang_format = helpers.make_builtin({
+          name = "taxi-clang-format",
+          method = { null_ls.methods.FORMATTING },
+          filetypes = { "cpp" },
+          generator_opts = {
+            command = "taxi-clang-format",
+            to_temp_file = true,
+            args = function()
+              return {
+                "--quiet",
+                "--force",
+                "$FILENAME",
+                "-",
+              }
+            end,
+          },
+          factory = helpers.formatter_factory,
+        })
+      else
+        clang_format = formatting.clang_format
+      end
+
       null_ls.setup({
         default_timeout = 5000,
         sources = {
@@ -297,7 +331,7 @@ return {
             filetypes = { "json", "javascript", "markdown", "scss" },
           }),
           formatting.phpcsfixer,
-          formatting.clang_format,
+          clang_format,
           black,
           formatting.latexindent.with({
             extra_args = { "-g", "/dev/null", "--local" },
