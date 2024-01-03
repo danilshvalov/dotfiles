@@ -71,18 +71,18 @@
     "Show the full path file name in the minibuffer."
     (interactive)
     (message
-      (concat
-        (propertize "Current file:" 'face 'bold)
-        " "
-        (abbreviate-file-name (buffer-file-name)))))
+     (concat
+      (propertize "Current file:" 'face 'bold)
+      " "
+      (abbreviate-file-name (buffer-file-name)))))
 
   (defun show-datetime ()
     (interactive)
     (message
-      (concat
-        (propertize "Current datetime:" 'face 'bold)
-        " "
-        (format-time-string "%A %d.%m %H:%M"))))
+     (concat
+      (propertize "Current datetime:" 'face 'bold)
+      " "
+      (format-time-string "%A %d.%m %H:%M"))))
 
   (defun execute-at-project-root (orig-fun &rest args)
     (let ((default-directory (project-root-current)))
@@ -91,15 +91,15 @@
   (defun inhibit-sentinel-messages (fun &rest args)
     "Inhibit messages in all sentinels started by fun."
     (cl-letf*
-      (
-        (old-set-process-sentinel (symbol-function 'set-process-sentinel))
-        ((symbol-function 'set-process-sentinel)
+        (
+         (old-set-process-sentinel (symbol-function 'set-process-sentinel))
+         ((symbol-function 'set-process-sentinel)
           (lambda (process sentinel)
             (funcall old-set-process-sentinel
-              process
-              `(lambda (&rest args)
-                (let ((inhibit-message t))
-                  (apply (quote ,sentinel) args)))))))
+                     process
+                     `(lambda (&rest args)
+                        (let ((inhibit-message t))
+                          (apply (quote ,sentinel) args)))))))
       (apply fun args)))
 
   (defun new-instance--darwin ()
@@ -114,14 +114,14 @@
   (defun open-finder (&optional path)
     (interactive "P")
     (let*
-      ((path (or path "."))
-        (path
+        ((path (or path "."))
+         (path
           (cond
-            ((listp path)
-              (string-join path " "))
-            (t
-              path)))
-        (command (list "open" path)))
+           ((listp path)
+            (string-join path " "))
+           (t
+            path)))
+         (command (list "open" path)))
       (call-process-shell-command (string-join command " "))))
 
   :general
@@ -136,7 +136,7 @@
     "L" "$")
 
   (:keymaps 'override
-    "C-s-f" 'toggle-frame-fullscreen)
+            "C-s-f" 'toggle-frame-fullscreen)
 
   (nmap
     :keymaps 'override
@@ -157,18 +157,18 @@
   ;; We display [CRM<separator>], e.g., [CRM,] if the separator is a comma.
   (defun crm-indicator (args)
     (cons
-      (format "[CRM%s] %s"
-        (replace-regexp-in-string
-          "\\`\\[.*?]\\*\\|\\[.*?]\\*\\'"
-          ""
-          crm-separator)
-        (car args))
-      (cdr args)))
+     (format "[CRM%s] %s"
+             (replace-regexp-in-string
+              "\\`\\[.*?]\\*\\|\\[.*?]\\*\\'"
+              ""
+              crm-separator)
+             (car args))
+     (cdr args)))
   (advice-add #'completing-read-multiple :filter-args #'crm-indicator)
 
   ;; Do not allow the cursor in the minibuffer prompt
   (setq minibuffer-prompt-properties
-    '(read-only t cursor-intangible t face minibuffer-prompt))
+        '(read-only t cursor-intangible t face minibuffer-prompt))
   (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
 
   ;; Enable recursive minibuffers
@@ -229,44 +229,44 @@
   (org-use-sub-superscripts nil)
   (org-highlight-latex-and-related '(native script entities))
   (org-src-lang-modes
-    '(("C" . c-ts)
-       ("C++" . c++-ts)
-       ("asymptote" . asy)
-       ("beamer" . latex)
-       ("calc" . fundamental)
-       ("cpp" . c++-ts)
-       ("ditaa" . artist)
-       ("desktop" . conf-desktop)
-       ("dot" . fundamental)
-       ("elisp" . emacs-lisp)
-       ("ocaml" . tuareg)
-       ("screen" . shell-script)
-       ("sqlite" . sql)
-       ("toml" . conf-toml)
-       ("shell" . sh)
-       ("ash" . sh)
-       ("sh" . sh)
-       ("bash" . sh)
-       ("jsh" . sh)
-       ("bash2" . sh)
-       ("dash" . sh)
-       ("dtksh" . sh)
-       ("ksh" . sh)
-       ("es" . sh)
-       ("rc" . sh)
-       ("itcsh" . sh)
-       ("tcsh" . sh)
-       ("jcsh" . sh)
-       ("csh" . sh)
-       ("ksh88" . sh)
-       ("oash" . sh)
-       ("pdksh" . sh)
-       ("mksh" . sh)
-       ("posix" . sh)
-       ("wksh" . sh)
-       ("wsh" . sh)
-       ("zsh" . sh)
-       ("rpm" . sh)))
+   '(("C" . c-ts)
+     ("C++" . c++-ts)
+     ("asymptote" . asy)
+     ("beamer" . latex)
+     ("calc" . fundamental)
+     ("cpp" . c++-ts)
+     ("ditaa" . artist)
+     ("desktop" . conf-desktop)
+     ("dot" . fundamental)
+     ("elisp" . emacs-lisp)
+     ("ocaml" . tuareg)
+     ("screen" . shell-script)
+     ("sqlite" . sql)
+     ("toml" . conf-toml)
+     ("shell" . sh)
+     ("ash" . sh)
+     ("sh" . sh)
+     ("bash" . sh)
+     ("jsh" . sh)
+     ("bash2" . sh)
+     ("dash" . sh)
+     ("dtksh" . sh)
+     ("ksh" . sh)
+     ("es" . sh)
+     ("rc" . sh)
+     ("itcsh" . sh)
+     ("tcsh" . sh)
+     ("jcsh" . sh)
+     ("csh" . sh)
+     ("ksh88" . sh)
+     ("oash" . sh)
+     ("pdksh" . sh)
+     ("mksh" . sh)
+     ("posix" . sh)
+     ("wksh" . sh)
+     ("wsh" . sh)
+     ("zsh" . sh)
+     ("rpm" . sh)))
   :custom-face
   (org-level-2 ((t (:inherit 'org-level-1))))
   (org-level-3 ((t (:inherit 'org-level-1))))
@@ -415,11 +415,11 @@
       (dired default-directory)))
   :custom
   (project-switch-commands '((affe-find "Find file")
-                              (dired-project-root "Dired")))
+                             (dired-project-root "Dired")))
   :general
   (:keymaps 'project-prefix-map
-    "f" 'affe-find
-    "d" 'dired-project-root)
+            "f" 'affe-find
+            "d" 'dired-project-root)
   (nmap
     :prefix "SPC p"
     "s" 'project-switch-project
@@ -456,11 +456,11 @@ DIR must include a .project file to be considered a project."
 (set-frame-font "JetBrains Mono 17" nil t)
 
 (custom-set-faces
-  `(default ((t (:font "JetBrains Mono 17"))))
-  `(fixed-pitch ((t (:inherit (default)))))
-  `(fixed-pitch-serif ((t (:inherit (default)))))
-  `(variable-pitch ((t (:inherit (default)))))
-  `(variable-pitch-text ((t (:height 1.0)))))
+ `(default ((t (:font "JetBrains Mono 17"))))
+ `(fixed-pitch ((t (:inherit (default)))))
+ `(fixed-pitch-serif ((t (:inherit (default)))))
+ `(variable-pitch ((t (:inherit (default)))))
+ `(variable-pitch-text ((t (:height 1.0)))))
 
 (setq c-ts-mode-indent-offset 4)
 
@@ -581,9 +581,9 @@ DIR must include a .project file to be considered a project."
   (defun +adaptive-wrap-prefix-mode ()
     "Toggle `visual-line-mode' and `adaptive-wrap-prefix-mode' simultaneously."
     (unless
-      (or (equal major-mode 'org-mode) (equal major-mode 'org-journal-mode))
+        (or (equal major-mode 'org-mode) (equal major-mode 'org-journal-mode))
       (adaptive-wrap-prefix-mode
-        (if visual-line-mode 1 -1))))
+       (if visual-line-mode 1 -1))))
 
   (defun +disable-visual-line-mode ()
     (visual-line-mode -1)
@@ -593,9 +593,9 @@ DIR must include a .project file to be considered a project."
     (interactive)
     (let ((inhibit-message t))
       (if visual-line-mode
-        (progn
-          (visual-line-mode -1)
-          (toggle-truncate-lines 1))
+          (progn
+            (visual-line-mode -1)
+            (toggle-truncate-lines 1))
         (progn
           (toggle-truncate-lines -1)
           (visual-line-mode 1)))))
@@ -656,13 +656,13 @@ DIR must include a .project file to be considered a project."
   (eglot-events-buffer-size 0)
   :hook
   ((LaTeX-mode
-     c++-ts-mode
-     csharp-mode
-     python-ts-mode
-     conf-toml-mode
-     tsx-ts-mode)
-    .
-    eglot-ensure)
+    c++-ts-mode
+    csharp-mode
+    python-ts-mode
+    conf-toml-mode
+    tsx-ts-mode)
+   .
+   eglot-ensure)
   :general
   (nmap
     :prefix "SPC c"
@@ -681,8 +681,8 @@ DIR must include a .project file to be considered a project."
   (add-to-list 'eglot-server-programs '(latex-mode . ("texlab")))
   (add-to-list 'eglot-server-programs '(python-ts-mode . ("pylsp")))
   (add-to-list
-    'eglot-server-programs
-    '(conf-toml-mode . ("taplo" "lsp" "stdio"))))
+   'eglot-server-programs
+   '(conf-toml-mode . ("taplo" "lsp" "stdio"))))
 
 (use-package vertico
   :custom
@@ -696,27 +696,27 @@ DIR must include a .project file to be considered a project."
     "C-k" 'vertico-previous)
   :init
   (setq completion-in-region-function
-    (lambda (&rest args)
-      (apply
-        (if vertico-mode
-          #'consult-completion-in-region
-          #'completion--in-region)
-        args)))
+        (lambda (&rest args)
+          (apply
+           (if vertico-mode
+               #'consult-completion-in-region
+             #'completion--in-region)
+           args)))
   (vertico-mode))
 
 (use-package consult
   :custom
   (consult-buffer-filter
-    '("\\` "
-      "\\`\\*Completions\\*\\'"
-      "\\`\\*Messages\\*\\'"
-      "\\`\\*Help\\*\\'"
-      "\\`\\*Flymake log\\*\\'"
-      "\\`\\*Semantic SymRef\\*\\'"
-      "\\`\\*WoMan-Log\\*\\'"
-      "\\`\\*Async-native-compile-log\\*\\'"
-      "\\`\\*tramp/.*\\*\\'"
-      "\\`\\*Eglot .*\\*\\'"))
+   '("\\` "
+     "\\`\\*Completions\\*\\'"
+     "\\`\\*Messages\\*\\'"
+     "\\`\\*Help\\*\\'"
+     "\\`\\*Flymake log\\*\\'"
+     "\\`\\*Semantic SymRef\\*\\'"
+     "\\`\\*WoMan-Log\\*\\'"
+     "\\`\\*Async-native-compile-log\\*\\'"
+     "\\`\\*tramp/.*\\*\\'"
+     "\\`\\*Eglot .*\\*\\'"))
   (consult-ripgrep-args
    "rg --null --line-buffered --color=never --max-columns=1000 --path-separator / --smart-case --no-heading --with-filename --line-number --search-zip")
   (consult-async-min-input 0)
@@ -799,9 +799,9 @@ DIR must include a .project file to be considered a project."
 (use-package orderless
   :init
   (setq
-    completion-styles '(orderless basic)
-    completion-category-defaults nil
-    completion-category-overrides '((file (styles partial-completion)))))
+   completion-styles '(orderless basic)
+   completion-category-defaults nil
+   completion-category-overrides '((file (styles partial-completion)))))
 
 (use-package corfu
   :demand t
@@ -841,15 +841,15 @@ DIR must include a .project file to be considered a project."
   (defun corfu--unread-this-command-keys ()
     (when (> (length (this-command-keys)) 0)
       (setq unread-command-events
-        (nconc
-          (listify-key-sequence (this-command-keys))
-          unread-command-events))
+            (nconc
+             (listify-key-sequence (this-command-keys))
+             unread-command-events))
       (clear-this-command-keys t)))
 
   (cl-defmethod corfu--insert :around
     (status)
     (if (or (eq this-command 'corfu-insert-exact) (not (eq status 'exact)))
-      (cl-call-next-method)
+        (cl-call-next-method)
       (corfu--unread-this-command-keys)
       (setq this-command 'corfu-insert-exact)))
 
@@ -858,16 +858,16 @@ DIR must include a .project file to be considered a project."
 Quit if no candidate is selected."
     (interactive)
     (if (>= corfu--index 0)
-      (corfu--insert 'exact)
+        (corfu--insert 'exact)
       (corfu-quit)))
 
   (mapc
-    #'evil-declare-ignore-repeat
-    '(corfu-next corfu-previous corfu-first corfu-last))
+   #'evil-declare-ignore-repeat
+   '(corfu-next corfu-previous corfu-first corfu-last))
 
   (mapc
-    #'evil-declare-change-repeat
-    '(corfu-insert corfu-insert-exact corfu-complete)))
+   #'evil-declare-change-repeat
+   '(corfu-insert corfu-insert-exact corfu-complete)))
 
 (use-package corfu-terminal
   :hook (corfu-mode . corfu-terminal-mode)
@@ -879,11 +879,11 @@ Quit if no candidate is selected."
   (kind-icon-blend-background nil)
   (kind-icon-extra-space t)
   (kind-icon-default-style `(:padding 0
-                             :stroke 0
-                             :margin 0
-                             :radius 0
-                             :height 0.9
-                             :scale 1))
+                                      :stroke 0
+                                      :margin 0
+                                      :radius 0
+                                      :height 0.9
+                                      :scale 1))
   :config
   (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
 
@@ -904,11 +904,11 @@ Quit if no candidate is selected."
   (let ((dabbrev (cape-capf-case-fold #'cape-dabbrev)))
     (defun my/eglot-capf ()
       (setq-local completion-at-point-functions
-        (list
-          (cape-super-capf
-           (cape-capf-properties #'eglot-completion-at-point :exclusive 'no)
-           dabbrev)
-          #'cape-file)))
+                  (list
+                   (cape-super-capf
+                    (cape-capf-properties #'eglot-completion-at-point :exclusive 'no)
+                    dabbrev)
+                   #'cape-file)))
     (add-hook 'eglot-managed-mode-hook #'my/eglot-capf)
 
     (defun add-cape-capf ()
@@ -941,14 +941,14 @@ Quit if no candidate is selected."
   :config
   (evil-mode)
 
-(evil-define-operator evil-fill (beg end)
-  "Fill text."
-  :move-point nil
-  :type line
-  (save-excursion
-    (ignore-errors
-      (fill-region beg end)
-      (evil-indent beg end))))
+  (evil-define-operator evil-fill (beg end)
+    "Fill text."
+    :move-point nil
+    :type line
+    (save-excursion
+      (ignore-errors
+        (fill-region beg end)
+        (evil-indent beg end))))
 
   (advice-add 'evil-ex :around #'execute-at-project-root)
   (evil-set-undo-system 'undo-fu)
@@ -962,13 +962,13 @@ Quit if no candidate is selected."
     evil-next-line (count)
     :type exclusive
     (let ((line-move-visual (not count)))
-        (evil-line-move (or count 1))))
+      (evil-line-move (or count 1))))
 
   (evil-define-motion
     evil-previous-line (count)
     :type exclusive
-      (let ((line-move-visual (not count)))
-        (evil-line-move (- (or count 1)))))
+    (let ((line-move-visual (not count)))
+      (evil-line-move (- (or count 1)))))
 
   (evil-select-search-module 'evil-search-module 'evil-search))
 
@@ -1004,12 +1004,12 @@ Quit if no candidate is selected."
   (rassq-delete-all 'cmake-format apheleia-mode-alist)
 
   (add-to-list! 'apheleia-formatters
-    '(sqlfluff . ("sqlfluff" "format" "--dialect" "postgres" "-"))
-    '(taplo . ("taplo" "fmt"))
-    '(csharpier . ("dotnet" "csharpier"))
-    '(prettier . ("prettier" "--stdin-filepath" filepath))
-    '(phpcs . ("my-phpcs" "fix" "-n" "-q" filepath))
-    )
+                '(sqlfluff . ("sqlfluff" "format" "--dialect" "postgres" "-"))
+                '(taplo . ("taplo" "fmt"))
+                '(csharpier . ("dotnet" "csharpier"))
+                '(prettier . ("prettier" "--stdin-filepath" filepath))
+                '(phpcs . ("my-phpcs" "fix" "-n" "-q" filepath))
+                )
 
   (add-hook 'apheleia-formatter-exited-hook (cl-function
                                              (lambda (&key formatter error log)
@@ -1018,10 +1018,10 @@ Quit if no candidate is selected."
                                                  (revert-buffer nil t)))))
 
   (add-to-list! 'apheleia-mode-alist
-    '(sql-mode . sqlfluff)
-    '(conf-toml-mode . taplo)
-    '(csharp-mode . csharpier)
-    '(markdown-mode . prettier)))
+                '(sql-mode . sqlfluff)
+                '(conf-toml-mode . taplo)
+                '(csharp-mode . csharpier)
+                '(markdown-mode . prettier)))
 
 (use-package jinx
   :custom
@@ -1048,7 +1048,7 @@ Quit if no candidate is selected."
   :after evil
   :custom
   (undo-fu-session-incompatible-files
-    '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'"))
+   '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'"))
   :config (undo-fu-session-global-mode))
 
 (use-package vterm
@@ -1078,10 +1078,10 @@ Quit if no candidate is selected."
     (let* ((default-directory (project-root-current))
            (vterm-buffer-name (concat vterm-buffer-name (my-tab-name-current))))
       (if (equal major-mode 'vterm-mode)
-        (let (display-buffer-alist)
-          (split-window-right)
-          (other-window 1)
-          (vterm args))
+          (let (display-buffer-alist)
+            (split-window-right)
+            (other-window 1)
+            (vterm args))
         (vterm args))))
 
   (defun toggle-vterm-cd (&optional args)
@@ -1102,16 +1102,16 @@ Quit if no candidate is selected."
   (setq vterm-timer-delay 0.01)
 
   (add-to-list
-    'display-buffer-alist
-    '((lambda (buffer-or-name _)
-        (let ((buffer (get-buffer buffer-or-name)))
-          (with-current-buffer buffer
-            (or (equal major-mode 'vterm-mode)
-              (string-prefix-p vterm-buffer-name (buffer-name buffer))))))
-      (display-buffer-reuse-window display-buffer-in-direction)
-      (direction . bottom)
-      (reusable-frames . visible)
-       (window-height . 0.4))))
+   'display-buffer-alist
+   '((lambda (buffer-or-name _)
+       (let ((buffer (get-buffer buffer-or-name)))
+         (with-current-buffer buffer
+           (or (equal major-mode 'vterm-mode)
+               (string-prefix-p vterm-buffer-name (buffer-name buffer))))))
+     (display-buffer-reuse-window display-buffer-in-direction)
+     (direction . bottom)
+     (reusable-frames . visible)
+     (window-height . 0.4))))
 
 (use-package editorconfig
   :config (editorconfig-mode 1))
@@ -1155,48 +1155,48 @@ Quit if no candidate is selected."
     "D" '+dired-open-here))
 
 
-(use-package auctex
-  :commands (LaTeX-mode latex-mode)
-  :custom
-  (LaTeX-item-indent 0)
-  (LaTeX-indent-level 2)
-  (tex-fontify-script nil)
-  (TeX-close-quote ">>")
-  (TeX-open-quote "<<")
-  (TeX-engine 'luatex)
-  (font-latex-fontify-script nil)
-  :custom-face
-  (font-latex-warning-face ((t :inherit 'bold)))
-  (font-latex-math-face ((t :inherit 'bold)))
-  (font-latex-string-face ((t :inherit 'font-lock-string-face)))
-  (font-latex-verbatim-face ((t :inherit 'bold)))
-  (font-latex-bold-face ((t :inherit 'bold)))
-  (font-latex-italic-face ((t :inherit 'italic)))
-  (font-latex-sectioning-0-face ((t :inherit 'bold)))
-  (font-latex-sectioning-1-face ((t :inherit 'bold)))
-  (font-latex-sectioning-2-face ((t :inherit 'bold)))
-  (font-latex-sectioning-3-face ((t :inherit 'bold)))
-  (font-latex-sectioning-4-face ((t :inherit 'bold)))
-  (font-latex-sectioning-5-face ((t :inherit 'bold)))
-  :hook (LaTeX-mode . auto-fill-mode)
-  :config
-  (add-to-list 'LaTeX-indent-environment-list '("align*")))
+                                        ; (use-package auctex
+                                        ;   :commands (LaTeX-mode latex-mode)
+                                        ;   :custom
+                                        ;   (LaTeX-item-indent 0)
+                                        ;   (LaTeX-indent-level 2)
+                                        ;   (tex-fontify-script nil)
+                                        ;   (TeX-close-quote ">>")
+                                        ;   (TeX-open-quote "<<")
+                                        ;   (TeX-engine 'luatex)
+                                        ;   (font-latex-fontify-script nil)
+                                        ;   :custom-face
+                                        ;   (font-latex-warning-face ((t :inherit 'bold)))
+                                        ;   (font-latex-math-face ((t :inherit 'bold)))
+                                        ;   (font-latex-string-face ((t :inherit 'font-lock-string-face)))
+                                        ;   (font-latex-verbatim-face ((t :inherit 'bold)))
+                                        ;   (font-latex-bold-face ((t :inherit 'bold)))
+                                        ;   (font-latex-italic-face ((t :inherit 'italic)))
+                                        ;   (font-latex-sectioning-0-face ((t :inherit 'bold)))
+                                        ;   (font-latex-sectioning-1-face ((t :inherit 'bold)))
+                                        ;   (font-latex-sectioning-2-face ((t :inherit 'bold)))
+                                        ;   (font-latex-sectioning-3-face ((t :inherit 'bold)))
+                                        ;   (font-latex-sectioning-4-face ((t :inherit 'bold)))
+                                        ;   (font-latex-sectioning-5-face ((t :inherit 'bold)))
+                                        ;   :hook (LaTeX-mode . auto-fill-mode)
+                                        ;   :config
+                                        ;   (add-to-list 'LaTeX-indent-environment-list '("align*")))
 
 (add-hook 'LaTeX-mode-hook
-    (lambda ()
-      (face-remap-add-relative 'font-lock-type-face '(:inherit default))))
+          (lambda ()
+            (face-remap-add-relative 'font-lock-type-face '(:inherit default))))
 
 (use-package cmake-mode
   :commands cmake-mode)
 
 (add-to-list! 'auto-mode-alist
-  '("\\.latexmkrc\\'" . perl-mode)
-  '("\\.h\\'" . c++-ts-mode)
-  '("\\.sqlfluff\\'" . conf-mode)
-  '("\\.clang-format\\'" . yaml-mode)
-  '("\\.tsx\\'" . tsx-ts-mode)
-  '("\\.puml\\'" . plantuml-mode)
-  '("skhdrc\\'" . conf-mode))
+              '("\\.latexmkrc\\'" . perl-mode)
+              '("\\.h\\'" . c++-ts-mode)
+              '("\\.sqlfluff\\'" . conf-mode)
+              '("\\.clang-format\\'" . yaml-mode)
+              '("\\.tsx\\'" . tsx-ts-mode)
+              '("\\.puml\\'" . plantuml-mode)
+              '("skhdrc\\'" . conf-mode))
 
 (setq-default css-indent-offset 2)
 
@@ -1207,24 +1207,24 @@ Quit if no candidate is selected."
   :custom
   (markdown-fontify-code-blocks-natively t)
   (markdown-code-lang-modes
-    '(("ocaml" . tuareg-mode)
-       ("elisp" . emacs-lisp-mode)
-       ("ditaa" . artist-mode)
-       ("asymptote" . asy-mode)
-       ("dot" . fundamental-mode)
-       ("sqlite" . sql-mode)
-       ("calc" . fundamental-mode)
-       ("C" . c-ts-mode)
-       ("cpp" . c++-ts-mode)
-       ("C++" . c++-ts-mode)
-       ;; ("python" . python-ts-mode)
-       ("screen" . shell-script-mode)
-       ("shell" . sh-mode)
-       ("bash" . sh-mode)))
+   '(("ocaml" . tuareg-mode)
+     ("elisp" . emacs-lisp-mode)
+     ("ditaa" . artist-mode)
+     ("asymptote" . asy-mode)
+     ("dot" . fundamental-mode)
+     ("sqlite" . sql-mode)
+     ("calc" . fundamental-mode)
+     ("C" . c-ts-mode)
+     ("cpp" . c++-ts-mode)
+     ("C++" . c++-ts-mode)
+     ;; ("python" . python-ts-mode)
+     ("screen" . shell-script-mode)
+     ("shell" . sh-mode)
+     ("bash" . sh-mode)))
   :general
   (general-define-key
-    :keymaps 'markdown-mode-map
-    "C-c C-c" 'markdown-toggle-gfm-checkbox)
+   :keymaps 'markdown-mode-map
+   "C-c C-c" 'markdown-toggle-gfm-checkbox)
   :config
   (defun markdown-fontify-tables (last)
     ;; (when (re-search-forward "|" last t)
@@ -1306,8 +1306,8 @@ Quit if no candidate is selected."
     (other-window 1))
 
   (add-hook
-    'LaTeX-mode-hook
-    (lambda () (setq-local compile-command "latexmk"))))
+   'LaTeX-mode-hook
+   (lambda () (setq-local compile-command "latexmk"))))
 
 (use-builtin help
   :general
@@ -1317,10 +1317,10 @@ Quit if no candidate is selected."
   :commands markdown-preview-mode
   :config
   (setq markdown-preview-stylesheets
-    (list
-      "https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/2.9.0/github-markdown.min.css"
-      "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"
-      "
+        (list
+         "https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/2.9.0/github-markdown.min.css"
+         "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"
+         "
   <style>
    .markdown-body {
      box-sizing: border-box;
@@ -1338,9 +1338,9 @@ Quit if no candidate is selected."
   </style>
 "))
   (setq markdown-preview-javascript
-    (list
-      "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"
-      "
+        (list
+         "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"
+         "
   <script>
    $(document).on('mdContentChange', function() {
      $('pre code').each(function(i, block) {
@@ -1354,13 +1354,13 @@ Quit if no candidate is selected."
   :demand t
   :config
   (setq my-sql-tsauto-config
-    (make-treesit-auto-recipe
-      :lang 'sql
-      :ts-mode 'sql-ts-mode
-      :remap 'sql-mode
-      :url "https://github.com/DerekStride/tree-sitter-sql"
-      :revision "gh-pages"
-      :source-dir "src"))
+        (make-treesit-auto-recipe
+         :lang 'sql
+         :ts-mode 'sql-ts-mode
+         :remap 'sql-mode
+         :url "https://github.com/DerekStride/tree-sitter-sql"
+         :revision "gh-pages"
+         :source-dir "src"))
 
   (add-to-list 'treesit-auto-recipe-list my-sql-tsauto-config)
 
@@ -1665,8 +1665,8 @@ Quit if no candidate is selected."
   :commands embark-act
   :general
   (:states '(normal visual insert)
-   :keymaps 'override
-   "C-e" 'embark-act)
+           :keymaps 'override
+           "C-e" 'embark-act)
   (general-define-key
    :keymaps 'embark-file-map
    "C-v" 'split-window-vertically)
@@ -1682,10 +1682,10 @@ Quit if no candidate is selected."
                  (window-parameters (mode-line-format . none))))
 
   (setq embark-indicators
-    '(embark--vertico-indicator
-       embark-minimal-indicator
-       embark-highlight-indicator
-       embark-isearch-highlight-indicator)))
+        '(embark--vertico-indicator
+          embark-minimal-indicator
+          embark-highlight-indicator
+          embark-isearch-highlight-indicator)))
 
 (use-package embark-consult
   :hook
@@ -1711,267 +1711,270 @@ Quit if no candidate is selected."
   :init (turn-on-pbcopy))
 
 (setq cc-search-directories '("."
-                               "../include" "../include/*" "../../include/*"
-                               "../../../include/*" "../../include/*/*"
-                               "../../../include/*/*/*" "../src" "../src/*"
-                               "../../src/*" "../../../src/*"
-                               "../../src/*/*" "../../../src/*/*/*"
-                               "/usr/include" "/usr/local/include/*"))
+                              "../include" "../include/*" "../../include/*"
+                              "../../../include/*" "../../include/*/*"
+                              "../../../include/*/*/*" "../src" "../src/*"
+                              "../../src/*" "../../../src/*"
+                              "../../src/*/*" "../../../src/*/*/*"
+                              "/usr/include" "/usr/local/include/*"))
 
 (with-eval-after-load 'highlight-doxygen
   (defun highlight-doxygen-anchored-keywords-template ()
-  "List of font-lock keywords that will be converted to anchored submatches.
+    "List of font-lock keywords that will be converted to anchored submatches.
 
 The MATCHER will be wrapped in a call to
 `highlight-doxygen-forward-search' and pre and post match forms
 will be added.
 
 Note that these rules can't contain anchored rules themselves."
-  (let ((title-rules '()))
-    (dolist (pair highlight-doxygen-title-commands-alist)
-      (let ((commands (car pair))
-            (face     (cdr pair)))
-        (push `(,(concat "[\\@]\\_<"
-                         (regexp-opt commands)
-                         "\\s-+"
-                         "\\(.*\\)")
-                (1 (quote ,face) prepend))
-              title-rules)))
-    (dolist (pair highlight-doxygen-name-title-commands-alist)
-      (let ((commands (car pair))
-            (face     (cdr pair)))
-        (push `(,(concat "[\\@]\\_<"
-                         (regexp-opt commands)
-                         "\\s-+"
-                         "\\_<\\(\\sw+\\)"
-                         "\\(\\s-+"
-                         "\\(.*\\)\\)?")
-                (1 'highlight-doxygen-label prepend)
-                (2 (quote ,face) prepend t))
-              title-rules)))
-    (append
-     `(
-       ;; --------------------
-       ;; Highlight every line in the Doxygen block.
-       ;;
-       ;; Unlike plain comment highlighting, make the highlighting
-       ;; follow the indentation of the Doxygen comment.
-       (highlight-doxygen-match-comment-line
-        (0 'highlight-doxygen-comment prepend))
-       ;; --------------------
-       ;; Explicit code blocks
-       (highlight-doxygen-find-and-highlight-keywords-code-block)
-       ;; --------------------
-       ;; Implicit (indented) code blocks
-       (highlight-doxygen-find-and-highlight-markdown-code-block)
-       ;; --------------------
-       ;; Doxygen command.
-       (,(concat "[\\@]"
-                 "\\_<\\([a-z]+\\)\\_>")
-        (1 'highlight-doxygen-command prepend))
+    (let ((title-rules '()))
+      (dolist (pair highlight-doxygen-title-commands-alist)
+        (let ((commands (car pair))
+              (face     (cdr pair)))
+          (push `(,(concat "[\\@]\\_<"
+                           (regexp-opt commands)
+                           "\\s-+"
+                           "\\(.*\\)")
+                  (1 (quote ,face) prepend))
+                title-rules)))
+      (dolist (pair highlight-doxygen-name-title-commands-alist)
+        (let ((commands (car pair))
+              (face     (cdr pair)))
+          (push `(,(concat "[\\@]\\_<"
+                           (regexp-opt commands)
+                           "\\s-+"
+                           "\\_<\\(\\sw+\\)"
+                           "\\(\\s-+"
+                           "\\(.*\\)\\)?")
+                  (1 'highlight-doxygen-label prepend)
+                  (2 (quote ,face) prepend t))
+                title-rules)))
+      (append
+       `(
+         ;; --------------------
+         ;; Highlight every line in the Doxygen block.
+         ;;
+         ;; Unlike plain comment highlighting, make the highlighting
+         ;; follow the indentation of the Doxygen comment.
+         (highlight-doxygen-match-comment-line
+          (0 'highlight-doxygen-comment prepend))
+         ;; --------------------
+         ;; Explicit code blocks
+         (highlight-doxygen-find-and-highlight-keywords-code-block)
+         ;; --------------------
+         ;; Implicit (indented) code blocks
+         (highlight-doxygen-find-and-highlight-markdown-code-block)
+         ;; --------------------
+         ;; Doxygen command.
+         (,(concat "[\\@]"
+                   "\\_<\\([a-z]+\\)\\_>")
+          (1 'highlight-doxygen-command prepend))
 
-       ;; ----------------------------------------
-       ;; Inline constructs.
+         ;; ----------------------------------------
+         ;; Inline constructs.
 
-       ;; --------------------
-       ;; Type name
+         ;; --------------------
+         ;; Type name
 
-       (highlight-doxygen-match-camel-case
-        (1 font-lock-type-face prepend))
+         (highlight-doxygen-match-camel-case
+          (1 font-lock-type-face prepend))
 
-       ;; --------------------
-       ;; Qualified class name
+         ;; --------------------
+         ;; Qualified class name
 
-       ("\\_<\\(\\sw+\\)\\(::\\|#\\)"
-        (1 font-lock-type-face prepend))
+         ("\\_<\\(\\sw+\\)\\(::\\|#\\)"
+          (1 font-lock-type-face prepend))
 
-       ;; --------------------
-       ;; Function name
-       ("\\_<\\(\\(\\sw\\)+\\)()"
-        (1 font-lock-function-name-face prepend))
+         ;; --------------------
+         ;; Function name
+         ("\\_<\\(\\(\\sw\\)+\\)()"
+          (1 font-lock-function-name-face prepend))
 
-       ;; --------------------
-       ;; Links (URI:s). See RFC 3986, chapter 3.
+         ;; --------------------
+         ;; Links (URI:s). See RFC 3986, chapter 3.
 
-       ("\\_<\\([a-zA-Z][-a-zA-Z0-9+.]*://[^ \t\n]*\\)"
-        (1 'highlight-doxygen-link prepend)))
-     title-rules
-     `(
-       ;; ------------------------------
-       ;; Various command signatures.
-       ;;
+         ("\\_<\\([a-zA-Z][-a-zA-Z0-9+.]*://[^ \t\n]*\\)"
+          (1 'highlight-doxygen-link prepend)))
+       title-rules
+       `(
+         ;; ------------------------------
+         ;; Various command signatures.
+         ;;
 
-       ;; --------------------
-       ;; bold
-       (,(concat "[\\@]\\_<"
-                 (regexp-opt highlight-doxygen-bold-commands)
-                 "\\s-+"
-                 "\\_<\\(\\sw+\\)")
-        (1 'highlight-doxygen-bold prepend))
+         ;; --------------------
+         ;; bold
+         (,(concat "[\\@]\\_<"
+                   (regexp-opt highlight-doxygen-bold-commands)
+                   "\\s-+"
+                   "\\_<\\(\\sw+\\)")
+          (1 'highlight-doxygen-bold prepend))
 
-       ;; --------------------
-       ;; code
-       (,(concat "[\\@]\\_<"
-                 (regexp-opt highlight-doxygen-code-commands)
-                 "\\s-+"
-                 "\\_<\\(\\sw+\\)")
-        (1 'highlight-doxygen-code prepend))
+         ;; --------------------
+         ;; code
+         (,(concat "[\\@]\\_<"
+                   (regexp-opt highlight-doxygen-code-commands)
+                   "\\s-+"
+                   "\\_<\\(\\sw+\\)")
+          (1 'highlight-doxygen-code prepend))
 
-       ;; --------------------
-       ;; emphasize
-       (,(concat "[\\@]\\_<"
-                 (regexp-opt highlight-doxygen-emphasize-commands)
-                 "\\s-+"
-                 "\\_<\\(\\sw+\\)")
-        (1 'highlight-doxygen-emphasize prepend))
+         ;; --------------------
+         ;; emphasize
+         (,(concat "[\\@]\\_<"
+                   (regexp-opt highlight-doxygen-emphasize-commands)
+                   "\\s-+"
+                   "\\_<\\(\\sw+\\)")
+          (1 'highlight-doxygen-emphasize prepend))
 
-       ;; --------------------
-       ;; Type name
+         ;; --------------------
+         ;; Type name
 
-       (,(concat "[\\@]\\_<"
-                 (regexp-opt highlight-doxygen-qualified-type-commands)
-                 "\\s-+"
-                 ;; Skip qualifiers.
-                 "\\_<\\(?:\\sw+\\(?:::\\|#\\)\\)*"
-                 "\\_<\\(\\sw+\\)")
-        (1 'highlight-doxygen-type prepend))
+         (,(concat "[\\@]\\_<"
+                   (regexp-opt highlight-doxygen-qualified-type-commands)
+                   "\\s-+"
+                   ;; Skip qualifiers.
+                   "\\_<\\(?:\\sw+\\(?:::\\|#\\)\\)*"
+                   "\\_<\\(\\sw+\\)")
+          (1 'highlight-doxygen-type prepend))
 
-       ;; --------------------
-       ;; exception
+         ;; --------------------
+         ;; exception
 
-       (,(concat "[\\@]\\_<"
-                 (regexp-opt highlight-doxygen-exception-commands)
-                 "\\s-+"
-                 ;; Skip qualifiers.
-                 "\\_<\\(?:\\sw+\\(?:::\\|#\\)\\)*"
-                 "\\(\\sw+\\)")
-        (1 'highlight-doxygen-exception prepend))
+         (,(concat "[\\@]\\_<"
+                   (regexp-opt highlight-doxygen-exception-commands)
+                   "\\s-+"
+                   ;; Skip qualifiers.
+                   "\\_<\\(?:\\sw+\\(?:::\\|#\\)\\)*"
+                   "\\(\\sw+\\)")
+          (1 'highlight-doxygen-exception prepend))
 
-       ;; --------------------
-       ;; namespace
+         ;; --------------------
+         ;; namespace
 
-       (,(concat "[\\@]\\_<"
-                 (regexp-opt highlight-doxygen-namespace-commands)
-                 "\\s-+"
-                 ;; Skip qualifiers.
-                 "\\_<\\(?:\\sw+\\(?:::\\|#\\)\\)*"
-                 "\\_<\\(\\sw+\\)")
-        (1 'highlight-doxygen-namespace prepend))
+         (,(concat "[\\@]\\_<"
+                   (regexp-opt highlight-doxygen-namespace-commands)
+                   "\\s-+"
+                   ;; Skip qualifiers.
+                   "\\_<\\(?:\\sw+\\(?:::\\|#\\)\\)*"
+                   "\\_<\\(\\sw+\\)")
+          (1 'highlight-doxygen-namespace prepend))
 
-       ;; --------------------
-       ;; Group name
-       (,(concat "[\\@]\\_<"
-                 (regexp-opt highlight-doxygen-group-commands)
-                 "\\s-+"
-                 "\\_<\\(\\sw+\\)")
-        (1 'highlight-doxygen-group prepend))
+         ;; --------------------
+         ;; Group name
+         (,(concat "[\\@]\\_<"
+                   (regexp-opt highlight-doxygen-group-commands)
+                   "\\s-+"
+                   "\\_<\\(\\sw+\\)")
+          (1 'highlight-doxygen-group prepend))
 
-       ;; --------------------
-       ;; File name
-       (,(concat "[\\@]\\_<"
-                 (regexp-opt highlight-doxygen-filename-commands)
-                 "\\s-+"
-                 "\\_<\\([a-zA-Z0-9_:/\\.]+\\)")
-        (1 'highlight-doxygen-filename prepend))
+         ;; --------------------
+         ;; File name
+         (,(concat "[\\@]\\_<"
+                   (regexp-opt highlight-doxygen-filename-commands)
+                   "\\s-+"
+                   "\\_<\\([a-zA-Z0-9_:/\\.]+\\)")
+          (1 'highlight-doxygen-filename prepend))
 
-       ;; --------------------
-       ;; Reference
+         ;; --------------------
+         ;; Reference
 
-       ;; Note: The Doxygen documentation doesn't specify the format
-       ;; of a reference, this code use a combination of word
-       ;; characters, symbol characters, and punctuation
-       ;; characters. Another approach would be to match every
-       ;; character except whitespace.  Unfortunately, "\\S-" might
-       ;; match newlines, so the search must be restricted to the end
-       ;; of the line that contains the Doxygen command.
-       (,(concat "[\\@]\\_<"
-                 (regexp-opt highlight-doxygen-reference-commands)
-                 "\\s-+"
-                 "\\(\\(\\sw\\|\\s_\\|\\s.\\)+\\)")
-        (1 'highlight-doxygen-link prepend))
+         ;; Note: The Doxygen documentation doesn't specify the format
+         ;; of a reference, this code use a combination of word
+         ;; characters, symbol characters, and punctuation
+         ;; characters. Another approach would be to match every
+         ;; character except whitespace.  Unfortunately, "\\S-" might
+         ;; match newlines, so the search must be restricted to the end
+         ;; of the line that contains the Doxygen command.
+         (,(concat "[\\@]\\_<"
+                   (regexp-opt highlight-doxygen-reference-commands)
+                   "\\s-+"
+                   "\\(\\(\\sw\\|\\s_\\|\\s.\\)+\\)")
+          (1 'highlight-doxygen-link prepend))
 
-       ;; --------------------
-       ;; section-label (`if' and `elseif' etc.)
+         ;; --------------------
+         ;; section-label (`if' and `elseif' etc.)
 
-       ;; TODO: The section label can be a complex expression like
-       ;; "(TEST1 && !TEST2). Since this is rule itself is included in a
-       ;; anchored match, it's not possible to handle this using anchored
-       ;; matches, so it must be done in elisp.
-       (,(concat "[\\@]\\_<"
-                 (regexp-opt highlight-doxygen-section-label-commands)
-                 "\\s-+"
-                 "\\_<\\(\\sw+\\)")
-        (1 'highlight-doxygen-section-label prepend))
+         ;; TODO: The section label can be a complex expression like
+         ;; "(TEST1 && !TEST2). Since this is rule itself is included in a
+         ;; anchored match, it's not possible to handle this using anchored
+         ;; matches, so it must be done in elisp.
+         (,(concat "[\\@]\\_<"
+                   (regexp-opt highlight-doxygen-section-label-commands)
+                   "\\s-+"
+                   "\\_<\\(\\sw+\\)")
+          (1 'highlight-doxygen-section-label prepend))
 
-       ;; --------------------
-       ;; Variable
+         ;; --------------------
+         ;; Variable
 
-       (,(concat "[\\@]\\_<"
-                 (regexp-opt highlight-doxygen-variable-commands)
-                 "\\s-+"
-                 "\\_<\\(\\(\\sw\\|_\\)+\\)")
-        (1 'highlight-doxygen-variable prepend))
+         (,(concat "[\\@]\\_<"
+                   (regexp-opt highlight-doxygen-variable-commands)
+                   "\\s-+"
+                   "\\_<\\(\\(\\sw\\|_\\)+\\)")
+          (1 'highlight-doxygen-variable prepend))
 
-       ;; --------------------
-       ;; Variable with direction
+         ;; --------------------
+         ;; Variable with direction
 
-       (,(concat "[\\@]\\_<"
-                 (regexp-opt highlight-doxygen-variable-with-dir-commands)
-                 "\\_>"
-                 "\\s-*"
-                 "\\(?:\\["
-                 "\\(?:\\(in\\)\\|\\(out\\)\\|\\(in\\),\\(out\\)\\)"
-                 "\\]\\)?"
-                 "\\s-*"
-                 "\\(\\_<\\(\\sw\\|_\\)+\\)?")
-        (1 'highlight-doxygen-direction prepend t) ; in
-        (2 'highlight-doxygen-direction prepend t) ; out
-        (3 'highlight-doxygen-direction prepend t) ; in  (part of in,out)
-        (4 'highlight-doxygen-direction prepend t) ; out (part of in,out)
-        (5 'highlight-doxygen-variable prepend t))
+         (,(concat "[\\@]\\_<"
+                   (regexp-opt highlight-doxygen-variable-with-dir-commands)
+                   "\\_>"
+                   "\\s-*"
+                   "\\(?:\\["
+                   "\\(?:\\(in\\)\\|\\(out\\)\\|\\(in\\),\\(out\\)\\)"
+                   "\\]\\)?"
+                   "\\s-*"
+                   "\\(\\_<\\(\\sw\\|_\\)+\\)?")
+          (1 'highlight-doxygen-direction prepend t) ; in
+          (2 'highlight-doxygen-direction prepend t) ; out
+          (3 'highlight-doxygen-direction prepend t) ; in  (part of in,out)
+          (4 'highlight-doxygen-direction prepend t) ; out (part of in,out)
+          (5 'highlight-doxygen-variable prepend t))
 
-       ;; --------------------
-       ;; Line of code
+         ;; --------------------
+         ;; Line of code
 
-       (,(concat "[\\@]\\_<"
-                 (regexp-opt highlight-doxygen-code-line-commands)
-                 "\\s-+\\(.*\\)$")
-        (0 (progn
-             (highlight-doxygen-code-block
-              (match-beginning 1)
-              (match-end 1)
-              major-mode)
-             nil)))
+         (,(concat "[\\@]\\_<"
+                   (regexp-opt highlight-doxygen-code-line-commands)
+                   "\\s-+\\(.*\\)$")
+          (0 (progn
+               (highlight-doxygen-code-block
+                (match-beginning 1)
+                (match-end 1)
+                major-mode)
+               nil)))
 
-       ;; --------------------
-       ;; Reference or file name
+         ;; --------------------
+         ;; Reference or file name
 
-       (,(concat "[\\@]\\_<"
-                 (regexp-opt highlight-doxygen-link-object-commands)
-                 "\\_>")
-        (0 (progn
-             ;; This will apply suitable highlighting to whatever is
-             ;; after the command.
-             (highlight-doxygen-highlight-link-object)
-             nil)))
+         (,(concat "[\\@]\\_<"
+                   (regexp-opt highlight-doxygen-link-object-commands)
+                   "\\_>")
+          (0 (progn
+               ;; This will apply suitable highlighting to whatever is
+               ;; after the command.
+               (highlight-doxygen-highlight-link-object)
+               nil)))
 
-       ;; --------------------
-       ;; Highlight "`foo`". Note that in Doxygen a quote cancels a
-       ;; backquote.
-       ;;
-       ;; TODO: Multi-line support.
-       ("`\\([^\n`']+\\)`"
-        (1 (progn
-             (goto-char (match-end 0))
-             font-lock-constant-face)
-          prepend)))))))
+         ;; --------------------
+         ;; Highlight "`foo`". Note that in Doxygen a quote cancels a
+         ;; backquote.
+         ;;
+         ;; TODO: Multi-line support.
+         ("`\\([^\n`']+\\)`"
+          (1 (progn
+               (goto-char (match-end 0))
+               font-lock-constant-face)
+             prepend)))))))
 
 (use-package lua-mode
   :mode "\\.lua\\'")
 
 (use-builtin tramp
-  :defer t
-  :custom (tramp-verbose 0))
+  :config
+  (setopt
+   tramp-default-remote-shell "/bin/zsh"
+   tramp-encoding-shell "/bin/zsh"
+   tramp-verbose 0))
 
 (use-builtin calendar
   :defer t
@@ -2017,8 +2020,8 @@ Note that these rules can't contain anchored rules themselves."
   :custom
   (treesit-font-lock-level 4)
   (major-mode-remap-alist
-    '((c++-mode . c++-ts-mode)
-       (c-mode . c-ts-mode))))
+   '((c++-mode . c++-ts-mode)
+     (c-mode . c-ts-mode))))
 
 (use-package rainbow-mode
   :general
@@ -2035,41 +2038,41 @@ Note that these rules can't contain anchored rules themselves."
   :custom
   (vc-handled-backends nil))
 
-(use-package magit
-  :custom
-  (magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1)
-  :preface
-  (defun my-magit-process-environment (env)
-    "Add GIT_DIR and GIT_WORK_TREE to ENV when in a special directory.
-https://github.com/magit/magit/issues/460 (@cpitclaudel)."
-    (let ((default (file-name-as-directory (expand-file-name default-directory)))
-          (home (expand-file-name "~/")))
-      (when (string= default home)
-        (let ((gitdir (expand-file-name "~/dotfiles/")))
-          (push (format "GIT_WORK_TREE=%s" home) env)
-          (push (format "GIT_DIR=%s" gitdir) env))))
-    env)
-  :general
-  (nvmap
-    :prefix "SPC g"
-    "g" 'magit-status
-    "d" (lambda ()
-          (interactive)
-          (magit-status "~")))
+                                        ; (use-package magit
+                                        ;   :custom
+                                        ;   (magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1)
+                                        ;   :preface
+                                        ;   (defun my-magit-process-environment (env)
+                                        ;     "Add GIT_DIR and GIT_WORK_TREE to ENV when in a special directory.
+                                        ; https://github.com/magit/magit/issues/460 (@cpitclaudel)."
+                                        ;     (let ((default (file-name-as-directory (expand-file-name default-directory)))
+                                        ;           (home (expand-file-name "~/")))
+                                        ;       (when (string= default home)
+                                        ;         (let ((gitdir (expand-file-name "~/dotfiles/")))
+                                        ;           (push (format "GIT_WORK_TREE=%s" home) env)
+                                        ;           (push (format "GIT_DIR=%s" gitdir) env))))
+                                        ;     env)
+                                        ;   :general
+                                        ;   (nvmap
+                                        ;     :prefix "SPC g"
+                                        ;     "g" 'magit-status
+                                        ;     "d" (lambda ()
+                                        ;           (interactive)
+                                        ;           (magit-status "~")))
 
-  (general-define-key
-    :keymaps 'transient-base-map
-    "<escape>" 'transient-quit-one)
-  :config
-  (advice-add 'magit-process-environment
-              :filter-return #'my-magit-process-environment)
-  (advice-add 'magit-status :around #'execute-at-project-root))
+                                        ;   (general-define-key
+                                        ;     :keymaps 'transient-base-map
+                                        ;     "<escape>" 'transient-quit-one)
+                                        ;   :config
+                                        ;   (advice-add 'magit-process-environment
+                                        ;               :filter-return #'my-magit-process-environment)
+                                        ;   (advice-add 'magit-status :around #'execute-at-project-root))
 
 
 (add-hook
-  'yaml-ts-mode-hook
-  (lambda ()
-    (setq-local tab-width 2)))
+ 'yaml-ts-mode-hook
+ (lambda ()
+   (setq-local tab-width 2)))
 
 (use-package powershell
   :custom
@@ -2366,13 +2369,13 @@ https://github.com/magit/magit/issues/460 (@cpitclaudel)."
          (i 0))
     (while (< i (length captures))
       (let* ((lang-node (cdr (nth i captures)))
-            (lang (treesit-node-text lang-node))
-            (lang-mode (if lang (markdown-get-lang-mode lang)
-                         markdown-fontify-code-block-default-mode))
-            (content-node (cdr (nth (1+ i) captures)))
-            (content (treesit-node-text content-node))
-            (start (treesit-node-start content-node))
-            (end (treesit-node-end content-node)))
+             (lang (treesit-node-text lang-node))
+             (lang-mode (if lang (markdown-get-lang-mode lang)
+                          markdown-fontify-code-block-default-mode))
+             (content-node (cdr (nth (1+ i) captures)))
+             (content (treesit-node-text content-node))
+             (start (treesit-node-start content-node))
+             (end (treesit-node-end content-node)))
 
         (let ((string content)
               (modified (buffer-modified-p))
@@ -2395,8 +2398,8 @@ https://github.com/magit/magit/issues/460 (@cpitclaudel)."
               (let ((val (get-text-property pos 'face)))
                 (when val
                   (message "%s" `(put-text-property
-                   ,(+ start (1- pos)) ,(1- (+ start next)) 'face
-                   ,val ,markdown-buffer))
+                                  ,(+ start (1- pos)) ,(1- (+ start next)) 'face
+                                  ,val ,markdown-buffer))
                   (put-text-property
                    (+ start (1- pos)) (1- (+ start next)) 'font-lock-face
                    val markdown-buffer)))
@@ -2418,28 +2421,28 @@ https://github.com/magit/magit/issues/460 (@cpitclaudel)."
 
 (defmacro markdown-ts-capture (parser-language parser-mode)
   `(lambda (beg end)
-             (let* ((parser (treesit-parser-create 'markdown))
-                    (root (treesit-parser-root-node parser))
-                    (query '((fenced_code_block
-                              (info_string) @lang
-                              (code_fence_content) @content)))
-                    (captures (treesit-query-capture root query beg end))
-                    (set-ranges)
-                    (i 0))
-               (while (< i (length captures))
-                 (let* ((lang-node (cdr (nth i captures)))
-                        (lang (treesit-node-text lang-node))
-                        (lang-mode (if lang (markdown-get-lang-mode lang)
-                                     markdown-fontify-code-block-default-mode))
-                        (content-node (cdr (nth (1+ i) captures))))
-                   (if (eq lang-mode ,parser-mode)
-                       (setq set-ranges (push (cons (treesit-node-start content-node)
-                                                    (treesit-node-end content-node))
-                                              set-ranges))))
-                 (setq i (+ i 2)))
-               (when set-ranges
-                 (treesit-parser-set-included-ranges
-                  (treesit-parser-create ,parser-language) (nreverse set-ranges))))))
+     (let* ((parser (treesit-parser-create 'markdown))
+            (root (treesit-parser-root-node parser))
+            (query '((fenced_code_block
+                      (info_string) @lang
+                      (code_fence_content) @content)))
+            (captures (treesit-query-capture root query beg end))
+            (set-ranges)
+            (i 0))
+       (while (< i (length captures))
+         (let* ((lang-node (cdr (nth i captures)))
+                (lang (treesit-node-text lang-node))
+                (lang-mode (if lang (markdown-get-lang-mode lang)
+                             markdown-fontify-code-block-default-mode))
+                (content-node (cdr (nth (1+ i) captures))))
+           (if (eq lang-mode ,parser-mode)
+               (setq set-ranges (push (cons (treesit-node-start content-node)
+                                            (treesit-node-end content-node))
+                                      set-ranges))))
+         (setq i (+ i 2)))
+       (when set-ranges
+         (treesit-parser-set-included-ranges
+          (treesit-parser-create ,parser-language) (nreverse set-ranges))))))
 
 (use-builtin files
   :general
@@ -2447,8 +2450,8 @@ https://github.com/magit/magit/issues/460 (@cpitclaudel)."
     :keymaps 'override
     :prefix "SPC c"
     "d" (lambda ()
-               (interactive)
-               (cd default-directory))
+          (interactive)
+          (cd default-directory))
     "D" 'cd)
   :config
   (advice-add

@@ -1,5 +1,7 @@
 vim.loader.enable()
 
+table.unpack = unpack
+
 require("kit.core")
 
 -- disable any backup
