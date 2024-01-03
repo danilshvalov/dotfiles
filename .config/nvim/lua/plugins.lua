@@ -1422,8 +1422,7 @@ return {
   {
     "theHamsta/nvim_rocks",
     build = "pip3 install --user hererocks && python3 -mhererocks . -j2.1.0-beta3 -r3.0.0 && cp nvim_rocks.lua lua",
-    enabled = is_local_session,
-    init = function()
+    config = function()
       local rocks = require("nvim_rocks")
       rocks.ensure_installed("luautf8")
     end,
@@ -1431,7 +1430,6 @@ return {
   {
     "starwing/luautf8",
     dependencies = "theHamsta/nvim_rocks",
-    enabled = is_local_session,
     config = function()
       _G.utf8 = require("lua-utf8")
     end,
