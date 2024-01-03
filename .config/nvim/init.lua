@@ -198,3 +198,7 @@ end)
 vim.cmd.cabbrev("ц w")
 vim.cmd.cabbrev("й q")
 vim.cmd.cabbrev("цй wq")
+
+function _G.open_in_arcadia()
+  local path = vim.api.nvim_buf_get_name(0)
+end

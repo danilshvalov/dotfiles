@@ -137,27 +137,18 @@ return {
       local caps = vim.lsp.protocol.make_client_capabilities()
       caps.offsetEncoding = { "utf-16" }
 
-      local clangd_possible_executables = {"clangd", "clangd-10"}
-      local clangd_executable = "clangd"
-      for _, clangd in ipairs(clangd_possible_executables) do
-        if vim.fn.executable(clangd) == 1 then
-          clangd_executable = clangd
-          break
-        end
-      end
-
-      lspconfig.clangd.setup({
-        cmd = {
-          clangd_executable,
-          "--background-index",
-          "-j=8",
-          "--completion-style=detailed",
-          "--clang-tidy",
-          "--all-scopes-completion",
-        },
-        capabilities = caps,
-        on_attach = disable_format,
-      })
+      -- lspconfig.clangd.setup({
+      --   cmd = {
+      --     "clangd",
+      --     "--background-index",
+      --     "-j=8",
+      --     "--completion-style=detailed",
+      --     "--clang-tidy",
+      --     "--all-scopes-completion",
+      --   },
+      --   capabilities = caps,
+      --   on_attach = disable_format,
+      -- })
 
       lspconfig.csharp_ls.setup({ on_attach = disable_format })
 
@@ -1261,11 +1252,51 @@ return {
         :set("r", fzf.oldfiles, { desc = "Recent files" })
         :set("p", fzf.resume, { desc = "Resume last search" })
 
+      map:mode('t'):set('<C-r>', [['<C-\><C-N>"'.nr2char(getchar()).'pi']], { expr = true })
+
       map:set("z=", fzf.spell_suggest)
 
       fzf.register_ui_select()
 
       local actions = require("fzf-lua.actions")
+
+      local function arc_branch(opts)
+        local result = vim.system({'arc', 'branch', "--json"}, { text = true }):wait()
+        local data = vim.json.decode(result.stdout)
+        local branch_names = vim.iter(data):map(function(value)
+          return value['name']
+        end):totable()
+
+        vim.ui.select(branch_names, {prompt = 'Select branch: '}, function(choice)
+          if not choice then
+            return
+          end
+          vim.system({'arc', 'checkout', choice}, { text = true }):wait()
+        end)
+      end
+
+      local arc_commands = {
+        branch = arc_branch,
+      }
+
+      vim.api.nvim_create_user_command(
+        'Arc',
+        function(opts)
+          local args = vim.split(opts.args, ' ', {trimempty=true, plain=true})
+          local command = arc_commands[args[1]]
+          if not command then
+            vim.notify("Unknown command")
+            return
+          end
+          command()
+        end,
+        { 
+          nargs = '*',
+          complete = function(ArgLead, CmdLine, CursorPos)
+            return vim.tbl_keys(arc_commands)
+          end,
+        }
+      )
 
       fzf.setup({
         winopts = {
@@ -1326,10 +1357,10 @@ return {
           ["bg+"] = { "bg", "Visual" },
           ["hl+"] = { "bg", "IncSearch" },
           ["info"] = { "fg", "PreProc" },
-          ["prompt"] = { "fg", "Conditional" },
+          ["prompt"] = { "fg", "Keyword" },
           ["pointer"] = { "fg", "Exception" },
           ["marker"] = { "fg", "Keyword" },
-          ["spinner"] = { "fg", "Label" },
+          ["spinner"] = { "fg", "Conditional" },
           ["header"] = { "fg", "Comment" },
           ["gutter"] = { "bg", "Normal" },
         },
@@ -1643,6 +1674,10 @@ return {
     config = function()
       require("oil").setup({
         columns = {},
+        buf_options = {
+          buflisted = true,
+          bufhidden = "",
+        },
         win_options = {
           signcolumn = "yes",
           cursorcolumn = false,
