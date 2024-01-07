@@ -1406,6 +1406,9 @@ return {
     config = function()
       _G.utf8 = require("lua-utf8")
 
+      local string_find = string.find
+      _G.string_find = string_find
+
       string.find = function(s, pattern, init, plain)
         if init then
           local clean, _ = utf8.clean(string.sub(s, 0, init))
@@ -1421,10 +1424,13 @@ return {
           return nil
         end
 
-        start = utf8.offset(s, start)
-        finish = utf8.offset(s, finish)
+        local new_start = utf8.offset(s, start)
+        local new_finish = utf8.offset(s, finish)
+        if start ~= finish then
+          new_finish = utf8.offset(s, finish + 1) - 1
+        end
 
-        return start, finish
+        return new_start, new_finish
       end
     end,
   },
@@ -1483,8 +1489,11 @@ return {
       map:ft("markdown"):prefix("<leader>o"):set("o", vim.cmd.ObsidianOpen)
     end,
     opts = {
-      disable_frontmatter = false,
+      disable_frontmatter = true,
       open_app_foreground = true,
+      ui = {
+        enable = false,
+      },
       workspaces = {
         {
           name = "personal",
@@ -1497,7 +1506,7 @@ return {
       },
       daily_notes = {
         folder = "Ежедневник",
-        date_format = "%Y-%m-%d",
+        date_format = "%Y/%m/%d",
         alias_format = "%Y-%m-%d",
         template = "Ежедневник.md",
       },
