@@ -137,18 +137,18 @@ return {
       local caps = vim.lsp.protocol.make_client_capabilities()
       caps.offsetEncoding = { "utf-16" }
 
-      -- lspconfig.clangd.setup({
-      --   cmd = {
-      --     "clangd",
-      --     "--background-index",
-      --     "-j=8",
-      --     "--completion-style=detailed",
-      --     "--clang-tidy",
-      --     "--all-scopes-completion",
-      --   },
-      --   capabilities = caps,
-      --   on_attach = disable_format,
-      -- })
+      lspconfig.clangd.setup({
+        cmd = {
+          "clangd",
+          "--background-index",
+          "-j=8",
+          "--completion-style=detailed",
+          "--clang-tidy",
+          "--all-scopes-completion",
+        },
+        capabilities = caps,
+        on_attach = disable_format,
+      })
 
       lspconfig.csharp_ls.setup({ on_attach = disable_format })
 
@@ -237,7 +237,7 @@ return {
         },
         indent = {
           enable = true,
-          disable = { "python", "java", "yaml", "sql", "latex" },
+          disable = { "python", "java", "yaml", "sql", "latex", "markdown" },
         },
         autopairs = {
           enable = true,
@@ -1252,7 +1252,7 @@ return {
         :set("r", fzf.oldfiles, { desc = "Recent files" })
         :set("p", fzf.resume, { desc = "Resume last search" })
 
-      map:mode('t'):set('<C-r>', [['<C-\><C-N>"'.nr2char(getchar()).'pi']], { expr = true })
+      map:mode("t"):set("<C-r>", [['<C-\><C-N>"'.nr2char(getchar()).'pi']], { expr = true })
 
       map:set("z=", fzf.spell_suggest)
 
@@ -1261,17 +1261,20 @@ return {
       local actions = require("fzf-lua.actions")
 
       local function arc_branch(opts)
-        local result = vim.system({'arc', 'branch', "--json"}, { text = true }):wait()
+        local result = vim.system({ "arc", "branch", "--json" }, { text = true }):wait()
         local data = vim.json.decode(result.stdout)
-        local branch_names = vim.iter(data):map(function(value)
-          return value['name']
-        end):totable()
+        local branch_names = vim
+          .iter(data)
+          :map(function(value)
+            return value["name"]
+          end)
+          :totable()
 
-        vim.ui.select(branch_names, {prompt = 'Select branch: '}, function(choice)
+        vim.ui.select(branch_names, { prompt = "Select branch: " }, function(choice)
           if not choice then
             return
           end
-          vim.system({'arc', 'checkout', choice}, { text = true }):wait()
+          vim.system({ "arc", "checkout", choice }, { text = true }):wait()
         end)
       end
 
@@ -1279,24 +1282,20 @@ return {
         branch = arc_branch,
       }
 
-      vim.api.nvim_create_user_command(
-        'Arc',
-        function(opts)
-          local args = vim.split(opts.args, ' ', {trimempty=true, plain=true})
-          local command = arc_commands[args[1]]
-          if not command then
-            vim.notify("Unknown command")
-            return
-          end
-          command()
+      vim.api.nvim_create_user_command("Arc", function(opts)
+        local args = vim.split(opts.args, " ", { trimempty = true, plain = true })
+        local command = arc_commands[args[1]]
+        if not command then
+          vim.notify("Unknown command")
+          return
+        end
+        command()
+      end, {
+        nargs = "*",
+        complete = function(ArgLead, CmdLine, CursorPos)
+          return vim.tbl_keys(arc_commands)
         end,
-        { 
-          nargs = '*',
-          complete = function(ArgLead, CmdLine, CursorPos)
-            return vim.tbl_keys(arc_commands)
-          end,
-        }
-      )
+      })
 
       fzf.setup({
         winopts = {
@@ -1368,33 +1367,6 @@ return {
     end,
   },
   {
-    "ojroques/nvim-osc52",
-    config = function()
-      local osc = require("osc52")
-
-      osc.setup({
-        silent = true,
-      })
-
-      map
-        :prefix("<leader>")
-        :set("c", osc.copy_operator, { expr = true })
-        :set("cc", "<leader>c_", { remap = true })
-        :mode("v")
-        :set("c", require("osc52").copy_visual)
-
-      local function copy()
-        local event = vim.v.event
-        local regname = event.regname
-        if event.operator == "y" and (regname == "+" or regname == "") then
-          require("osc52").copy_register("+")
-        end
-      end
-
-      vim.api.nvim_create_autocmd("TextYankPost", { callback = copy })
-    end,
-  },
-  {
     "derekwyatt/vim-fswitch",
     config = function()
       map:prefix("<leader>f"):set("o", vim.cmd.FSHere)
@@ -1430,8 +1402,30 @@ return {
   {
     "starwing/luautf8",
     dependencies = "theHamsta/nvim_rocks",
+    priority = 10000,
     config = function()
       _G.utf8 = require("lua-utf8")
+
+      string.find = function(s, pattern, init, plain)
+        if init then
+          local clean, _ = utf8.clean(string.sub(s, 0, init))
+          local new_init = utf8.len(clean)
+          if utf8.offset(s, new_init) < init then
+            new_init = new_init + 1
+          end
+          init = new_init
+        end
+
+        local start, finish = utf8.find(s, pattern, init, plain)
+        if not start then
+          return nil
+        end
+
+        start = utf8.offset(s, start)
+        finish = utf8.offset(s, finish)
+
+        return start, finish
+      end
     end,
   },
   -- {

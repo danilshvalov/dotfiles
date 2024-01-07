@@ -201,6 +201,16 @@ vim.cmd.cabbrev("ц w")
 vim.cmd.cabbrev("й q")
 vim.cmd.cabbrev("цй wq")
 
-function _G.open_in_arcadia()
-  local path = vim.api.nvim_buf_get_name(0)
+if vim.env['SSH_TTY'] then
+  vim.g.clipboard = {
+    name = 'OSC 52',
+    copy = {
+      ['+'] = require('vim.ui.clipboard.osc52').copy('+'),
+      ['*'] = require('vim.ui.clipboard.osc52').copy('*'),
+    },
+    paste = {
+      ['+'] = require('vim.ui.clipboard.osc52').paste('+'),
+      ['*'] = require('vim.ui.clipboard.osc52').paste('*'),
+    },
+  }
 end
