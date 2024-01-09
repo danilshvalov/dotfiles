@@ -125,6 +125,10 @@ end
 local function insert_item()
   local ts_utils = require("nvim-treesitter.ts_utils")
 
+  if vim.bo.filetype == "markdown" then
+    return vim.cmd.MkdnNewListItem()
+  end
+
   if vim.bo.filetype ~= "tex" then
     return
   end
@@ -191,7 +195,7 @@ function _G.make_comment(str)
   return vim.bo.commentstring:gsub("%%s", str)
 end
 
-map:ft("tex"):mode("i"):set("<A-CR>", insert_item)
+map:ft({ "tex", "markdown" }):mode("i"):set("<A-CR>", insert_item)
 
 kit.call_at_ft({ "markdown", "org", "tex" }, function()
   vim.bo.textwidth = 80
@@ -201,16 +205,16 @@ vim.cmd.cabbrev("ц w")
 vim.cmd.cabbrev("й q")
 vim.cmd.cabbrev("цй wq")
 
-if vim.env['SSH_TTY'] then
+if vim.env["SSH_TTY"] then
   vim.g.clipboard = {
-    name = 'OSC 52',
+    name = "OSC 52",
     copy = {
-      ['+'] = require('vim.ui.clipboard.osc52').copy('+'),
-      ['*'] = require('vim.ui.clipboard.osc52').copy('*'),
+      ["+"] = require("vim.ui.clipboard.osc52").copy("+"),
+      ["*"] = require("vim.ui.clipboard.osc52").copy("*"),
     },
     paste = {
-      ['+'] = require('vim.ui.clipboard.osc52').paste('+'),
-      ['*'] = require('vim.ui.clipboard.osc52').paste('*'),
+      ["+"] = require("vim.ui.clipboard.osc52").paste("+"),
+      ["*"] = require("vim.ui.clipboard.osc52").paste("*"),
     },
   }
 end

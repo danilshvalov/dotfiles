@@ -34,6 +34,8 @@ return {
     keymap = function(map)
       map:set("<leader>l", vim.cmd.Lazy)
 
+      map:set("х", "[")
+
       map:set("Y", "y$")
       map:mode({ "i", "n", "t" }):set("<A-j>", vim.cmd.bnext):set("<A-k>", vim.cmd.bprev)
       map:set("<C-b>", "<Cmd>b#<CR>")
@@ -237,7 +239,7 @@ return {
         },
         indent = {
           enable = true,
-          disable = { "python", "java", "yaml", "sql", "latex", "markdown" },
+          disable = { "python", "java", "yaml", "sql", "latex" },
         },
         autopairs = {
           enable = true,
@@ -1249,7 +1251,10 @@ return {
         :prefix("<leader>f", "+find")
         :set("f", fzf.files, { desc = "Find files" })
         :set("g", fzf.live_grep, { desc = "Grep files" })
-        :set("r", fzf.oldfiles, { desc = "Recent files" })
+        :set("r", function()
+          vim.cmd("rshada!")
+          fzf.oldfiles()
+        end, { desc = "Recent files" })
         :set("p", fzf.resume, { desc = "Resume last search" })
 
       map:mode("t"):set("<C-r>", [['<C-\><C-N>"'.nr2char(getchar()).'pi']], { expr = true })
@@ -1297,10 +1302,15 @@ return {
         end,
       })
 
+      vim.api.nvim_create_autocmd({ "BufDelete", "BufWipeout" }, {
+        pattern = "*",
+        command = "wshada",
+      })
+
       fzf.setup({
         winopts = {
           preview = {
-            hidden = "hidden",
+            default = false,
           },
         },
         winopts_fn = function()
@@ -1312,7 +1322,6 @@ return {
           }
         end,
         oldfiles = {
-          include_current_session = true,
           fzf_opts = {
             ["--history"] = vim.fn.stdpath("data") .. "/fzf-lua-oldfiles-history",
           },
@@ -1388,6 +1397,9 @@ return {
         to_do = {
           symbols = { " ", "-", "x" },
         },
+        mappings = {
+          MkdnTablePrevRow = false,
+        },
       })
     end,
   },
@@ -1434,15 +1446,6 @@ return {
       end
     end,
   },
-  -- {
-  --   "danilshvalov/text-case.nvim",
-  --   branch = "feat-unicode",
-  --   config = function()
-  --     require("textcase").setup({
-  --       prefix = "cr",
-  --     })
-  --   end,
-  -- },
   {
     "chomosuke/term-edit.nvim",
     config = function()
@@ -1488,47 +1491,55 @@ return {
     keymap = function(map)
       map:ft("markdown"):prefix("<leader>o"):set("o", vim.cmd.ObsidianOpen)
     end,
-    opts = {
-      disable_frontmatter = true,
-      open_app_foreground = true,
-      ui = {
-        enable = false,
-      },
-      workspaces = {
-        {
-          name = "personal",
-          path = "/Users/danilshvalov/Library/Mobile Documents/iCloud~md~obsidian/Documents/notes",
+    config = function()
+      require("obsidian.search").Patterns = {
+        TagChars = "[%w_/-]*",
+        Highlight = "==[^=]+==",
+        WikiWithAlias = "%[%[[^][%|]+%|[^%]]+%]%]",
+        Wiki = "%[%[[^][%|]+%]%]",
+        Markdown = "%[[^][]+%]%([^%)]+%)",
+        NakedUrl = "https?://[%w._#/=&?%%-]+[%w]",
+        Tag = "#[%w_/-]+",
+      }
+
+      require("obsidian").setup({
+        disable_frontmatter = true,
+        open_app_foreground = true,
+        workspaces = {
+          {
+            name = "personal",
+            path = "/Users/danilshvalov/Library/Mobile Documents/iCloud~md~obsidian/Documents/notes",
+          },
         },
-      },
-      notes_subdir = "Заметки/неотсортированное",
-      attachments = {
-        img_folder = "вложения",
-      },
-      daily_notes = {
-        folder = "Ежедневник",
-        date_format = "%Y/%m/%d",
-        alias_format = "%Y-%m-%d",
-        template = "Ежедневник.md",
-      },
-      templates = {
-        subdir = "Шаблоны",
-        date_format = "%Y-%m-%d",
-        time_format = "%H:%M",
-        substitutions = {},
-      },
-      note_id_func = function(title)
-        local suffix = ""
-        if title ~= nil then
-          suffix = utf8.lower(utf8.gsub(title:gsub(" ", "-"), "[^%w%d-]", ""))
-        else
-          for _ = 1, 4 do
-            suffix = suffix .. string.char(math.random(65, 90))
+        notes_subdir = "Заметки/неотсортированное",
+        attachments = {
+          img_folder = "вложения",
+        },
+        daily_notes = {
+          folder = "Ежедневник",
+          date_format = "%Y/%m/%d",
+          alias_format = "%Y-%m-%d",
+          template = "Ежедневник.md",
+        },
+        templates = {
+          subdir = "Шаблоны",
+          date_format = "%Y-%m-%d",
+          time_format = "%H:%M",
+          substitutions = {},
+        },
+        note_id_func = function(title)
+          local suffix = ""
+          if title ~= nil then
+            suffix = utf8.lower(utf8.gsub(title:gsub(" ", "-"), "[^%w%d-]", ""))
+          else
+            for _ = 1, 4 do
+              suffix = suffix .. string.char(math.random(65, 90))
+            end
           end
-        end
-        return tostring(os.time()) .. "-" .. suffix
-      end,
-      finder = "fzf-lua",
-    },
+          return tostring(os.time()) .. "-" .. suffix
+        end,
+      })
+    end,
   },
   -- {
   --   "nvim-telescope/telescope.nvim",
