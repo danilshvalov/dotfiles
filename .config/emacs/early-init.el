@@ -5,7 +5,7 @@
       ;; package-native-compile    t
       ) ; native compile packages
 
-(scroll-bar-mode -1)
+; (scroll-bar-mode -1)
 (tooltip-mode -1)
 (blink-cursor-mode -1)
 

@@ -54,13 +54,18 @@
     (file-name-as-directory (or (getenv "PWD") "~")))
 
   (defvar my-directories nil)
+  (defvar my-directory nil)
 
   (defun my-get-current-directory ()
-    (or (assoc-default (my-tab-name-current) my-directories)
-        (or (getenv "PWD") "~")))
+    (or my-directory (or (getenv "PWD") "~"))
+    ;; (or (assoc-default (my-tab-name-current) my-directories)
+    ;;     (or (getenv "PWD") "~"))
+    )
 
   (defun my-set-current-directory (directory)
-    (add-to-list 'my-directories (cons (my-tab-name-current) directory)))
+    (setq my-directory directory)
+    ;; (add-to-list 'my-directories (cons (my-tab-name-current) directory))
+    )
 
   ;; remove image resize delay
   (advice-add 'image--delayed-change-size :override 'image--change-size)
@@ -1576,7 +1581,9 @@ Note that these rules can't contain anchored rules themselves."
   (tab-bar-new-tab-to 'rightmost)
   :preface
   (defun my-tab-name-current ()
-    (cdr (assoc 'name (cdr (tab-bar--current-tab-find nil nil)))))
+    1
+    ;; (cdr (assoc 'name (cdr (tab-bar--current-tab-find nil nil))))
+    )
 
   :config
   (tab-bar-rename-tab (number-to-string (random)))
@@ -1724,3 +1731,6 @@ Note that these rules can't contain anchored rules themselves."
   :demand t
   :config
   (global-clipetty-mode))
+
+(define-advice server-eval-and-print (:filter-args (args) no-print)
+  (list (car args) nil))

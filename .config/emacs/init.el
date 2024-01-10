@@ -47,6 +47,14 @@
 
 (add-to-list 'load-path (file-name-concat user-emacs-directory "modules"))
 
+(defun +elpaca-unload-seq (e) "Unload seq before continuing the elpaca build, then continue to build the recipe E."
+  (and (featurep 'seq) (unload-feature 'seq t))
+  (elpaca--continue-build e))
+(elpaca `(seq :build ,(append (butlast (if (file-exists-p (expand-file-name "seq" elpaca-builds-directory))
+                                          elpaca--pre-built-steps
+                                        elpaca-build-steps))
+                             (list '+elpaca-unload-seq 'elpaca--activate-package))))
+
 (load "~/.config/emacs/config.el")
 
 (setq custom-file (make-temp-file ""))
