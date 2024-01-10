@@ -45,9 +45,9 @@ return {
       map:set("<C-g>", "2<C-g>")
 
       map
-        :mode("nvo")
-        :set("H", "^", { desc = "Start of line" })
-        :set("L", "$", { desc = "End of line" })
+          :mode("nvo")
+          :set("H", "^", { desc = "Start of line" })
+          :set("L", "$", { desc = "End of line" })
 
       map:prefix("<leader>t", "+toggle"):set("w", function()
         if not vim.opt_local.formatoptions:get().a then
@@ -58,25 +58,25 @@ return {
       end, { desc = "Toggle wrap" })
 
       map
-        :new({ mode = "nv", expr = true })
-        :set("k", "(v:count? 'k' : 'gk')")
-        :set("j", "(v:count? 'j' : 'gj')")
+          :new({ mode = "nv", expr = true })
+          :set("k", "(v:count? 'k' : 'gk')")
+          :set("j", "(v:count? 'j' : 'gj')")
 
       map
-        :prefix("<leader>o", "+open")
-        :set("f", kit.wrap(vim.fn.system, "open ."), { desc = "Open in finder" })
+          :prefix("<leader>o", "+open")
+          :set("f", kit.wrap(vim.fn.system, "open ."), { desc = "Open in finder" })
 
       map
-        :prefix("<leader>d", "+dir")
-        :set("c", function()
-          local path, _ = vim.fn.expand("%:p:h"):gsub("oil://", "")
-          vim.cmd.cd(path)
-          vim.notify("Directory: " .. vim.fn.expand("%:p:~:h"):gsub("oil://", ""))
-        end, { desc = "Set cwd to current file directory" })
-        :set("y", function()
-          vim.fn.setreg("+", vim.fn.expand("%:p:h"))
-          vim.notify("Copied directory: " .. vim.fn.expand("%:p:~:h"))
-        end, { desc = "Yank cwd" })
+          :prefix("<leader>d", "+dir")
+          :set("c", function()
+            local path, _ = vim.fn.expand("%:p:h"):gsub("oil://", "")
+            vim.cmd.cd(path)
+            vim.notify("Directory: " .. vim.fn.expand("%:p:~:h"):gsub("oil://", ""))
+          end, { desc = "Set cwd to current file directory" })
+          :set("y", function()
+            vim.fn.setreg("+", vim.fn.expand("%:p:h"))
+            vim.notify("Copied directory: " .. vim.fn.expand("%:p:~:h"))
+          end, { desc = "Yank cwd" })
 
       map:set("<Esc>", vim.cmd.noh)
     end,
@@ -254,7 +254,7 @@ return {
     },
     keymap = function(map)
       map:set("<leader>cf", function()
-        vim.lsp.buf.format({ async = false })
+        vim.lsp.buf.format({ async = false, timeout_ms = 10000 })
       end)
     end,
     config = function()
@@ -352,6 +352,7 @@ return {
         modified = "**",
         readwrite = "RW",
         readonly = "RO",
+        terminal = "TT",
       }
 
       local function modified_color()
@@ -365,6 +366,9 @@ return {
         lualine_a = {
           {
             function()
+              if vim.bo.filetype == "toggleterm" then
+                return symbols.terminal
+              end
               if vim.bo.modified then
                 return symbols.modified
               elseif vim.bo.modifiable == false or vim.bo.readonly == true then
@@ -378,7 +382,17 @@ return {
         },
         lualine_b = {},
         lualine_c = {
-          { "filename", file_status = false, path = 0 },
+          {
+            "filename",
+            file_status = false,
+            path = 0,
+            fmt = function(str)
+              if vim.bo.filetype == "toggleterm" then
+                return ""
+              end
+              return str
+            end,
+          },
           "diagnostics",
         },
         lualine_x = {},
@@ -405,12 +419,7 @@ return {
           section_separators = "",
         },
         sections = line_sections,
-        tabline = {
-          lualine_a = { "tabs" },
-        },
       })
-
-      vim.o.showtabline = 1
     end,
   },
   {
@@ -649,83 +658,31 @@ return {
       end
 
       map
-        :prefix("<leader>x")
-        :set("q", open("quickfix"))
-        :set("x", open("workspace_diagnostics"), { desc = "Show code errors" })
+          :prefix("<leader>x")
+          :set("q", open("quickfix"))
+          :set("x", open("workspace_diagnostics"), { desc = "Show code errors" })
 
       map
-        :new({ prefix = "<leader>c" })
-        :set("r", vim.lsp.buf.rename)
-        :set("h", vim.diagnostic.open_float)
-        :set("a", vim.lsp.buf.code_action)
+          :new({ prefix = "<leader>c" })
+          :set("r", vim.lsp.buf.rename)
+          :set("h", vim.diagnostic.open_float)
+          :set("a", vim.lsp.buf.code_action)
 
       map
-        :prefix("g", "+goto")
-        :set("d", open("lsp_definitions"), { desc = "Go definitions" })
-        :set("D", vim.lsp.buf.declaration, { desc = "Go declaration" })
-        :set("r", open("lsp_references"), { desc = "Go references" })
-        :set("i", open("lsp_implementations"), { desc = "Go implementations" })
-        :set("n", vim.diagnostic.goto_next, { desc = "Go next error" })
-        :set("p", vim.diagnostic.goto_prev, { desc = "Go prev error" })
+          :prefix("g", "+goto")
+          :set("d", open("lsp_definitions"), { desc = "Go definitions" })
+          :set("D", vim.lsp.buf.declaration, { desc = "Go declaration" })
+          :set("r", open("lsp_references"), { desc = "Go references" })
+          :set("i", open("lsp_implementations"), { desc = "Go implementations" })
+          :set("n", vim.diagnostic.goto_next, { desc = "Go next error" })
+          :set("p", vim.diagnostic.goto_prev, { desc = "Go prev error" })
 
       require("trouble").setup()
     end,
   },
-  {
-    "lewis6991/gitsigns.nvim",
-    dependencies = "nvim-lua/plenary.nvim",
-    config = function()
-      local gs = require("gitsigns")
-      gs.setup({
-        signs = {
-          add = {
-            text = "┃",
-          },
-          change = {
-            text = "┃",
-          },
-          delete = {
-            text = "┃",
-          },
-          topdelete = {
-            text = "┃",
-          },
-          changedelete = {
-            text = "┃",
-          },
-          untracked = {
-            text = "┃",
-          },
-        },
-      })
-
-      map
-        :new({ prefix = "<leader>g" })
-        :set("p", gs.prev_hunk, { desc = "Previous hunk" })
-        :set("n", gs.next_hunk, { desc = "Next hunk" })
-        :set("r", gs.reset_hunk, { desc = "Reset hunk" })
-        :set("s", gs.stage_hunk, { desc = "Stage hunk" })
-        :set("h", gs.preview_hunk_inline, { desc = "Preview hunk" })
-    end,
-  },
-  {
-    "akinsho/git-conflict.nvim",
-    config = function()
-      require("git-conflict").setup()
-    end,
-  },
-  {
-    "folke/neodev.nvim",
-    config = function()
-      require("neodev").setup()
-    end,
-  },
-  {
-    "windwp/nvim-ts-autotag",
-    config = function()
-      require("nvim-ts-autotag").setup()
-    end,
-  },
+  { "akinsho/git-conflict.nvim" },
+  { "folke/neodev.nvim" },
+  { "windwp/nvim-ts-autotag" },
   {
     "aklt/plantuml-syntax",
     ft = "plantuml",
@@ -753,55 +710,13 @@ return {
   },
   {
     "uga-rosa/ccc.nvim",
-    config = function()
-      local ccc = require("ccc")
-
-      ccc.setup({
-        highlighter = {
-          auto_enable = true,
-          lsp = true,
-          excludes = { "git" },
-        },
-      })
-    end,
-  },
-  {
-    "danymat/neogen",
-    dependencies = "nvim-treesitter/nvim-treesitter",
-    config = function()
-      local neogen = kit.require_on_exported_call("neogen")
-
-      map
-        :prefix("<leader>c", "+code")
-        :set("g", neogen.generate, { desc = "Generate documentation" })
-
-      local i = require("neogen.types.template").item
-
-      require("neogen").setup({
-        languages = {
-          cpp = {
-            template = {
-              annotation_convention = "custom",
-              custom = {
-                { nil, "/// @file", { no_results = true, type = { "file" } } },
-                {
-                  nil,
-                  "/// @brief $1",
-                  { no_results = true, type = { "func", "file", "class" } },
-                },
-                { nil, "", { no_results = true, type = { "file" } } },
-                { i.ClassName, "/// @class %s", { type = { "class" } } },
-                { i.Type, "/// @typedef %s", { type = { "type" } } },
-                { nil, "/// @brief $1", { type = { "func", "class", "type" } } },
-                { i.Tparam, "/// @tparam %s $1" },
-                { i.Parameter, "/// @param %s $1" },
-                { i.Return, "/// @return $1" },
-              },
-            },
-          },
-        },
-      })
-    end,
+    opts = {
+      highlighter = {
+        auto_enable = true,
+        lsp = true,
+        excludes = { "git" },
+      },
+    },
   },
   {
     "AckslD/nvim-FeMaco.lua",
@@ -835,13 +750,13 @@ return {
       local toggleterm = kit.require_on_exported_call("toggleterm")
 
       map
-        :prefix("<leader>t", "+toggle")
-        :set("t", function()
-          toggleterm.toggle(vim.v.count, nil, nil, "horizontal")
-        end)
-        :set("T", function()
-          toggleterm.toggle(vim.v.count, nil, nil, "tab")
-        end)
+          :prefix("<leader>t", "+toggle")
+          :set("t", function()
+            toggleterm.toggle(vim.v.count, nil, nil, "horizontal")
+          end)
+          :set("T", function()
+            toggleterm.toggle(vim.v.count, nil, nil, "tab")
+          end)
 
       map:ft("toggleterm"):mode("t"):set("<Esc><Esc>", "<C-\\><C-n>")
     end,
@@ -850,7 +765,6 @@ return {
       local Terminal = require("toggleterm.terminal").Terminal
 
       toggleterm.setup({
-        autochdir = true,
         shade_terminals = false,
         persist_mode = false,
         persist_size = false,
@@ -873,7 +787,7 @@ return {
     config = function()
       local get_input = function(prompt, default)
         local ok, result =
-          pcall(vim.fn.input, { prompt = prompt, default = default, cancelreturn = vim.NIL })
+            pcall(vim.fn.input, { prompt = prompt, default = default, cancelreturn = vim.NIL })
         if ok and result ~= vim.NIL then
           return result
         end
@@ -956,195 +870,6 @@ return {
     end,
   },
   {
-    "nvim-orgmode/orgmode",
-    dependencies = {
-      "danilshvalov/org-modern.nvim",
-      "nvim-treesitter/nvim-treesitter",
-    },
-    keymap = function(map)
-      local function find_org_files()
-        local config = require("orgmode.config")
-        local paths = config.org_agenda_files
-        if type(paths) == "string" then
-          paths = { paths }
-        end
-
-        local items = {}
-        for _, path in ipairs(paths) do
-          local files = vim.split(vim.fn.expand(path), "\n")
-          for _, file in ipairs(files) do
-            if not file:match("%.org_archive$") then
-              table.insert(items, file)
-            end
-          end
-        end
-
-        vim.ui.select(items, { prompt = "Select: " }, function(result)
-          if result then
-            vim.cmd.edit(result)
-          end
-        end)
-      end
-      map:prefix("<leader>o"):set("f", find_org_files)
-
-      map:ft("org"):mode("i"):set("<A-CR>", function()
-        local line = vim.api.nvim_get_current_line()
-        local indent_size = line:match("^%s*"):len()
-        local pos = vim.api.nvim_win_get_cursor(0)
-        vim.api.nvim_buf_set_lines(
-          0,
-          pos[1],
-          pos[1],
-          true,
-          { string.rep(" ", indent_size) .. "- " }
-        )
-        vim.api.nvim_win_set_cursor(0, { pos[1] + 1, pos[2] })
-      end)
-    end,
-    config = function()
-      local VirtualIndent = require("virtual-indent")
-
-      local Menu = require("org-modern.menu")
-
-      local ns_id = vim.api.nvim_create_namespace("orgmode.ui.indent")
-      local Headline = require("orgmode.treesitter.headline")
-
-      local function get_indent_size(line)
-        local headline = Headline.from_cursor({ line + 1, 1 })
-
-        if headline then
-          local level = headline:level()
-          local headline_line, _, _ = headline.headline:start()
-
-          if headline_line == line then
-            return level - 1
-          else
-            return level * 2
-          end
-        end
-
-        return 0
-      end
-
-      local function delete_old_extmarks(buffer, start_line, end_line)
-        local old_extmarks = vim.api.nvim_buf_get_extmarks(
-          buffer,
-          ns_id,
-          { start_line, 0 },
-          { end_line, 0 },
-          { type = "virt_text" }
-        )
-        for _, ext in ipairs(old_extmarks) do
-          vim.api.nvim_buf_del_extmark(buffer, ns_id, ext[1])
-        end
-      end
-
-      local org_dir = vim.fs.normalize("~/org")
-
-      local function itmo_capture(headline, file)
-        return {
-          description = headline,
-          template = "** TODO %?",
-          target = string.format("~/org/itmo/%s.org", file),
-          headline = headline,
-          properties = {
-            empty_lines = 1,
-          },
-        }
-      end
-
-      require("orgmode").setup_ts_grammar()
-      require("orgmode").setup({
-        org_todo_keywords = { "TODO", "WAITING", "|", "DONE", "DELEGATED" },
-        org_agenda_files = vim.fs.joinpath(org_dir, "**", "*"),
-        org_indent_mode = "noindent",
-        org_startup_folded = "showeverything",
-        org_hide_emphasis_markers = true,
-        org_log_done = false,
-        org_agenda_skip_scheduled_if_done = true,
-        org_agenda_skip_deadline_if_done = true,
-        org_blank_before_new_entry = { heading = false, plain_list_item = false },
-        org_capture_templates = {
-          i = {
-            description = "ИТМО",
-            subtemplates = {
-              a = itmo_capture("Английский язык", "english"),
-              w = itmo_capture("Web-программирование", "web-programming"),
-              n = itmo_capture("Компьютерные сети", "computer-networks"),
-              s = itmo_capture("Навыки обучения", "learning-skills"),
-              t = itmo_capture("Теория электрической связи", "tec"),
-            },
-          },
-          t = {
-            description = "Inbox",
-            template = { "* TODO %?", "%U" },
-            target = "~/org/inbox.org",
-            properties = {
-              empty_lines = 1,
-            },
-          },
-          T = {
-            description = "Tickler",
-            template = "* TODO %?",
-            target = "~/org/tickler.org",
-            properties = {
-              empty_lines = 1,
-            },
-          },
-        },
-        journal = {
-          current_journal = "default",
-          journals = {
-            default = {
-              directory = "~/org/journal/",
-              file_format = "%Y.org",
-              date = {
-                prefix = "\n* ",
-                format = "%A, %d.%m.%Y\n",
-              },
-              time = {
-                prefix = "** ",
-                format = "%H:%M ",
-              },
-            },
-            bicycle = {
-              directory = "~/org/",
-              file_format = "bicycle.org",
-              date = {
-                prefix = "* ",
-                format = "%A, %d.%m.%Y\n",
-              },
-            },
-          },
-        },
-        ui = {
-          menu = {
-            handler = function(data)
-              Menu:new():open(data)
-            end,
-          },
-        },
-      })
-
-      map:prefix("<leader>o"):set("i", function()
-        vim.cmd.edit(vim.fs.joinpath(org_dir, "index.org"))
-      end)
-
-      kit.autocmd("FileType", {
-        pattern = "*.org",
-        callback = function()
-          VirtualIndent:new({}):attach()
-        end,
-      })
-
-      -- local Journal = require("orgmode.journal")
-      -- FIXME:
-      local opts = require("orgmode.config").opts
-      local Journal = require("journal")
-      map:prefix("<Leader>o"):set("j", Journal.menu)
-    end,
-  },
-  {
     "folke/tokyonight.nvim",
     priority = 1000,
     config = function()
@@ -1212,50 +937,20 @@ return {
     end,
   },
   {
-    "danilshvalov/skeletor.nvim",
-    cmd = "Skeletor",
-    config = function()
-      require("skeletor").setup()
-    end,
-  },
-  {
-    "aserowy/tmux.nvim",
-    config = function()
-      local tmux = require("tmux")
-
-      tmux.setup({
-        copy_sync = {
-          redirect_to_clipboard = true,
-        },
-        resize = {
-          enable_default_keybindings = false,
-        },
-      })
-
-      map
-        :set("<C-a>h", tmux.move_left)
-        :set("<C-a>j", tmux.move_bottom)
-        :set("<C-a>k", tmux.move_top)
-        :set("<C-a>l", tmux.move_right)
-    end,
-  },
-  {
     "ibhagwan/fzf-lua",
     dependencies = "nvim-tree/nvim-web-devicons",
     config = function()
       local fzf = kit.require_on_exported_call("fzf-lua")
+      fzf.oldfiles = require("plugins.fzf-lua.oldfiles").oldfiles
 
       map:mode("t"):ft("fzf"):set("<Esc>", vim.cmd.quit)
 
       map
-        :prefix("<leader>f", "+find")
-        :set("f", fzf.files, { desc = "Find files" })
-        :set("g", fzf.live_grep, { desc = "Grep files" })
-        :set("r", function()
-          vim.cmd("rshada!")
-          fzf.oldfiles()
-        end, { desc = "Recent files" })
-        :set("p", fzf.resume, { desc = "Resume last search" })
+          :prefix("<leader>f", "+find")
+          :set("f", fzf.files, { desc = "Find files" })
+          :set("g", fzf.live_grep, { desc = "Grep files" })
+          :set("r", fzf.oldfiles, { desc = "Recent files" })
+          :set("p", fzf.resume, { desc = "Resume last search" })
 
       map:mode("t"):set("<C-r>", [['<C-\><C-N>"'.nr2char(getchar()).'pi']], { expr = true })
 
@@ -1265,15 +960,15 @@ return {
 
       local actions = require("fzf-lua.actions")
 
-      local function arc_branch(opts)
+      local function arc_branch()
         local result = vim.system({ "arc", "branch", "--json" }, { text = true }):wait()
         local data = vim.json.decode(result.stdout)
         local branch_names = vim
-          .iter(data)
-          :map(function(value)
-            return value["name"]
-          end)
-          :totable()
+            .iter(data)
+            :map(function(value)
+              return value["name"]
+            end)
+            :totable()
 
         vim.ui.select(branch_names, { prompt = "Select branch: " }, function(choice)
           if not choice then
@@ -1297,7 +992,7 @@ return {
         command()
       end, {
         nargs = "*",
-        complete = function(ArgLead, CmdLine, CursorPos)
+        complete = function()
           return vim.tbl_keys(arc_commands)
         end,
       })
@@ -1327,7 +1022,8 @@ return {
           },
         },
         files = {
-          fd_opts = "--color=never --type f --hidden --follow --exclude .git --exclude .obsidian --exclude build --exclude .DS_Store --exclude Вложения",
+          fd_opts =
+          "--color=never --type f --hidden --follow --exclude .git --exclude .obsidian --exclude build --exclude .DS_Store --exclude Вложения",
           fzf_opts = {
             ["--history"] = vim.fn.stdpath("data") .. "/fzf-lua-files-history",
           },
@@ -1377,9 +1073,10 @@ return {
   },
   {
     "derekwyatt/vim-fswitch",
-    config = function()
+    keymap = function(map)
       map:prefix("<leader>f"):set("o", vim.cmd.FSHere)
-
+    end,
+    config = function()
       kit.autocmd("BufEnter", {
         pattern = { "*.h", "*.hpp" },
         callback = function()
@@ -1418,22 +1115,30 @@ return {
     config = function()
       _G.utf8 = require("lua-utf8")
 
-      local string_find = string.find
-      _G.string_find = string_find
+      local function find_char_pos(s, init)
+        if not init then
+          return
+        end
+
+        if init < 0 then
+          init = string.len(s) + init + 1
+        end
+
+        local clean, _ = utf8.clean(string.sub(s, 0, init))
+        local new_init = utf8.len(clean)
+        if utf8.offset(s, new_init) < init then
+          new_init = new_init + 1
+        end
+
+        return new_init
+      end
 
       string.find = function(s, pattern, init, plain)
-        if init then
-          local clean, _ = utf8.clean(string.sub(s, 0, init))
-          local new_init = utf8.len(clean)
-          if utf8.offset(s, new_init) < init then
-            new_init = new_init + 1
-          end
-          init = new_init
-        end
+        init = find_char_pos(s, init)
 
         local start, finish = utf8.find(s, pattern, init, plain)
         if not start then
-          return nil
+          return
         end
 
         local new_start = utf8.offset(s, start)
@@ -1444,6 +1149,55 @@ return {
 
         return new_start, new_finish
       end
+
+      local string_match = string.match
+
+      -- string.match = function(s, pattern, init)
+      --   if not string_match(s, "%G", init) then
+      --     return string_match(s, pattern, init)
+      --   end
+
+      --   local result = { utf8.match(s, pattern, find_char_pos(s, init)) }
+
+      --   for i, capture in ipairs(result) do
+      --     if type(capture) == "number" then
+      --       result[i] = utf8.offset(s, capture)
+      --     end
+      --   end
+
+      --   return unpack(result)
+      -- end
+
+      -- local string_gmatch = string.gmatch
+
+      -- string.gmatch = function(s, pattern)
+      --   if not string_match(s, "%G", init) then
+      --     return string_gmatch(s, pattern, init)
+      --   end
+
+      --   local iterator = utf8.gmatch(s, pattern)
+      --   return function()
+      --     local result = { iterator() }
+
+      --     for i, capture in ipairs(result) do
+      --       if type(capture) == "number" then
+      --         result[i] = utf8.offset(s, capture)
+      --       end
+      --     end
+
+      --     return unpack(result)
+      --   end
+      -- end
+
+      -- string.sub = function(s, i, j)
+      --   i = find_char_pos(s, i)
+      --   j = find_char_pos(s, j)
+      --   return utf8.sub(s, i, j)
+      -- end
+
+      string.gsub = utf8.gsub
+      string.lower = utf8.lower
+      string.upper = utf8.upper
     end,
   },
   {
@@ -1536,7 +1290,7 @@ return {
               suffix = suffix .. string.char(math.random(65, 90))
             end
           end
-          return tostring(os.time()) .. "-" .. suffix
+          return suffix
         end,
       })
     end,
@@ -1634,6 +1388,7 @@ return {
   -- },
   {
     "lervag/vimtex",
+    ft = "tex",
     config = function()
       vim.g.vimtex_syntax_enabled = 0
       vim.g.vimtex_syntax_conceal_disable = 1
