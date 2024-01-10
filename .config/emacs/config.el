@@ -32,7 +32,6 @@
   (scroll-conservatively 101)
   (scroll-preserve-screen-position t)
   (ring-bell-function 'ignore)
-  (display-line-numbers-type 'relative)
   (fill-column 80)
   (use-short-answers t)
   (ns-right-option-modifier nil)
@@ -49,7 +48,6 @@
   (warning-minimum-level :emergency)
   :hook
   (before-save . delete-trailing-whitespace)
-  ((prog-mode text-mode conf-mode LaTeX-mode) . display-line-numbers-mode)
   ((prog-mode text-mode) . display-fill-column-indicator-mode)
   :preface
   (defvar my-default-directory
@@ -719,10 +717,10 @@ DIR must include a .project file to be considered a project."
      "\\`\\*Eglot .*\\*\\'"))
   (consult-ripgrep-args
    "rg --null --line-buffered --color=never --max-columns=1000 --path-separator / --smart-case --no-heading --with-filename --line-number --search-zip")
-  (consult-async-min-input 0)
-  (consult-async-input-throttle 0.01)
-  (consult-async-input-debounce 0.01)
-  (consult-async-refresh-delay 0.01)
+  ;; (consult-async-min-input 0)
+  ;; (consult-async-input-throttle 0.01)
+  ;; (consult-async-input-debounce 0.01)
+  ;; (consult-async-refresh-delay 0.01)
   :general
   (nvmap
     :keymaps 'override
@@ -731,7 +729,7 @@ DIR must include a .project file to be considered a project."
     "r" '+consult-recent-file
     "b" 'consult-buffer
     "f" 'affe-find
-    "g" 'consult-ripgrep
+    "g" 'affe-grep
     "o" 'ff-find-other-file
     "e" 'consult-flymake
     "." (lambda ()
@@ -776,6 +774,7 @@ DIR must include a .project file to be considered a project."
    consult-find
    consult-ripgrep
    consult-buffer
+   affe-grep
    :preview-key nil))
 
 (use-package affe
@@ -941,6 +940,9 @@ Quit if no candidate is selected."
   :config
   (evil-mode)
 
+  (add-hook 'evil-insert-state-entry-hook (lambda () (send-string-to-terminal "\033[5 q")))
+  (add-hook 'evil-insert-state-exit-hook  (lambda () (send-string-to-terminal "\033[2 q")))
+
   (evil-define-operator evil-fill (beg end)
     "Fill text."
     :move-point nil
@@ -1100,6 +1102,8 @@ Quit if no candidate is selected."
 
   :config
   (setq vterm-timer-delay 0.01)
+
+  (add-hook 'vterm-mode-hook (lambda () (setq-local evil-insert-state-cursor '(box))))
 
   (add-to-list
    'display-buffer-alist
@@ -1691,12 +1695,12 @@ Quit if no candidate is selected."
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
 
-(use-package evil-terminal-cursor-changer
-  :after evil
-  :custom (etcc-term-type-override 'xterm)
-  :unless (display-graphic-p)
-  :config
-  (evil-terminal-cursor-changer-activate))
+;; (use-package evil-terminal-cursor-changer
+;;   :after evil
+;;   :custom (etcc-term-type-override 'xterm)
+;;   :unless (display-graphic-p)
+;;   :config
+;;   (evil-terminal-cursor-changer-activate))
 
 (use-package image-mode
   :elpaca nil
@@ -1972,6 +1976,7 @@ Note that these rules can't contain anchored rules themselves."
 (use-builtin tramp
   :config
   (setopt
+   explicit-shell-file-name "/bin/zsh"
    tramp-default-remote-shell "/bin/zsh"
    tramp-encoding-shell "/bin/zsh"
    tramp-verbose 0))
@@ -2466,13 +2471,15 @@ Note that these rules can't contain anchored rules themselves."
   :custom
   (web-mode-enable-auto-expanding t))
 
-(use-builtin indent
-  :general
-  (imap "<backtab>" "C-d")
+(imap "<backtab>" "C-d")
+(advice-add 'indent-for-tab-command
+            :around
+            (lambda (fun &rest args)
+              (if (eq evil-state 'insert)
+                  (tab-to-tab-stop)
+                (apply fun args))))
+
+(use-package obsidian
   :config
-  (advice-add 'indent-for-tab-command
-              :around
-              (lambda (fun &rest args)
-                (if (eq evil-state 'insert)
-                    (tab-to-tab-stop)
-                  (apply fun args)))))
+  (obsidian-specify-path "~/obsidian")
+  (global-obsidian-mode t))
