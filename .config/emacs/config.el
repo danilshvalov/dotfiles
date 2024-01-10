@@ -648,7 +648,7 @@ DIR must include a .project file to be considered a project."
   :general
   (nvmap "s" 'avy-goto-char-2))
 
-(use-package eglot
+(use-builtin eglot
   :custom
   (eglot-sync-connect nil)
   (eglot-events-buffer-size 0)
@@ -1252,7 +1252,7 @@ Quit if no candidate is selected."
   (nvmap
     "ga" 'ialign))
 
-(use-package flymake
+(use-builtin flymake
   :hook ((sql-mode) . flymake-mode)
   :commands flymake-mode
   :custom
@@ -2478,8 +2478,3 @@ Note that these rules can't contain anchored rules themselves."
               (if (eq evil-state 'insert)
                   (tab-to-tab-stop)
                 (apply fun args))))
-
-(use-package obsidian
-  :config
-  (obsidian-specify-path "~/obsidian")
-  (global-obsidian-mode t))
