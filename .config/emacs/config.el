@@ -213,198 +213,6 @@
 (defun concat-lines (&rest args)
   (string-join args "\n"))
 
-(use-package org
-  :pin gnu
-  :commands (org-agenda org-capture)
-  :custom
-  (calendar-week-start-day 1)
-  (org-agenda-start-on-weekday 1)
-  (org-edit-src-content-indentation 0)
-  (org-confirm-babel-evaluate nil)
-  (org-agenda-skip-deadline-if-done t)
-  (org-agenda-skip-scheduled-if-done t)
-  (org-agenda-skip-timestamp-if-done t)
-  (org-indent-mode-turns-on-hiding-stars nil)
-  (org-use-sub-superscripts nil)
-  (org-highlight-latex-and-related '(native script entities))
-  (org-src-lang-modes
-   '(("C" . c-ts)
-     ("C++" . c++-ts)
-     ("asymptote" . asy)
-     ("beamer" . latex)
-     ("calc" . fundamental)
-     ("cpp" . c++-ts)
-     ("ditaa" . artist)
-     ("desktop" . conf-desktop)
-     ("dot" . fundamental)
-     ("elisp" . emacs-lisp)
-     ("ocaml" . tuareg)
-     ("screen" . shell-script)
-     ("sqlite" . sql)
-     ("toml" . conf-toml)
-     ("shell" . sh)
-     ("ash" . sh)
-     ("sh" . sh)
-     ("bash" . sh)
-     ("jsh" . sh)
-     ("bash2" . sh)
-     ("dash" . sh)
-     ("dtksh" . sh)
-     ("ksh" . sh)
-     ("es" . sh)
-     ("rc" . sh)
-     ("itcsh" . sh)
-     ("tcsh" . sh)
-     ("jcsh" . sh)
-     ("csh" . sh)
-     ("ksh88" . sh)
-     ("oash" . sh)
-     ("pdksh" . sh)
-     ("mksh" . sh)
-     ("posix" . sh)
-     ("wksh" . sh)
-     ("wsh" . sh)
-     ("zsh" . sh)
-     ("rpm" . sh)))
-  :custom-face
-  (org-level-2 ((t (:inherit 'org-level-1))))
-  (org-level-3 ((t (:inherit 'org-level-1))))
-  (org-level-4 ((t (:inherit 'org-level-1))))
-  (org-level-5 ((t (:inherit 'org-level-1))))
-  (org-level-6 ((t (:inherit 'org-level-1))))
-  (org-level-7 ((t (:inherit 'org-level-1))))
-  (org-level-8 ((t (:inherit 'org-level-1))))
-  :preface
-  (defun open-org-file! (file)
-    (lambda ()
-      (interactive)
-      (require 'org)
-      (find-file (file-name-concat org-directory file))))
-
-  (transient-define-prefix my-org-capture ()
-    "Prefix that uses `setup-children' to generate single child."
-
-    [:setup-children
-     (lambda (_)
-       (require 'org)
-       (let ((prefixes))
-         (dolist (entry org-capture-templates)
-           (pcase entry
-             (`(,(and key) ,desc)
-              (setq prefixes (append prefixes `(,desc))))
-             (`(,(and key) ,desc . ,_)
-              (setq prefixes (append prefixes
-                                     `((,key ,desc
-                                             ,(lambda ()
-                                                (interactive)
-                                                (setq org-capture-entry entry)
-                                                (org-capture)))))))
-             (_ nil)))
-         (mapcar (lambda (x)
-                   (transient-parse-suffix transient--prefix x))
-                 prefixes)))])
-  (defun my-org-find-file ()
-    (require 'org)
-    (interactive)
-    (find-file (completing-read "Org file: " org-agenda-files)))
-  :general
-  (nmap
-    :prefix "SPC o"
-    "" '(nil :wk "org")
-    "a" 'org-agenda-list
-    "c" 'my-org-capture
-    "f" 'my-org-find-file)
-  (general-define-key
-   :keymaps 'org-read-date-minibuffer-local-map
-   "C-c" 'org-goto-calendar)
-  (nmap
-    :keymaps 'calendar-mode-map
-    "RET" 'org-calendar-select)
-  (nvmap
-    :keymaps 'org-mode-map
-    "gx" 'org-open-at-point)
-  (nmap
-    :keymaps 'org-mode-map
-    :prefix "SPC oi"
-    "" '(nil :wk "org-insert")
-    "t" (lambda (arg)
-          (interactive "P")
-          (end-of-line)
-          (newline)
-          (org-time-stamp arg))
-    "d" 'org-deadline)
-  :hook (org-mode . auto-fill-mode)
-  :config
-  (setq org-agenda-prefix-format '((agenda . " %i %?-24t% s")
-                                   (todo . " %i")
-                                   (tags . " %i")
-                                   (search . " %i")))
-  (setq org-agenda-files (apply 'append
-                                (mapcar
-                                 (lambda (directory)
-                                   (let ((history-add-new-input nil))
-                                     (directory-files-recursively
-                                      directory org-agenda-file-regexp)))
-                                 '("~/org"))))
-  (setq org-refile-targets
-        '((nil :maxlevel . 3)
-          (org-agenda-files :maxlevel . 3)))
-
-  (defun link-message ()
-    (when (eq major-mode 'org-mode)
-      (let ((object (org-element-context)))
-        (when (eq (car object) 'link)
-          (message "Link to: %s"
-                   (org-element-property :raw-link object))))))
-
-  (add-hook 'post-command-hook 'link-message)
-
-  (cl-flet ((itmo-template (key title file)
-              `(,key ,title entry
-                     (file ,(format "~/org/itmo/%s.org" file))
-                     "*** TODO %?"
-                     :empty-lines 1)))
-
-    (setq org-capture-templates
-          (list '("" "GTD")
-                '("t" "Inbox" entry
-                  (file "~/org/inbox.org")
-                  "* TODO %?"
-                  :empty-lines 1)
-                '("T" "Tickler" entry
-                  (file "~/org/tickler.org")
-                  "* TODO %?"
-                  :empty-lines 1)
-                '("i" "ИТМО")
-                (itmo-template "iw" "Web-программирование" "web-programming")
-                (itmo-template "ie" "Английский язык" "english")
-                (itmo-template "ic" "Компьютерные сети" "computer-networks")
-                (itmo-template "is" "Навыки обучения" "learning-skills")
-                (itmo-template "it" "Теория электрической связи" "tec")
-                (itmo-template "id" "Проектирование сетей" "network-design")))))
-
-(use-package evil-org
-  :after (evil org)
-  :hook (org-mode . (lambda () (evil-org-mode)))
-  :config
-  (require 'evil-org-agenda)
-  (evil-org-agenda-set-keys))
-
-(use-package org-journal
-  :after org
-  :custom
-  (org-journal-file-type 'yearly)
-  (org-journal-dir "~/org/journal")
-  (org-journal-date-format "%A, %d.%m.%Y")
-  (org-journal-file-format "%Y.org")
-  (org-journal-file-header (lambda () "#+STARTUP: show2levels"))
-  :general
-  (nmap
-    :prefix "SPC o j"
-    "" '(nil :wk "Org journal")
-    "c" '(org-journal-new-entry :wk "Create new entry")
-    "o" '(org-journal-open-current-journal-file :wk "Open journal file")))
-
 (use-package project
   :requires consult
   :preface
@@ -413,11 +221,11 @@
     (let ((default-directory (project-root-current)))
       (dired default-directory)))
   :custom
-  (project-switch-commands '((affe-find "Find file")
+  (project-switch-commands '((consult-fd "Find file")
                              (dired-project-root "Dired")))
   :general
   (:keymaps 'project-prefix-map
-            "f" 'affe-find
+            "f" 'consult-fd
             "d" 'dired-project-root)
   (nmap
     :prefix "SPC p"
@@ -718,10 +526,7 @@ DIR must include a .project file to be considered a project."
      "\\`\\*Eglot .*\\*\\'"))
   (consult-ripgrep-args
    "rg --null --line-buffered --color=never --max-columns=1000 --path-separator / --smart-case --no-heading --with-filename --line-number --search-zip")
-  ;; (consult-async-min-input 0)
-  ;; (consult-async-input-throttle 0.01)
-  ;; (consult-async-input-debounce 0.01)
-  ;; (consult-async-refresh-delay 0.01)
+  (consult-async-split-style 'semicolon)
   :general
   (nvmap
     :keymaps 'override
@@ -729,8 +534,8 @@ DIR must include a .project file to be considered a project."
     "" '(nil :wk "find")
     "r" '+consult-recent-file
     "b" 'consult-buffer
-    "f" 'affe-find
-    "g" 'affe-grep
+    "f" 'consult-fd
+    "g" 'consult-ripgrep
     "o" 'ff-find-other-file
     "e" 'consult-flymake
     "." (lambda ()
@@ -780,7 +585,8 @@ DIR must include a .project file to be considered a project."
 
 (use-package affe
   :custom
-  (affe-find-command "rg --color=never --files --hidden --sortr path")
+  ;; (affe-find-command "rg --color=never --files --hidden --sortr path")
+  (affe-find-command "fd -HI -t f")
   :config
   (advice-add 'affe-find :around #'execute-at-project-root))
 
@@ -941,8 +747,11 @@ Quit if no candidate is selected."
   :config
   (evil-mode)
 
-  (add-hook 'evil-insert-state-entry-hook (lambda () (send-string-to-terminal "\033[5 q")))
-  (add-hook 'evil-insert-state-exit-hook  (lambda () (send-string-to-terminal "\033[2 q")))
+  ;; (add-hook 'evil-insert-state-entry-hook
+  ;;           (lambda () (unless (eq major-mode 'vterm-mode)
+  ;;                        (send-string-to-terminal "\033[5 q"))))
+  ;; (add-hook 'evil-insert-state-exit-hook
+  ;;           (lambda () (send-string-to-terminal "\033[2 q")))
 
   (evil-define-operator evil-fill (beg end)
     "Fill text."
@@ -1355,316 +1164,316 @@ Quit if no candidate is selected."
   </script>
 ")))
 
-(use-package treesit-auto
-  :demand t
-  :config
-  (setq my-sql-tsauto-config
-        (make-treesit-auto-recipe
-         :lang 'sql
-         :ts-mode 'sql-ts-mode
-         :remap 'sql-mode
-         :url "https://github.com/DerekStride/tree-sitter-sql"
-         :revision "gh-pages"
-         :source-dir "src"))
+;; (use-package treesit-auto
+;;   :demand t
+;;   :config
+;;   (setq my-sql-tsauto-config
+;;         (make-treesit-auto-recipe
+;;          :lang 'sql
+;;          :ts-mode 'sql-ts-mode
+;;          :remap 'sql-mode
+;;          :url "https://github.com/DerekStride/tree-sitter-sql"
+;;          :revision "gh-pages"
+;;          :source-dir "src"))
 
-  (add-to-list 'treesit-auto-recipe-list my-sql-tsauto-config)
+;;   (add-to-list 'treesit-auto-recipe-list my-sql-tsauto-config)
 
-  ;; (add-hook
-  ;;   'c++-ts-mode-hook
-  ;;   (lambda ()
-  ;;     (setq treesit-range-settings
-  ;;       (treesit-range-rules
-  ;;         :embed 'sql
-  ;;         :host 'cpp
-  ;;         '((raw_string_literal (raw_string_content) @capture))))
+;;   ;; (add-hook
+;;   ;;   'c++-ts-mode-hook
+;;   ;;   (lambda ()
+;;   ;;     (setq treesit-range-settings
+;;   ;;       (treesit-range-rules
+;;   ;;         :embed 'sql
+;;   ;;         :host 'cpp
+;;   ;;         '((raw_string_literal (raw_string_content) @capture))))
 
-  ;;     ;; (setq treesit-language-at-point-function (lambda (point) 'cpp))
+;;   ;;     ;; (setq treesit-language-at-point-function (lambda (point) 'cpp))
 
-  ;;     (setq sql--treesit-settings
-  ;;       (treesit-font-lock-rules
-  ;;         :feature 'comment
-  ;;         :language 'sql
-  ;;         '((comment) @font-lock-comment-face)
+;;   ;;     (setq sql--treesit-settings
+;;   ;;       (treesit-font-lock-rules
+;;   ;;         :feature 'comment
+;;   ;;         :language 'sql
+;;   ;;         '((comment) @font-lock-comment-face)
 
-  ;;         ;; :feature 'string
-  ;;         ;; :language 'python
-  ;;         ;; '((string) @python--treesit-fontify-string)
+;;   ;;         ;; :feature 'string
+;;   ;;         ;; :language 'python
+;;   ;;         ;; '((string) @python--treesit-fontify-string)
 
-  ;;         ;; ;; HACK: This feature must come after the string feature and before
-  ;;         ;; ;; other features.  Maybe we should make string-interpolation an
-  ;;         ;; ;; option rather than a feature.
-  ;;         ;; :feature 'string-interpolation
-  ;;         ;; :language 'python
-  ;;         ;; '((interpolation) @python--treesit-fontify-string-interpolation)
+;;   ;;         ;; ;; HACK: This feature must come after the string feature and before
+;;   ;;         ;; ;; other features.  Maybe we should make string-interpolation an
+;;   ;;         ;; ;; option rather than a feature.
+;;   ;;         ;; :feature 'string-interpolation
+;;   ;;         ;; :language 'python
+;;   ;;         ;; '((interpolation) @python--treesit-fontify-string-interpolation)
 
-  ;;         :feature 'keyword
-  ;;         :language 'sql
-  ;;         `([
-  ;;             (keyword_select)
-  ;;             (keyword_from)
-  ;;             (keyword_where)
-  ;;             (keyword_index)
-  ;;             (keyword_join)
-  ;;             (keyword_primary)
-  ;;             (keyword_delete)
-  ;;             (keyword_create)
-  ;;             (keyword_insert)
-  ;;             (keyword_merge)
-  ;;             (keyword_distinct)
-  ;;             (keyword_replace)
-  ;;             (keyword_update)
-  ;;             (keyword_into)
-  ;;             (keyword_overwrite)
-  ;;             (keyword_matched)
-  ;;             (keyword_values)
-  ;;             (keyword_value)
-  ;;             (keyword_attribute)
-  ;;             (keyword_set)
-  ;;             (keyword_left)
-  ;;             (keyword_right)
-  ;;             (keyword_outer)
-  ;;             (keyword_inner)
-  ;;             (keyword_full)
-  ;;             (keyword_order)
-  ;;             (keyword_partition)
-  ;;             (keyword_group)
-  ;;             (keyword_with)
-  ;;             (keyword_as)
-  ;;             (keyword_having)
-  ;;             (keyword_limit)
-  ;;             (keyword_offset)
-  ;;             (keyword_table)
-  ;;             (keyword_tables)
-  ;;             (keyword_key)
-  ;;             (keyword_references)
-  ;;             (keyword_foreign)
-  ;;             (keyword_constraint)
-  ;;             (keyword_force)
-  ;;             (keyword_use)
-  ;;             (keyword_for)
-  ;;             (keyword_if)
-  ;;             (keyword_exists)
-  ;;             (keyword_max)
-  ;;             (keyword_min)
-  ;;             (keyword_avg)
-  ;;             (keyword_column)
-  ;;             (keyword_columns)
-  ;;             (keyword_cross)
-  ;;             (keyword_lateral)
-  ;;             (keyword_alter)
-  ;;             (keyword_drop)
-  ;;             (keyword_add)
-  ;;             (keyword_view)
-  ;;             (keyword_end)
-  ;;             (keyword_is)
-  ;;             (keyword_using)
-  ;;             (keyword_between)
-  ;;             (keyword_window)
-  ;;             (keyword_no)
-  ;;             (keyword_data)
-  ;;             (keyword_type)
-  ;;             (keyword_rename)
-  ;;             (keyword_to)
-  ;;             (keyword_schema)
-  ;;             (keyword_owner)
-  ;;             (keyword_authorization)
-  ;;             (keyword_all)
-  ;;             (keyword_any)
-  ;;             (keyword_some)
-  ;;             (keyword_returning)
-  ;;             (keyword_begin)
-  ;;             (keyword_commit)
-  ;;             (keyword_rollback)
-  ;;             (keyword_transaction)
-  ;;             (keyword_only)
-  ;;             (keyword_like)
-  ;;             (keyword_similar)
-  ;;             (keyword_over)
-  ;;             (keyword_change)
-  ;;             (keyword_modify)
-  ;;             (keyword_after)
-  ;;             (keyword_before)
-  ;;             (keyword_range)
-  ;;             (keyword_rows)
-  ;;             (keyword_groups)
-  ;;             (keyword_exclude)
-  ;;             (keyword_current)
-  ;;             (keyword_ties)
-  ;;             (keyword_others)
-  ;;             (keyword_preserve)
-  ;;             (keyword_zerofill)
-  ;;             (keyword_format)
-  ;;             (keyword_fields)
-  ;;             (keyword_row)
-  ;;             (keyword_sort)
-  ;;             (keyword_compute)
-  ;;             (keyword_comment)
-  ;;             (keyword_location)
-  ;;             (keyword_cached)
-  ;;             (keyword_uncached)
-  ;;             (keyword_lines)
-  ;;             (keyword_stored)
-  ;;             (keyword_partitioned)
-  ;;             (keyword_analyze)
-  ;;             (keyword_explain)
-  ;;             (keyword_verbose)
-  ;;             (keyword_truncate)
-  ;;             (keyword_rewrite)
-  ;;             (keyword_optimize)
-  ;;             (keyword_vacuum)
-  ;;             (keyword_cache)
-  ;;             (keyword_language)
-  ;;             (keyword_sql)
-  ;;             (keyword_called)
-  ;;             (keyword_conflict)
-  ;;             (keyword_declare)
-  ;;             (keyword_filter)
-  ;;             (keyword_function)
-  ;;             (keyword_input)
-  ;;             (keyword_name)
-  ;;             (keyword_oid)
-  ;;             (keyword_options)
-  ;;             (keyword_plpgsql)
-  ;;             (keyword_precision)
-  ;;             (keyword_regclass)
-  ;;             (keyword_regnamespace)
-  ;;             (keyword_regproc)
-  ;;             (keyword_regtype)
-  ;;             (keyword_restricted)
-  ;;             (keyword_return)
-  ;;             (keyword_returns)
-  ;;             (keyword_separator)
-  ;;             (keyword_setof)
-  ;;             (keyword_stable)
-  ;;             (keyword_support)
-  ;;             (keyword_tblproperties)
-  ;;             (keyword_trigger)
-  ;;             (keyword_unsafe)
-  ;;             (keyword_admin)
-  ;;             (keyword_connection)
-  ;;             (keyword_cycle)
-  ;;             (keyword_database)
-  ;;             (keyword_encrypted)
-  ;;             (keyword_increment)
-  ;;             (keyword_logged)
-  ;;             (keyword_none)
-  ;;             (keyword_owned)
-  ;;             (keyword_password)
-  ;;             (keyword_reset)
-  ;;             (keyword_role)
-  ;;             (keyword_sequence)
-  ;;             (keyword_start)
-  ;;             (keyword_restart)
-  ;;             (keyword_tablespace)
-  ;;             (keyword_until)
-  ;;             (keyword_user)
-  ;;             (keyword_valid)
-  ;;             ] @font-lock-keyword-face)
+;;   ;;         :feature 'keyword
+;;   ;;         :language 'sql
+;;   ;;         `([
+;;   ;;             (keyword_select)
+;;   ;;             (keyword_from)
+;;   ;;             (keyword_where)
+;;   ;;             (keyword_index)
+;;   ;;             (keyword_join)
+;;   ;;             (keyword_primary)
+;;   ;;             (keyword_delete)
+;;   ;;             (keyword_create)
+;;   ;;             (keyword_insert)
+;;   ;;             (keyword_merge)
+;;   ;;             (keyword_distinct)
+;;   ;;             (keyword_replace)
+;;   ;;             (keyword_update)
+;;   ;;             (keyword_into)
+;;   ;;             (keyword_overwrite)
+;;   ;;             (keyword_matched)
+;;   ;;             (keyword_values)
+;;   ;;             (keyword_value)
+;;   ;;             (keyword_attribute)
+;;   ;;             (keyword_set)
+;;   ;;             (keyword_left)
+;;   ;;             (keyword_right)
+;;   ;;             (keyword_outer)
+;;   ;;             (keyword_inner)
+;;   ;;             (keyword_full)
+;;   ;;             (keyword_order)
+;;   ;;             (keyword_partition)
+;;   ;;             (keyword_group)
+;;   ;;             (keyword_with)
+;;   ;;             (keyword_as)
+;;   ;;             (keyword_having)
+;;   ;;             (keyword_limit)
+;;   ;;             (keyword_offset)
+;;   ;;             (keyword_table)
+;;   ;;             (keyword_tables)
+;;   ;;             (keyword_key)
+;;   ;;             (keyword_references)
+;;   ;;             (keyword_foreign)
+;;   ;;             (keyword_constraint)
+;;   ;;             (keyword_force)
+;;   ;;             (keyword_use)
+;;   ;;             (keyword_for)
+;;   ;;             (keyword_if)
+;;   ;;             (keyword_exists)
+;;   ;;             (keyword_max)
+;;   ;;             (keyword_min)
+;;   ;;             (keyword_avg)
+;;   ;;             (keyword_column)
+;;   ;;             (keyword_columns)
+;;   ;;             (keyword_cross)
+;;   ;;             (keyword_lateral)
+;;   ;;             (keyword_alter)
+;;   ;;             (keyword_drop)
+;;   ;;             (keyword_add)
+;;   ;;             (keyword_view)
+;;   ;;             (keyword_end)
+;;   ;;             (keyword_is)
+;;   ;;             (keyword_using)
+;;   ;;             (keyword_between)
+;;   ;;             (keyword_window)
+;;   ;;             (keyword_no)
+;;   ;;             (keyword_data)
+;;   ;;             (keyword_type)
+;;   ;;             (keyword_rename)
+;;   ;;             (keyword_to)
+;;   ;;             (keyword_schema)
+;;   ;;             (keyword_owner)
+;;   ;;             (keyword_authorization)
+;;   ;;             (keyword_all)
+;;   ;;             (keyword_any)
+;;   ;;             (keyword_some)
+;;   ;;             (keyword_returning)
+;;   ;;             (keyword_begin)
+;;   ;;             (keyword_commit)
+;;   ;;             (keyword_rollback)
+;;   ;;             (keyword_transaction)
+;;   ;;             (keyword_only)
+;;   ;;             (keyword_like)
+;;   ;;             (keyword_similar)
+;;   ;;             (keyword_over)
+;;   ;;             (keyword_change)
+;;   ;;             (keyword_modify)
+;;   ;;             (keyword_after)
+;;   ;;             (keyword_before)
+;;   ;;             (keyword_range)
+;;   ;;             (keyword_rows)
+;;   ;;             (keyword_groups)
+;;   ;;             (keyword_exclude)
+;;   ;;             (keyword_current)
+;;   ;;             (keyword_ties)
+;;   ;;             (keyword_others)
+;;   ;;             (keyword_preserve)
+;;   ;;             (keyword_zerofill)
+;;   ;;             (keyword_format)
+;;   ;;             (keyword_fields)
+;;   ;;             (keyword_row)
+;;   ;;             (keyword_sort)
+;;   ;;             (keyword_compute)
+;;   ;;             (keyword_comment)
+;;   ;;             (keyword_location)
+;;   ;;             (keyword_cached)
+;;   ;;             (keyword_uncached)
+;;   ;;             (keyword_lines)
+;;   ;;             (keyword_stored)
+;;   ;;             (keyword_partitioned)
+;;   ;;             (keyword_analyze)
+;;   ;;             (keyword_explain)
+;;   ;;             (keyword_verbose)
+;;   ;;             (keyword_truncate)
+;;   ;;             (keyword_rewrite)
+;;   ;;             (keyword_optimize)
+;;   ;;             (keyword_vacuum)
+;;   ;;             (keyword_cache)
+;;   ;;             (keyword_language)
+;;   ;;             (keyword_sql)
+;;   ;;             (keyword_called)
+;;   ;;             (keyword_conflict)
+;;   ;;             (keyword_declare)
+;;   ;;             (keyword_filter)
+;;   ;;             (keyword_function)
+;;   ;;             (keyword_input)
+;;   ;;             (keyword_name)
+;;   ;;             (keyword_oid)
+;;   ;;             (keyword_options)
+;;   ;;             (keyword_plpgsql)
+;;   ;;             (keyword_precision)
+;;   ;;             (keyword_regclass)
+;;   ;;             (keyword_regnamespace)
+;;   ;;             (keyword_regproc)
+;;   ;;             (keyword_regtype)
+;;   ;;             (keyword_restricted)
+;;   ;;             (keyword_return)
+;;   ;;             (keyword_returns)
+;;   ;;             (keyword_separator)
+;;   ;;             (keyword_setof)
+;;   ;;             (keyword_stable)
+;;   ;;             (keyword_support)
+;;   ;;             (keyword_tblproperties)
+;;   ;;             (keyword_trigger)
+;;   ;;             (keyword_unsafe)
+;;   ;;             (keyword_admin)
+;;   ;;             (keyword_connection)
+;;   ;;             (keyword_cycle)
+;;   ;;             (keyword_database)
+;;   ;;             (keyword_encrypted)
+;;   ;;             (keyword_increment)
+;;   ;;             (keyword_logged)
+;;   ;;             (keyword_none)
+;;   ;;             (keyword_owned)
+;;   ;;             (keyword_password)
+;;   ;;             (keyword_reset)
+;;   ;;             (keyword_role)
+;;   ;;             (keyword_sequence)
+;;   ;;             (keyword_start)
+;;   ;;             (keyword_restart)
+;;   ;;             (keyword_tablespace)
+;;   ;;             (keyword_until)
+;;   ;;             (keyword_user)
+;;   ;;             (keyword_valid)
+;;   ;;             ] @font-lock-keyword-face)
 
-  ;;         ;; :feature 'constant
-  ;;         ;; :language 'python
-  ;;         ;; '([(true) (false) (none)] @font-lock-constant-face)
+;;   ;;         ;; :feature 'constant
+;;   ;;         ;; :language 'python
+;;   ;;         ;; '([(true) (false) (none)] @font-lock-constant-face)
 
-  ;;         ;; :feature 'definition
-  ;;         ;; :language 'python
-  ;;         ;; '((function_definition
-  ;;         ;;     name: (identifier) @font-lock-function-name-face)
-  ;;         ;;    (class_definition
-  ;;         ;;      name: (identifier) @font-lock-type-face)
-  ;;         ;;    (parameters (identifier) @font-lock-variable-name-face))
+;;   ;;         ;; :feature 'definition
+;;   ;;         ;; :language 'python
+;;   ;;         ;; '((function_definition
+;;   ;;         ;;     name: (identifier) @font-lock-function-name-face)
+;;   ;;         ;;    (class_definition
+;;   ;;         ;;      name: (identifier) @font-lock-type-face)
+;;   ;;         ;;    (parameters (identifier) @font-lock-variable-name-face))
 
-  ;;         ;; :feature 'function
-  ;;         ;; :language 'python
-  ;;         ;; '((call function: (identifier) @font-lock-function-call-face)
-  ;;         ;;    (call function: (attribute
-  ;;         ;;                      attribute: (identifier) @font-lock-function-call-face)))
+;;   ;;         ;; :feature 'function
+;;   ;;         ;; :language 'python
+;;   ;;         ;; '((call function: (identifier) @font-lock-function-call-face)
+;;   ;;         ;;    (call function: (attribute
+;;   ;;         ;;                      attribute: (identifier) @font-lock-function-call-face)))
 
-  ;;         ;; :feature 'builtin
-  ;;         ;; :language 'python
-  ;;         ;; `(((identifier) @font-lock-builtin-face
-  ;;         ;;     (:match ,(rx-to-string
-  ;;         ;;                `(seq bol
-  ;;         ;;                   (or ,@python--treesit-builtins
-  ;;         ;;                     ,@python--treesit-special-attributes)
-  ;;         ;;                   eol))
-  ;;         ;;       @font-lock-builtin-face)))
+;;   ;;         ;; :feature 'builtin
+;;   ;;         ;; :language 'python
+;;   ;;         ;; `(((identifier) @font-lock-builtin-face
+;;   ;;         ;;     (:match ,(rx-to-string
+;;   ;;         ;;                `(seq bol
+;;   ;;         ;;                   (or ,@python--treesit-builtins
+;;   ;;         ;;                     ,@python--treesit-special-attributes)
+;;   ;;         ;;                   eol))
+;;   ;;         ;;       @font-lock-builtin-face)))
 
-  ;;         ;; :feature 'constant
-  ;;         ;; :language 'python
-  ;;         ;; '([(true) (false) (none)] @font-lock-constant-face)
+;;   ;;         ;; :feature 'constant
+;;   ;;         ;; :language 'python
+;;   ;;         ;; '([(true) (false) (none)] @font-lock-constant-face)
 
-  ;;         ;; :feature 'assignment
-  ;;         ;; :language 'python
-  ;;         ;; `(;; Variable names and LHS.
-  ;;         ;;    (assignment left: (identifier)
-  ;;         ;;      @font-lock-variable-name-face)
-  ;;         ;;    (assignment left: (attribute
-  ;;         ;;                        attribute: (identifier)
-  ;;         ;;                        @font-lock-property-use-face))
-  ;;         ;;    (pattern_list (identifier)
-  ;;         ;;      @font-lock-variable-name-face)
-  ;;         ;;    (tuple_pattern (identifier)
-  ;;         ;;      @font-lock-variable-name-face)
-  ;;         ;;    (list_pattern (identifier)
-  ;;         ;;      @font-lock-variable-name-face)
-  ;;         ;;    (list_splat_pattern (identifier)
-  ;;         ;;      @font-lock-variable-name-face))
+;;   ;;         ;; :feature 'assignment
+;;   ;;         ;; :language 'python
+;;   ;;         ;; `(;; Variable names and LHS.
+;;   ;;         ;;    (assignment left: (identifier)
+;;   ;;         ;;      @font-lock-variable-name-face)
+;;   ;;         ;;    (assignment left: (attribute
+;;   ;;         ;;                        attribute: (identifier)
+;;   ;;         ;;                        @font-lock-property-use-face))
+;;   ;;         ;;    (pattern_list (identifier)
+;;   ;;         ;;      @font-lock-variable-name-face)
+;;   ;;         ;;    (tuple_pattern (identifier)
+;;   ;;         ;;      @font-lock-variable-name-face)
+;;   ;;         ;;    (list_pattern (identifier)
+;;   ;;         ;;      @font-lock-variable-name-face)
+;;   ;;         ;;    (list_splat_pattern (identifier)
+;;   ;;         ;;      @font-lock-variable-name-face))
 
-  ;;         ;; :feature 'decorator
-  ;;         ;; :language 'python
-  ;;         ;; '((decorator "@" @font-lock-type-face)
-  ;;         ;;    (decorator (call function: (identifier) @font-lock-type-face))
-  ;;         ;;    (decorator (identifier) @font-lock-type-face))
+;;   ;;         ;; :feature 'decorator
+;;   ;;         ;; :language 'python
+;;   ;;         ;; '((decorator "@" @font-lock-type-face)
+;;   ;;         ;;    (decorator (call function: (identifier) @font-lock-type-face))
+;;   ;;         ;;    (decorator (identifier) @font-lock-type-face))
 
-  ;;         ;; :feature 'type
-  ;;         ;; :language 'python
-  ;;         ;; `(((identifier) @font-lock-type-face
-  ;;         ;;     (:match ,(rx-to-string
-  ;;         ;;                `(seq bol (or ,@python--treesit-exceptions)
-  ;;         ;;                   eol))
-  ;;         ;;       @font-lock-type-face))
-  ;;         ;;    (type (identifier) @font-lock-type-face))
+;;   ;;         ;; :feature 'type
+;;   ;;         ;; :language 'python
+;;   ;;         ;; `(((identifier) @font-lock-type-face
+;;   ;;         ;;     (:match ,(rx-to-string
+;;   ;;         ;;                `(seq bol (or ,@python--treesit-exceptions)
+;;   ;;         ;;                   eol))
+;;   ;;         ;;       @font-lock-type-face))
+;;   ;;         ;;    (type (identifier) @font-lock-type-face))
 
-  ;;         ;; :feature 'escape-sequence
-  ;;         ;; :language 'python
-  ;;         ;; :override t
-  ;;         ;; '((escape_sequence) @font-lock-escape-face)
+;;   ;;         ;; :feature 'escape-sequence
+;;   ;;         ;; :language 'python
+;;   ;;         ;; :override t
+;;   ;;         ;; '((escape_sequence) @font-lock-escape-face)
 
-  ;;         ;; :feature 'number
-  ;;         ;; :language 'python
-  ;;         ;; '([(integer) (float)] @font-lock-number-face)
+;;   ;;         ;; :feature 'number
+;;   ;;         ;; :language 'python
+;;   ;;         ;; '([(integer) (float)] @font-lock-number-face)
 
-  ;;         ;; :feature 'property
-  ;;         ;; :language 'python
-  ;;         ;; '((attribute
-  ;;         ;;     attribute: (identifier) @font-lock-property-use-face)
-  ;;         ;;    (class_definition
-  ;;         ;;      body: (block
-  ;;         ;;              (expression_statement
-  ;;         ;;                (assignment left:
-  ;;         ;;                  (identifier) @font-lock-property-use-face)))))
+;;   ;;         ;; :feature 'property
+;;   ;;         ;; :language 'python
+;;   ;;         ;; '((attribute
+;;   ;;         ;;     attribute: (identifier) @font-lock-property-use-face)
+;;   ;;         ;;    (class_definition
+;;   ;;         ;;      body: (block
+;;   ;;         ;;              (expression_statement
+;;   ;;         ;;                (assignment left:
+;;   ;;         ;;                  (identifier) @font-lock-property-use-face)))))
 
-  ;;         ;; :feature 'operator
-  ;;         ;; :language 'python
-  ;;         ;; `([,@python--treesit-operators] @font-lock-operator-face)
+;;   ;;         ;; :feature 'operator
+;;   ;;         ;; :language 'python
+;;   ;;         ;; `([,@python--treesit-operators] @font-lock-operator-face)
 
-  ;;         ;; :feature 'bracket
-  ;;         ;; :language 'python
-  ;;         ;; '(["(" ")" "[" "]" "{" "}"] @font-lock-bracket-face)
+;;   ;;         ;; :feature 'bracket
+;;   ;;         ;; :language 'python
+;;   ;;         ;; '(["(" ")" "[" "]" "{" "}"] @font-lock-bracket-face)
 
-  ;;         ;; :feature 'delimiter
-  ;;         ;; :language 'python
-  ;;         ;; '(["," "." ":" ";" (ellipsis)] @font-lock-delimiter-face)
+;;   ;;         ;; :feature 'delimiter
+;;   ;;         ;; :language 'python
+;;   ;;         ;; '(["," "." ":" ";" (ellipsis)] @font-lock-delimiter-face)
 
-  ;;         ;; :feature 'variable
-  ;;         ;; :language 'python
-  ;;         ;; '((identifier) @python--treesit-fontify-variable)
-  ;;         ))
+;;   ;;         ;; :feature 'variable
+;;   ;;         ;; :language 'python
+;;   ;;         ;; '((identifier) @python--treesit-fontify-variable)
+;;   ;;         ))
 
-  ;;     (setq treesit-font-lock-settings (append sql--treesit-settings treesit-font-lock-settings))
-  ;;     ))
+;;   ;;     (setq treesit-font-lock-settings (append sql--treesit-settings treesit-font-lock-settings))
+;;   ;;     ))
 
-  (global-treesit-auto-mode))
+;;   (global-treesit-auto-mode))
 
 (use-package embark
   :commands embark-act
@@ -1695,13 +1504,6 @@ Quit if no candidate is selected."
 (use-package embark-consult
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
-
-;; (use-package evil-terminal-cursor-changer
-;;   :after evil
-;;   :custom (etcc-term-type-override 'xterm)
-;;   :unless (display-graphic-p)
-;;   :config
-;;   (evil-terminal-cursor-changer-activate))
 
 (use-package image-mode
   :elpaca nil
@@ -2153,217 +1955,6 @@ Note that these rules can't contain anchored rules themselves."
 (use-package dockerfile-mode)
 
 (use-package nginx-mode)
-
-;; (defvar markdown-ts-mode--font-lock-settings
-;;   (treesit-font-lock-rules
-;;    :language 'markdown
-;;    :feature 'header
-;;    `((atx_heading (atx_h1_marker)) @markdown-header-face-1
-;;      (atx_heading (atx_h2_marker)) @markdown-header-face-2
-;;      (atx_heading (atx_h3_marker)) @markdown-header-face-3
-;;      (atx_heading (atx_h4_marker)) @markdown-header-face-4
-;;      (atx_heading (atx_h5_marker)) @markdown-header-face-5
-;;      (atx_heading (atx_h6_marker)) @markdown-header-face-6)
-
-;;    :language 'markdown
-;;    :feature 'keyword
-;;    `((fenced_code_block
-;;       (info_string (text) @markdown-language-keyword-face)))
-
-;;    :language 'markdown
-;;    :feature 'markup
-;;    `((fenced_code_block) @markdown-markup-face)
-
-;;    :language 'markdown
-;;    :feature 'inline-code
-;;    `((code_span) @markdown-inline-code-face)
-
-;;    :language 'markdown
-;;    :feature 'emphasis
-;;    `((strong_emphasis) @markdown-bold-face
-;;      (emphasis) @markdown-italic-face)
-
-;;    :language 'markdown
-;;    :feature 'link
-;;    `((link_text) @markdown-link-face
-;;      (link_destination) @markdown-url-face
-;;      (link_label) @markdown-reference-face)
-
-;; ;; (setext_heading (paragraph) @text.title.1 (setext_h1_underline) @text.title.1.marker)
-;; ;; (setext_heading (paragraph) @text.title.2 (setext_h2_underline) @text.title.2.marker)
-
-;; ;; (link_title) @text.literal
-;; ;; (indented_code_block) @text.literal.block
-;; ;; ((fenced_code_block) @text.literal.block (#set! "priority" 90))
-
-;; ;; (info_string) @label
-
-;; ;; (pipe_table_header (pipe_table_cell) @text.title)
-
-;; ;; (pipe_table_header "|" @punctuation.special)
-;; ;; (pipe_table_row "|" @punctuation.special)
-;; ;; (pipe_table_delimiter_row "|" @punctuation.special)
-;; ;; (pipe_table_delimiter_cell) @punctuation.special
-
-;; ;; [
-;; ;;   (fenced_code_block_delimiter)
-;; ;; ] @punctuation.delimiter
-
-;; ;; ;; Conceal backticks
-;; ;; (fenced_code_block
-;; ;;   (fenced_code_block_delimiter) @conceal
-;; ;;   (#set! conceal ""))
-;; ;; (fenced_code_block
-;; ;;   (info_string (language) @conceal
-;; ;;   (#set! conceal "")))
-
-;; ;; (code_fence_content) @none
-
-;; ;; [
-;; ;;   (link_destination)
-;; ;; ] @text.uri
-
-;; ;; [
-;; ;;   (link_label)
-;; ;; ] @text.reference
-
-;; ;; [
-;; ;;   (list_marker_plus)
-;; ;;   (list_marker_minus)
-;; ;;   (list_marker_star)
-;; ;;   (list_marker_dot)
-;; ;;   (list_marker_parenthesis)
-;; ;;   (thematic_break)
-;; ;; ] @punctuation.special
-
-
-;; ;; (task_list_marker_unchecked) @text.todo.unchecked
-;; ;; (task_list_marker_checked) @text.todo.checked
-
-;; ;; ((block_quote) @text.quote (#set! "priority" 90))
-
-;; ;; [
-;; ;;   (block_continuation)
-;; ;;   (block_quote_marker)
-;; ;; ] @punctuation.special
-
-;; ;; [
-;; ;;   (backslash_escape)
-;; ;; ] @string.escape
-
-;; ;; (inline) @spell
-
-;;        ;; :language 'php
-;;        ;; :feature 'preprocessor
-;;        ;; `((php_tag) @font-lock-preprocessor-face
-;;        ;;   ("?>") @font-lock-preprocessor-face)
-
-;;        ;; :language 'php
-;;        ;; :feature 'constant
-;;        ;; `((const_declaration (const_element (name) @font-lock-type-face))
-;;        ;;   (null) @php-constant)
-
-;;        ;; :language 'php
-;;        ;; :feature 'type
-;;        ;; `([(primitive_type)
-;;        ;;    (cast_type)
-;;        ;;    (bottom_type)
-;;        ;;    (named_type (name) @type)
-;;        ;;    (named_type (qualified_name) @type)
-;;        ;;    (namespace_use_clause)
-;;        ;;    (namespace_name (name))
-;;        ;;    (boolean)]
-;;        ;;   @font-lock-type-face
-;;        ;;   (class_interface_clause (name) @font-lock-type-face)
-;;        ;;   [(integer)
-;;        ;;    (float)]
-;;        ;;   @font-lock-number-face)
-
-;;        ;; :language 'php
-;;        ;; :feature 'definition
-;;        ;; `((class_declaration
-;;        ;;    name: (name) @font-lock-type-face)
-;;        ;;   (interface_declaration
-;;        ;;    name: (name) @font-lock-type-face)
-;;        ;;   (enum_declaration
-;;        ;;    name: (name) @font-lock-type-face)
-;;        ;;   (trait_declaration
-;;        ;;    name: (name) @font-lock-type-face)
-;;        ;;   (enum_case
-;;        ;;    name: (name) @font-lock-type-face))
-
-;;        ;; :language 'php
-;;        ;; :feature 'function
-;;        ;; `((array_creation_expression "array" @font-lock-builtin-face)
-;;        ;;   (list_literal "list" @font-lock-builtin-face)
-;;        ;;   (method_declaration
-;;        ;;    name: (name) @font-lock-function-name-face)
-;;        ;;   (function_call_expression
-;;        ;;    function: [(qualified_name (name)) (name)] @font-lock-function-call-face)
-;;        ;;   (scoped_call_expression
-;;        ;;    name: (name) @font-lock-function-call-face)
-;;        ;;   (member_call_expression
-;;        ;;    name: (name) @font-lock-function-call-face)
-;;        ;;   (function_definition
-;;        ;;    name: (name) @font-lock-function-name-face))
-
-;;        ;; :language 'php
-;;        ;; :feature 'variables
-;;        ;; `((relative_scope) @font-lock-builtin-face
-;;        ;;   ((name) @font-lock-constant-face
-;;        ;;    (:match ,(rx bos (? "_") (in "A-Z") (in "0-9A-Z_") eos)
-;;        ;;            @font-lock-constant-face))
-;;        ;;   ((name) @font-lock-builtin-face
-;;        ;;    (:match ,(rx-to-string `(: bos (or ,@php-ts-mode--magical-constants) eos))
-;;        ;;            @font-lock-builtin-face))
-
-;;        ;;   ;; ((name) @constructor
-;;        ;;   ;;  (:match ,(rx-to-string '(: bos (in "A-Z")))))
-
-;;        ;;   ;; ((name) @font-lock-variable-name-face
-;;        ;;   ;;  (#eq? @php-$this "this"))
-;;        ;;   (member_access_expression name: (name) @php-property-name)
-;;        ;;   (variable_name (name) @font-lock-variable-name-face)
-;;        ;;   (variable_name "$" @php-variable-sigil))
-
-;;        ;; :language 'php
-;;        ;; :feature 'comment
-;;        ;; `(((comment) @font-lock-doc-face
-;;        ;;    (:match ,(rx bos "/**")
-;;        ;;            @font-lock-doc-face))
-;;        ;;   (comment) @font-lock-comment-face)
-
-;;        ;; :language 'php
-;;        ;; :feature 'string
-;;        ;; `([(string)
-;;        ;;    (string_value)
-;;        ;;    (encapsed_string)
-;;        ;;    (heredoc)
-;;        ;;    (heredoc_body)
-;;        ;;    (nowdoc_body)]
-;;        ;;   @font-lock-string-face)
-
-;;        ;; :language 'php
-;;        ;; :feature 'operator
-;;        ;; `([,@php-ts-mode--operators] @font-lock-operator-face
-;;        ;;   (binary_expression operator: "xor" @font-lock-operator-face)
-;;        ;;   (binary_expression operator: "and" @font-lock-operator-face)
-;;        ;;   (binary_expression operator: "or" @font-lock-operator-face))
-
-;;        ;; :language 'php
-;;        ;; :feature 'keyword
-;;        ;; `([,@php-ts-mode--keywords] @font-lock-keyword-face
-;;        ;;   (yield_expression "from" @font-lock-keyword-face))
-
-;;        ;; :language 'php
-;;        ;; :feature 'delimiter
-;;        ;; '((["," ":" ";" "\\"]) @font-lock-delimiter-face)
-
-;;        ;; :language 'php
-;;        ;; :feature 'bracket
-;;        ;; `((["(" ")" "[" "]" "{" "}"]) @font-lock-bracket-face))
-;; ;; "Tree-sitter font-lock settings for `php-ts-mode'."
-;;    ))
 
 (defun markdown-ts-query-blocks ()
   (let* ((parser (treesit-parser-create 'markdown))
