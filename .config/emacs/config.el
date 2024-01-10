@@ -175,6 +175,7 @@
   (setq-default buffer-file-coding-system 'utf-8-unix)
   (setq buffer-file-coding-system 'utf-8-unix)
 
+  (menu-bar-mode -1)
   (global-whitespace-mode +1)
   (window-divider-mode)
   (savehist-mode)
@@ -2478,3 +2479,8 @@ Note that these rules can't contain anchored rules themselves."
               (if (eq evil-state 'insert)
                   (tab-to-tab-stop)
                 (apply fun args))))
+
+(use-package clipetty
+  :demand t
+  :config
+  (global-clipetty-mode))

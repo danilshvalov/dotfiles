@@ -96,3 +96,5 @@ fi
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
 unsetopt PROMPT_SP
+
+eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
