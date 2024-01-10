@@ -1710,6 +1710,8 @@ Note that these rules can't contain anchored rules themselves."
   :custom
   (web-mode-enable-auto-expanding t))
 
+(use-package git-commit)
+
 (imap "<backtab>" "C-d")
 (advice-add 'indent-for-tab-command
             :around
