@@ -269,7 +269,7 @@ DIR must include a .project file to be considered a project."
  `(variable-pitch ((t (:inherit (default)))))
  `(variable-pitch-text ((t (:height 1.0)))))
 
-(setq c-ts-mode-indent-offset 4)
+(add-hook 'c++-ts-mode-hook (lambda () (setq c-ts-mode-indent-offset 2)))
 
 (defun c++-ts-mode-indent-style ()
   `((c-ts-mode--for-each-tail-body-matcher prev-line c-ts-mode-indent-offset)
@@ -486,7 +486,7 @@ DIR must include a .project file to be considered a project."
 
   (add-to-list 'eglot-server-programs '(c++-ts-mode . ("clangd" "--compile-commands-dir=build_debug")))
   (add-to-list 'eglot-server-programs '(latex-mode . ("texlab")))
-  (add-to-list 'eglot-server-programs '(python-ts-mode . ("pylsp")))
+  ;; (add-to-list 'eglot-server-programs '(python-ts-mode . ("pylsp")))
   (add-to-list
    'eglot-server-programs
    '(conf-toml-mode . ("taplo" "lsp" "stdio"))))
@@ -580,15 +580,7 @@ DIR must include a .project file to be considered a project."
    consult-find
    consult-ripgrep
    consult-buffer
-   affe-grep
    :preview-key nil))
-
-(use-package affe
-  :custom
-  ;; (affe-find-command "rg --color=never --files --hidden --sortr path")
-  (affe-find-command "fd -HI -t f")
-  :config
-  (advice-add 'affe-find :around #'execute-at-project-root))
 
 (use-builtin recentf
   :custom
@@ -679,20 +671,6 @@ Quit if no candidate is selected."
   :hook (corfu-mode . corfu-terminal-mode)
   :unless (display-graphic-p))
 
-(use-package kind-icon
-  :after corfu
-  :custom
-  (kind-icon-blend-background nil)
-  (kind-icon-extra-space t)
-  (kind-icon-default-style `(:padding 0
-                                      :stroke 0
-                                      :margin 0
-                                      :radius 0
-                                      :height 0.9
-                                      :scale 1))
-  :config
-  (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
-
 (use-package cape
   :demand t
   :after corfu
@@ -711,7 +689,7 @@ Quit if no candidate is selected."
     (defun my/eglot-capf ()
       (setq-local completion-at-point-functions
                   (list
-                   (cape-super-capf
+                   (cape-capf-super
                     (cape-capf-properties #'eglot-completion-at-point :exclusive 'no)
                     dabbrev)
                    #'cape-file)))
@@ -811,7 +789,11 @@ Quit if no candidate is selected."
   :defer t)
 
 (use-package apheleia
-  :hook ((prog-mode text-mode) . apheleia-mode)
+  ;; :hook ((prog-mode text-mode) . apheleia-mode)
+  :general
+  (nvmap
+    :prefix "SPC c"
+    "f" 'apheleia-format-buffer)
   :config
   (rassq-delete-all 'cmake-format apheleia-mode-alist)
 
@@ -821,16 +803,18 @@ Quit if no candidate is selected."
                 '(csharpier . ("dotnet" "csharpier"))
                 '(prettier . ("prettier" "--stdin-filepath" filepath))
                 '(phpcs . ("my-phpcs" "fix" "-n" "-q" filepath))
-                )
+                '(taxi-black . ("taxi-black" "--quiet" "--force" filepath "-"))
+                '(taxi-clang-format . ("taxi-clang-format" "--quiet" "--force" filepath "-")))
 
   (add-hook 'apheleia-formatter-exited-hook (cl-function
                                              (lambda (&key formatter error log)
                                                (interactive)
-                                               (when (eq major-mode 'php-mode)
-                                                 (revert-buffer nil t)))))
+                                               (revert-buffer nil t))))
 
   (add-to-list! 'apheleia-mode-alist
                 '(sql-mode . sqlfluff)
+                '(python-mode . taxi-black)
+                '(c++-mode . taxi-clang-format)
                 '(conf-toml-mode . taplo)
                 '(csharp-mode . csharpier)
                 '(markdown-mode . prettier)))
@@ -927,8 +911,8 @@ Quit if no candidate is selected."
      (reusable-frames . visible)
      (window-height . 0.4))))
 
-(use-package editorconfig
-  :config (editorconfig-mode 1))
+;; (use-package editorconfig
+;;   :config (editorconfig-mode 1))
 
 (use-package reverse-im
   :demand t
@@ -1164,316 +1148,21 @@ Quit if no candidate is selected."
   </script>
 ")))
 
-;; (use-package treesit-auto
-;;   :demand t
-;;   :config
-;;   (setq my-sql-tsauto-config
-;;         (make-treesit-auto-recipe
-;;          :lang 'sql
-;;          :ts-mode 'sql-ts-mode
-;;          :remap 'sql-mode
-;;          :url "https://github.com/DerekStride/tree-sitter-sql"
-;;          :revision "gh-pages"
-;;          :source-dir "src"))
+(use-package treesit-auto
+  :demand t
+  :config
+  (setq my-sql-tsauto-config
+        (make-treesit-auto-recipe
+         :lang 'sql
+         :ts-mode 'sql-ts-mode
+         :remap 'sql-mode
+         :url "https://github.com/DerekStride/tree-sitter-sql"
+         :revision "gh-pages"
+         :source-dir "src"))
 
-;;   (add-to-list 'treesit-auto-recipe-list my-sql-tsauto-config)
+  (add-to-list 'treesit-auto-recipe-list my-sql-tsauto-config)
 
-;;   ;; (add-hook
-;;   ;;   'c++-ts-mode-hook
-;;   ;;   (lambda ()
-;;   ;;     (setq treesit-range-settings
-;;   ;;       (treesit-range-rules
-;;   ;;         :embed 'sql
-;;   ;;         :host 'cpp
-;;   ;;         '((raw_string_literal (raw_string_content) @capture))))
-
-;;   ;;     ;; (setq treesit-language-at-point-function (lambda (point) 'cpp))
-
-;;   ;;     (setq sql--treesit-settings
-;;   ;;       (treesit-font-lock-rules
-;;   ;;         :feature 'comment
-;;   ;;         :language 'sql
-;;   ;;         '((comment) @font-lock-comment-face)
-
-;;   ;;         ;; :feature 'string
-;;   ;;         ;; :language 'python
-;;   ;;         ;; '((string) @python--treesit-fontify-string)
-
-;;   ;;         ;; ;; HACK: This feature must come after the string feature and before
-;;   ;;         ;; ;; other features.  Maybe we should make string-interpolation an
-;;   ;;         ;; ;; option rather than a feature.
-;;   ;;         ;; :feature 'string-interpolation
-;;   ;;         ;; :language 'python
-;;   ;;         ;; '((interpolation) @python--treesit-fontify-string-interpolation)
-
-;;   ;;         :feature 'keyword
-;;   ;;         :language 'sql
-;;   ;;         `([
-;;   ;;             (keyword_select)
-;;   ;;             (keyword_from)
-;;   ;;             (keyword_where)
-;;   ;;             (keyword_index)
-;;   ;;             (keyword_join)
-;;   ;;             (keyword_primary)
-;;   ;;             (keyword_delete)
-;;   ;;             (keyword_create)
-;;   ;;             (keyword_insert)
-;;   ;;             (keyword_merge)
-;;   ;;             (keyword_distinct)
-;;   ;;             (keyword_replace)
-;;   ;;             (keyword_update)
-;;   ;;             (keyword_into)
-;;   ;;             (keyword_overwrite)
-;;   ;;             (keyword_matched)
-;;   ;;             (keyword_values)
-;;   ;;             (keyword_value)
-;;   ;;             (keyword_attribute)
-;;   ;;             (keyword_set)
-;;   ;;             (keyword_left)
-;;   ;;             (keyword_right)
-;;   ;;             (keyword_outer)
-;;   ;;             (keyword_inner)
-;;   ;;             (keyword_full)
-;;   ;;             (keyword_order)
-;;   ;;             (keyword_partition)
-;;   ;;             (keyword_group)
-;;   ;;             (keyword_with)
-;;   ;;             (keyword_as)
-;;   ;;             (keyword_having)
-;;   ;;             (keyword_limit)
-;;   ;;             (keyword_offset)
-;;   ;;             (keyword_table)
-;;   ;;             (keyword_tables)
-;;   ;;             (keyword_key)
-;;   ;;             (keyword_references)
-;;   ;;             (keyword_foreign)
-;;   ;;             (keyword_constraint)
-;;   ;;             (keyword_force)
-;;   ;;             (keyword_use)
-;;   ;;             (keyword_for)
-;;   ;;             (keyword_if)
-;;   ;;             (keyword_exists)
-;;   ;;             (keyword_max)
-;;   ;;             (keyword_min)
-;;   ;;             (keyword_avg)
-;;   ;;             (keyword_column)
-;;   ;;             (keyword_columns)
-;;   ;;             (keyword_cross)
-;;   ;;             (keyword_lateral)
-;;   ;;             (keyword_alter)
-;;   ;;             (keyword_drop)
-;;   ;;             (keyword_add)
-;;   ;;             (keyword_view)
-;;   ;;             (keyword_end)
-;;   ;;             (keyword_is)
-;;   ;;             (keyword_using)
-;;   ;;             (keyword_between)
-;;   ;;             (keyword_window)
-;;   ;;             (keyword_no)
-;;   ;;             (keyword_data)
-;;   ;;             (keyword_type)
-;;   ;;             (keyword_rename)
-;;   ;;             (keyword_to)
-;;   ;;             (keyword_schema)
-;;   ;;             (keyword_owner)
-;;   ;;             (keyword_authorization)
-;;   ;;             (keyword_all)
-;;   ;;             (keyword_any)
-;;   ;;             (keyword_some)
-;;   ;;             (keyword_returning)
-;;   ;;             (keyword_begin)
-;;   ;;             (keyword_commit)
-;;   ;;             (keyword_rollback)
-;;   ;;             (keyword_transaction)
-;;   ;;             (keyword_only)
-;;   ;;             (keyword_like)
-;;   ;;             (keyword_similar)
-;;   ;;             (keyword_over)
-;;   ;;             (keyword_change)
-;;   ;;             (keyword_modify)
-;;   ;;             (keyword_after)
-;;   ;;             (keyword_before)
-;;   ;;             (keyword_range)
-;;   ;;             (keyword_rows)
-;;   ;;             (keyword_groups)
-;;   ;;             (keyword_exclude)
-;;   ;;             (keyword_current)
-;;   ;;             (keyword_ties)
-;;   ;;             (keyword_others)
-;;   ;;             (keyword_preserve)
-;;   ;;             (keyword_zerofill)
-;;   ;;             (keyword_format)
-;;   ;;             (keyword_fields)
-;;   ;;             (keyword_row)
-;;   ;;             (keyword_sort)
-;;   ;;             (keyword_compute)
-;;   ;;             (keyword_comment)
-;;   ;;             (keyword_location)
-;;   ;;             (keyword_cached)
-;;   ;;             (keyword_uncached)
-;;   ;;             (keyword_lines)
-;;   ;;             (keyword_stored)
-;;   ;;             (keyword_partitioned)
-;;   ;;             (keyword_analyze)
-;;   ;;             (keyword_explain)
-;;   ;;             (keyword_verbose)
-;;   ;;             (keyword_truncate)
-;;   ;;             (keyword_rewrite)
-;;   ;;             (keyword_optimize)
-;;   ;;             (keyword_vacuum)
-;;   ;;             (keyword_cache)
-;;   ;;             (keyword_language)
-;;   ;;             (keyword_sql)
-;;   ;;             (keyword_called)
-;;   ;;             (keyword_conflict)
-;;   ;;             (keyword_declare)
-;;   ;;             (keyword_filter)
-;;   ;;             (keyword_function)
-;;   ;;             (keyword_input)
-;;   ;;             (keyword_name)
-;;   ;;             (keyword_oid)
-;;   ;;             (keyword_options)
-;;   ;;             (keyword_plpgsql)
-;;   ;;             (keyword_precision)
-;;   ;;             (keyword_regclass)
-;;   ;;             (keyword_regnamespace)
-;;   ;;             (keyword_regproc)
-;;   ;;             (keyword_regtype)
-;;   ;;             (keyword_restricted)
-;;   ;;             (keyword_return)
-;;   ;;             (keyword_returns)
-;;   ;;             (keyword_separator)
-;;   ;;             (keyword_setof)
-;;   ;;             (keyword_stable)
-;;   ;;             (keyword_support)
-;;   ;;             (keyword_tblproperties)
-;;   ;;             (keyword_trigger)
-;;   ;;             (keyword_unsafe)
-;;   ;;             (keyword_admin)
-;;   ;;             (keyword_connection)
-;;   ;;             (keyword_cycle)
-;;   ;;             (keyword_database)
-;;   ;;             (keyword_encrypted)
-;;   ;;             (keyword_increment)
-;;   ;;             (keyword_logged)
-;;   ;;             (keyword_none)
-;;   ;;             (keyword_owned)
-;;   ;;             (keyword_password)
-;;   ;;             (keyword_reset)
-;;   ;;             (keyword_role)
-;;   ;;             (keyword_sequence)
-;;   ;;             (keyword_start)
-;;   ;;             (keyword_restart)
-;;   ;;             (keyword_tablespace)
-;;   ;;             (keyword_until)
-;;   ;;             (keyword_user)
-;;   ;;             (keyword_valid)
-;;   ;;             ] @font-lock-keyword-face)
-
-;;   ;;         ;; :feature 'constant
-;;   ;;         ;; :language 'python
-;;   ;;         ;; '([(true) (false) (none)] @font-lock-constant-face)
-
-;;   ;;         ;; :feature 'definition
-;;   ;;         ;; :language 'python
-;;   ;;         ;; '((function_definition
-;;   ;;         ;;     name: (identifier) @font-lock-function-name-face)
-;;   ;;         ;;    (class_definition
-;;   ;;         ;;      name: (identifier) @font-lock-type-face)
-;;   ;;         ;;    (parameters (identifier) @font-lock-variable-name-face))
-
-;;   ;;         ;; :feature 'function
-;;   ;;         ;; :language 'python
-;;   ;;         ;; '((call function: (identifier) @font-lock-function-call-face)
-;;   ;;         ;;    (call function: (attribute
-;;   ;;         ;;                      attribute: (identifier) @font-lock-function-call-face)))
-
-;;   ;;         ;; :feature 'builtin
-;;   ;;         ;; :language 'python
-;;   ;;         ;; `(((identifier) @font-lock-builtin-face
-;;   ;;         ;;     (:match ,(rx-to-string
-;;   ;;         ;;                `(seq bol
-;;   ;;         ;;                   (or ,@python--treesit-builtins
-;;   ;;         ;;                     ,@python--treesit-special-attributes)
-;;   ;;         ;;                   eol))
-;;   ;;         ;;       @font-lock-builtin-face)))
-
-;;   ;;         ;; :feature 'constant
-;;   ;;         ;; :language 'python
-;;   ;;         ;; '([(true) (false) (none)] @font-lock-constant-face)
-
-;;   ;;         ;; :feature 'assignment
-;;   ;;         ;; :language 'python
-;;   ;;         ;; `(;; Variable names and LHS.
-;;   ;;         ;;    (assignment left: (identifier)
-;;   ;;         ;;      @font-lock-variable-name-face)
-;;   ;;         ;;    (assignment left: (attribute
-;;   ;;         ;;                        attribute: (identifier)
-;;   ;;         ;;                        @font-lock-property-use-face))
-;;   ;;         ;;    (pattern_list (identifier)
-;;   ;;         ;;      @font-lock-variable-name-face)
-;;   ;;         ;;    (tuple_pattern (identifier)
-;;   ;;         ;;      @font-lock-variable-name-face)
-;;   ;;         ;;    (list_pattern (identifier)
-;;   ;;         ;;      @font-lock-variable-name-face)
-;;   ;;         ;;    (list_splat_pattern (identifier)
-;;   ;;         ;;      @font-lock-variable-name-face))
-
-;;   ;;         ;; :feature 'decorator
-;;   ;;         ;; :language 'python
-;;   ;;         ;; '((decorator "@" @font-lock-type-face)
-;;   ;;         ;;    (decorator (call function: (identifier) @font-lock-type-face))
-;;   ;;         ;;    (decorator (identifier) @font-lock-type-face))
-
-;;   ;;         ;; :feature 'type
-;;   ;;         ;; :language 'python
-;;   ;;         ;; `(((identifier) @font-lock-type-face
-;;   ;;         ;;     (:match ,(rx-to-string
-;;   ;;         ;;                `(seq bol (or ,@python--treesit-exceptions)
-;;   ;;         ;;                   eol))
-;;   ;;         ;;       @font-lock-type-face))
-;;   ;;         ;;    (type (identifier) @font-lock-type-face))
-
-;;   ;;         ;; :feature 'escape-sequence
-;;   ;;         ;; :language 'python
-;;   ;;         ;; :override t
-;;   ;;         ;; '((escape_sequence) @font-lock-escape-face)
-
-;;   ;;         ;; :feature 'number
-;;   ;;         ;; :language 'python
-;;   ;;         ;; '([(integer) (float)] @font-lock-number-face)
-
-;;   ;;         ;; :feature 'property
-;;   ;;         ;; :language 'python
-;;   ;;         ;; '((attribute
-;;   ;;         ;;     attribute: (identifier) @font-lock-property-use-face)
-;;   ;;         ;;    (class_definition
-;;   ;;         ;;      body: (block
-;;   ;;         ;;              (expression_statement
-;;   ;;         ;;                (assignment left:
-;;   ;;         ;;                  (identifier) @font-lock-property-use-face)))))
-
-;;   ;;         ;; :feature 'operator
-;;   ;;         ;; :language 'python
-;;   ;;         ;; `([,@python--treesit-operators] @font-lock-operator-face)
-
-;;   ;;         ;; :feature 'bracket
-;;   ;;         ;; :language 'python
-;;   ;;         ;; '(["(" ")" "[" "]" "{" "}"] @font-lock-bracket-face)
-
-;;   ;;         ;; :feature 'delimiter
-;;   ;;         ;; :language 'python
-;;   ;;         ;; '(["," "." ":" ";" (ellipsis)] @font-lock-delimiter-face)
-
-;;   ;;         ;; :feature 'variable
-;;   ;;         ;; :language 'python
-;;   ;;         ;; '((identifier) @python--treesit-fontify-variable)
-;;   ;;         ))
-
-;;   ;;     (setq treesit-font-lock-settings (append sql--treesit-settings treesit-font-lock-settings))
-;;   ;;     ))
-
-;;   (global-treesit-auto-mode))
+  (global-treesit-auto-mode))
 
 (use-package embark
   :commands embark-act
@@ -1486,7 +1175,8 @@ Quit if no candidate is selected."
    "C-v" 'split-window-vertically)
   (imap
     :keymaps 'vertico-map
-    "C-v" "C-e C-v")
+    "C-v" "C-e C-v"
+    "C-q" "C-e S")
   :init
   (setq prefix-help-command #'embark-prefix-help-command)
   :config
@@ -1776,30 +1466,18 @@ Note that these rules can't contain anchored rules themselves."
 (use-package lua-mode
   :mode "\\.lua\\'")
 
-(use-builtin tramp
-  :config
-  (setopt
-   explicit-shell-file-name "/bin/zsh"
-   tramp-default-remote-shell "/bin/zsh"
-   tramp-encoding-shell "/bin/zsh"
-   tramp-verbose 0))
+;; (use-builtin tramp
+;;   :config
+;;   (setopt
+;;    explicit-shell-file-name "/bin/zsh"
+;;    tramp-default-remote-shell "/bin/zsh"
+;;    tramp-encoding-shell "/bin/zsh"
+;;    tramp-verbose 0))
 
 (use-builtin calendar
   :defer t
   :custom
   (calendar-minimum-window-height 10))
-
-(use-package denote
-  :custom
-  (denote-directory "~/denote")
-  (denote-allow-multi-word-keywords t)
-  :general
-  (nvmap
-    :keymaps 'override
-    :prefix "SPC d"
-    "f" '(denote-open-or-create :wk "Find node")
-    "i" '(denote-insert-link :wk "Insert node reference")
-    "c" '(denote-create-note :wk "Create new node")))
 
 ;; (use-package smartparens
 ;;   :demand t
@@ -1845,37 +1523,6 @@ Note that these rules can't contain anchored rules themselves."
   :defer t
   :custom
   (vc-handled-backends nil))
-
-                                        ; (use-package magit
-                                        ;   :custom
-                                        ;   (magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1)
-                                        ;   :preface
-                                        ;   (defun my-magit-process-environment (env)
-                                        ;     "Add GIT_DIR and GIT_WORK_TREE to ENV when in a special directory.
-                                        ; https://github.com/magit/magit/issues/460 (@cpitclaudel)."
-                                        ;     (let ((default (file-name-as-directory (expand-file-name default-directory)))
-                                        ;           (home (expand-file-name "~/")))
-                                        ;       (when (string= default home)
-                                        ;         (let ((gitdir (expand-file-name "~/dotfiles/")))
-                                        ;           (push (format "GIT_WORK_TREE=%s" home) env)
-                                        ;           (push (format "GIT_DIR=%s" gitdir) env))))
-                                        ;     env)
-                                        ;   :general
-                                        ;   (nvmap
-                                        ;     :prefix "SPC g"
-                                        ;     "g" 'magit-status
-                                        ;     "d" (lambda ()
-                                        ;           (interactive)
-                                        ;           (magit-status "~")))
-
-                                        ;   (general-define-key
-                                        ;     :keymaps 'transient-base-map
-                                        ;     "<escape>" 'transient-quit-one)
-                                        ;   :config
-                                        ;   (advice-add 'magit-process-environment
-                                        ;               :filter-return #'my-magit-process-environment)
-                                        ;   (advice-add 'magit-status :around #'execute-at-project-root))
-
 
 (add-hook
  'yaml-ts-mode-hook
