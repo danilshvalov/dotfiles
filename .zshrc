@@ -91,10 +91,10 @@ alias cfg='/usr/bin/git --git-dir=$HOME/dotfiles/ --work-tree=$HOME'
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
     eval "$(/opt/homebrew/bin/brew shellenv)"
+elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 fi
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
 unsetopt PROMPT_SP
-
-eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"

@@ -3,4 +3,4 @@
 if [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; then
     TERM=xterm-direct 
 fi
-emacsclient -nw --eval "(cd \"$PWD\")" $@
+emacsclient -nw $@

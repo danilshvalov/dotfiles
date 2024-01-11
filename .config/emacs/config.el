@@ -1020,6 +1020,7 @@ Quit if no candidate is selected."
      ("C" . c-ts-mode)
      ("cpp" . c++-ts-mode)
      ("C++" . c++-ts-mode)
+     ("html" . mhtml-mode)
      ;; ("python" . python-ts-mode)
      ("screen" . shell-script-mode)
      ("shell" . sh-mode)
@@ -1581,7 +1582,7 @@ Note that these rules can't contain anchored rules themselves."
   (tab-bar-new-tab-to 'rightmost)
   :preface
   (defun my-tab-name-current ()
-    1
+    "1"
     ;; (cdr (assoc 'name (cdr (tab-bar--current-tab-find nil nil))))
     )
 
@@ -1715,7 +1716,10 @@ Note that these rules can't contain anchored rules themselves."
 
 (use-package web-mode
   :custom
-  (web-mode-enable-auto-expanding t))
+  (web-mode-enable-auto-expanding t)
+  (web-mode-enable-auto-closing t)
+  :config
+  (add-hook 'mhtml-mode-hook 'web-mode))
 
 (use-package git-commit)
 
