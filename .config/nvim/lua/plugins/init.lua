@@ -254,7 +254,7 @@ return {
     },
     keymap = function(map)
       map:set("<leader>cf", function()
-        vim.lsp.buf.format({ async = false, timeout_ms = 10000 })
+        vim.lsp.buf.format({ async = true, timeout_ms = 5000 })
       end)
     end,
     config = function()
@@ -1115,6 +1115,8 @@ return {
     config = function()
       _G.utf8 = require("lua-utf8")
 
+      _G.string_sub = string.sub
+
       local function find_char_pos(s, init)
         if not init then
           return
@@ -1124,7 +1126,7 @@ return {
           init = string.len(s) + init + 1
         end
 
-        local clean, _ = utf8.clean(string.sub(s, 0, init))
+        local clean, _ = utf8.clean(string_sub(s, 0, init))
         local new_init = utf8.len(clean)
         if utf8.offset(s, new_init) < init then
           new_init = new_init + 1
@@ -1133,7 +1135,24 @@ return {
         return new_init
       end
 
+      local function is_ascii(s)
+        for i = 1, #s do
+          if s:byte(i) > 128 then
+            return false
+          end
+        end
+        return true
+      end
+
+      _G.string_find = string.find
+
       string.find = function(s, pattern, init, plain)
+        if is_ascii(s) then
+          return string_find(s, pattern, init, plain)
+        end
+
+        s = utf8.clean(s, "")
+
         init = find_char_pos(s, init)
 
         local start, finish = utf8.find(s, pattern, init, plain)
@@ -1150,44 +1169,48 @@ return {
         return new_start, new_finish
       end
 
-      local string_match = string.match
+      _G.string_match = string.match
 
-      -- string.match = function(s, pattern, init)
-      --   if not string_match(s, "%G", init) then
-      --     return string_match(s, pattern, init)
-      --   end
+      string.match = function(s, pattern, init)
+        if is_ascii(s) then
+          return string_match(s, pattern, init)
+        end
 
-      --   local result = { utf8.match(s, pattern, find_char_pos(s, init)) }
+        s = utf8.clean(s, "")
 
-      --   for i, capture in ipairs(result) do
-      --     if type(capture) == "number" then
-      --       result[i] = utf8.offset(s, capture)
-      --     end
-      --   end
+        local result = { utf8.match(s, pattern, find_char_pos(s, init)) }
 
-      --   return unpack(result)
-      -- end
+        for i, capture in ipairs(result) do
+          if type(capture) == "number" then
+            result[i] = utf8.offset(s, capture)
+          end
+        end
 
-      -- local string_gmatch = string.gmatch
+        return unpack(result)
+      end
 
-      -- string.gmatch = function(s, pattern)
-      --   if not string_match(s, "%G", init) then
-      --     return string_gmatch(s, pattern, init)
-      --   end
+      _G.string_gmatch = string.gmatch
 
-      --   local iterator = utf8.gmatch(s, pattern)
-      --   return function()
-      --     local result = { iterator() }
+      string.gmatch = function(s, pattern)
+        if is_ascii(s) then
+          return string_gmatch(s, pattern)
+        end
 
-      --     for i, capture in ipairs(result) do
-      --       if type(capture) == "number" then
-      --         result[i] = utf8.offset(s, capture)
-      --       end
-      --     end
+        s = utf8.clean(s, "")
 
-      --     return unpack(result)
-      --   end
-      -- end
+        local iterator = utf8.gmatch(s, pattern)
+        return function()
+          local result = { iterator() }
+
+          for i, capture in ipairs(result) do
+            if type(capture) == "number" then
+              result[i] = utf8.offset(s, capture)
+            end
+          end
+
+          return unpack(result)
+        end
+      end
 
       -- string.sub = function(s, i, j)
       --   i = find_char_pos(s, i)
