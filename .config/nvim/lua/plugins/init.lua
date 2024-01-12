@@ -7,6 +7,26 @@ return {
     "Wansmer/langmapper.nvim",
     config = function()
       local langmapper = require("langmapper")
+      local utils = require("langmapper.utils")
+
+      local function is_ascii(s)
+        for i = 1, #s do
+          if s:byte(i) > 128 then
+            return false
+          end
+        end
+        return true
+      end
+      
+      local translate_keycode = utils.translate_keycode
+
+      utils.translate_keycode = function(lhs, to_lang, from_lang)
+        if is_ascii(lhs) then
+          return lhs
+        end
+        return translate_keycode(lhs, to_lang, from_lang)
+      end
+
       langmapper.setup({
         hack_keymap = true,
       })
@@ -214,8 +234,8 @@ return {
     config = function()
       local treesitter = require("nvim-treesitter.configs")
 
-      vim.o.foldlevel = 99
-      vim.o.foldlevelstart = 99
+      -- vim.o.foldlevel = 99
+      -- vim.o.foldlevelstart = 99
 
       treesitter.setup({
         ensure_installed = {
@@ -838,21 +858,21 @@ return {
       })
     end,
   },
-  {
-    "kevinhwang91/nvim-ufo",
-    dependencies = "kevinhwang91/promise-async",
-    config = function()
-      local ft_options = {
-        org = "",
-      }
+  -- {
+  --   "kevinhwang91/nvim-ufo",
+  --   dependencies = "kevinhwang91/promise-async",
+  --   config = function()
+  --     local ft_options = {
+  --       org = "",
+  --     }
 
-      require("ufo").setup({
-        provider_selector = function(_, filetype)
-          return ft_options[filetype] or { "treesitter", "indent" }
-        end,
-      })
-    end,
-  },
+  --     require("ufo").setup({
+  --       provider_selector = function(_, filetype)
+  --         return ft_options[filetype] or { "treesitter", "indent" }
+  --       end,
+  --     })
+  --   end,
+  -- },
   {
     "echasnovski/mini.nvim",
     config = function()
