@@ -1,11 +1,13 @@
 [core]
-  editor = "nvim"
-  pager = "nvim -R -"
+  editor = "my-emacs"
+  pager = "my-emacs-pipe"
 
 [alias]
   st = status
   co = checkout
   ci = commit
+  df = diff --no-color
+  p  = push
 
 [branch "trunk"]
     allowCommit = false
