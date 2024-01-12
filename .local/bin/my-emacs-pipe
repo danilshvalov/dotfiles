@@ -1,0 +1,3 @@
+#!/bin/zsh
+
+(f=$(mktemp); cat > $f; my-emacs $f; rm -v $f)

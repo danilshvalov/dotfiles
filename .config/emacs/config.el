@@ -565,9 +565,11 @@ DIR must include a .project file to be considered a project."
                (if (string-prefix-p root file)
                    (file-relative-name file root)
                  file)))
-           (remove
-            (consult--fast-abbreviate-file-name (or (buffer-file-name) ""))
-            (bound-and-true-p recentf-list))))
+           (cl-remove-if
+            (lambda (x) (string-prefix-p "/var/tmp/tmp" x))
+            (remove
+             (consult--fast-abbreviate-file-name (or (buffer-file-name) ""))
+             (bound-and-true-p recentf-list)))))
          (user-error "No recent files, `recentf-mode' is %s"
                      (if recentf-mode
                          "enabled"
