@@ -9,24 +9,6 @@ return {
       local langmapper = require("langmapper")
       local utils = require("langmapper.utils")
 
-      local function is_ascii(s)
-        for i = 1, #s do
-          if s:byte(i) > 128 then
-            return false
-          end
-        end
-        return true
-      end
-      
-      local translate_keycode = utils.translate_keycode
-
-      utils.translate_keycode = function(lhs, to_lang, from_lang)
-        if is_ascii(lhs) then
-          return lhs
-        end
-        return translate_keycode(lhs, to_lang, from_lang)
-      end
-
       langmapper.setup({
         hack_keymap = true,
       })
@@ -372,7 +354,8 @@ return {
         modified = "**",
         readwrite = "RW",
         readonly = "RO",
-        terminal = "TT",
+        terminal = "TERM",
+        fzf = "FZF",
       }
 
       local function modified_color()
@@ -388,8 +371,9 @@ return {
             function()
               if vim.bo.filetype == "toggleterm" then
                 return symbols.terminal
-              end
-              if vim.bo.modified then
+              elseif vim.bo.filetype == "fzf" then
+                return symbols.fzf
+              elseif vim.bo.modified then
                 return symbols.modified
               elseif vim.bo.modifiable == false or vim.bo.readonly == true then
                 return symbols.readonly
@@ -403,17 +387,33 @@ return {
         lualine_b = {},
         lualine_c = {
           {
+            "diagnostics",
+            draw_empty = true,
+            fmt = function(str)
+              local result = vim.split(str, " ", { plain = true, trimempty = true })
+              for _ = 1, 4 - #result / 2 do
+                table.insert(result, "   ")
+              end
+              return table.concat(result, " ")
+            end,
+          },
+          "%=",
+          {
             "filename",
             file_status = false,
-            path = 0,
+            path = 3,
             fmt = function(str)
-              if vim.bo.filetype == "toggleterm" then
+              if
+                  str == "[No Name]" or vim.tbl_contains({ "toggleterm", "fzf" }, vim.bo.filetype)
+              then
                 return ""
               end
               return str
             end,
           },
-          "diagnostics",
+          function()
+            return string.rep(" ", 12)
+          end,
         },
         lualine_x = {},
         lualine_y = {},
@@ -1031,7 +1031,7 @@ return {
         winopts_fn = function()
           return {
             height = 0.3,
-            row = vim.o.lines - 14,
+            row = vim.o.lines - 18,
             width = vim.o.columns,
             border = "none",
           }
@@ -1468,6 +1468,8 @@ return {
           -- lua
           "stylua",
           "lua_ls",
+          -- markdown
+          "markdownlint",
         },
       })
     end,
@@ -1495,4 +1497,5 @@ return {
       })
     end,
   },
+  { "tpope/vim-eunuch" },
 }
