@@ -1,6 +1,7 @@
 [core]
-  editor = "my-emacs"
-  pager = "my-emacs-pipe"
+  editor = "nvim"
+  pager = "nvim -R"
+  # pager = "(f=$(mktemp); cat > $f; $EDITOR $f; rm -v $f)"
 
 [alias]
   st = status
