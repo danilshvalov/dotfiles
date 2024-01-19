@@ -82,6 +82,8 @@ source $ZSH/oh-my-zsh.sh
 export LANG=en_US.UTF-8
 
 alias v=nvim
+alias м=nvim
+
 alias e=my-emacs
 
 alias cls='printf "\ec\e[3J"'
