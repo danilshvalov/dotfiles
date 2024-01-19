@@ -105,6 +105,8 @@ vim.o.scrolloff = 10
 vim.o.sidescrolloff = 20
 vim.o.signcolumn = "yes"
 
+vim.opt.completeopt = { "menu", "preview", "menuone", "noinsert" }
+
 kit.autocmd("TextYankPost", {
   callback = function()
     vim.highlight.on_yank({
