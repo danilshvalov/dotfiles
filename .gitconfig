@@ -13,6 +13,9 @@
 [diff]
   tool = nvimdiff
 
+[mergetool "nvimdiff"]
+  cmd = nvim -f -d $LOCAL $REMOTE
+
 [mergetool]
   keepBackup = false
 	trustExitCode = true
