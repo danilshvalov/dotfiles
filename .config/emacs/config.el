@@ -56,16 +56,16 @@
   (defvar my-directories nil)
   (defvar my-directory nil)
 
-  (defun my-get-current-directory ()
-    (or my-directory (or (getenv "PWD") "~"))
-    ;; (or (assoc-default (my-tab-name-current) my-directories)
-    ;;     (or (getenv "PWD") "~"))
-    )
+  ;; (defun my-get-current-directory ()
+  ;;   (or my-directory (or (getenv "PWD") "~"))
+  ;;   ;; (or (assoc-default (my-tab-name-current) my-directories)
+  ;;   ;;     (or (getenv "PWD") "~"))
+  ;;   )
 
-  (defun my-set-current-directory (directory)
-    (setq my-directory directory)
-    ;; (add-to-list 'my-directories (cons (my-tab-name-current) directory))
-    )
+  ;; (defun my-set-current-directory (directory)
+  ;;   (setq my-directory directory)
+  ;;   ;; (add-to-list 'my-directories (cons (my-tab-name-current) directory))
+  ;;   )
 
   ;; remove image resize delay
   (advice-add 'image--delayed-change-size :override 'image--change-size)
@@ -220,11 +220,11 @@
 
 (use-package project
   :requires consult
-  :preface
-  (defun dired-project-root ()
-    (interactive)
-    (let ((default-directory (project-root-current)))
-      (dired default-directory)))
+  ;; :preface
+  ;; (defun dired-project-root ()
+  ;;   (interactive)
+  ;;   (let ((default-directory (project-root-current)))
+  ;;     (dired default-directory)))
   :custom
   (project-switch-commands '((consult-fd "Find file")
                              (dired-project-root "Dired")))
@@ -238,20 +238,26 @@
     "a" 'my-project-add)
 
   :preface
-  (cl-defmethod project-root ((project (head local)))
-    "Return root directory of current PROJECT."
-    (cdr project))
+  ;; (cl-defmethod project-root ((project (head local)))
+  ;;   "Return root directory of current PROJECT."
+  ;;   (cdr project))
 
   (defun project-root-current ()
-    (or project-current-directory-override
-        (my-get-current-directory)
-        ;; my-default-directory
-        ))
+    (let ((current (project-current)))
+      (if current
+          (project-root current)
+        default-directory))
+    ;; (or project-current-directory-override
+    ;;     default-directory
+    ;;     ; (my-get-current-directory)
+    ;;     ;; my-default-directory
+    ;;     )
+    )
 
-  (defun project-find-root (dir)
-    "Determine if DIR is a non-VC project.
-DIR must include a .project file to be considered a project."
-    (cons 'local (project-root-current)))
+  ;; (defun project-find-root (dir)
+;;     "Determine if DIR is a non-VC project.
+;; DIR must include a .project file to be considered a project."
+;;     (cons 'local (project-root-current)))
 
   (defun my-project-add (&optional dir)
     (interactive)
@@ -263,7 +269,22 @@ DIR must include a .project file to be considered a project."
       (project-remember-project (cons 'local dir))))
   :init
 
-  (add-hook 'project-find-functions #'project-find-root))
+  ;; (add-hook 'project-find-functions #'project-find-root)
+  )
+
+(use-package project-x
+  :demand t
+  :elpaca (:host github :repo "karthink/project-x")
+  :after project
+  :custom
+  (project-x-local-identifier '(".project" "ya.make"))
+  :config
+  (add-hook 'project-find-functions 'project-x-try-local 90)
+  ;; (add-hook 'kill-emacs-hook 'project-x--window-state-write)
+  ;; (add-to-list 'project-switch-commands
+  ;;              '(?j "Restore windows" project-x-windows) t)
+  :bind (("C-x p w" . project-x-window-state-save)
+         ("C-x p j" . project-x-window-state-load)))
 
 (set-frame-font "JetBrains Mono 17" nil t)
 
@@ -1708,13 +1729,14 @@ Note that these rules can't contain anchored rules themselves."
           (cd default-directory))
     "D" 'cd)
   :config
-  (advice-add
-   'cd
-   :around
-   (lambda (fun &rest args)
-     (apply fun args)
-     (my-set-current-directory (car args))
-     (message "Directory: %s" default-directory))))
+  ;; (advice-add
+  ;;  'cd
+  ;;  :around
+  ;;  (lambda (fun &rest args)
+  ;;    (apply fun args)
+  ;;    (my-set-current-directory (car args))
+  ;;    (message "Directory: %s" default-directory)))
+  )
 
 (use-package web-mode
   :custom
