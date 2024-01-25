@@ -27,6 +27,7 @@ vim.opt.listchars = {
   tab = ">-",
 }
 
+vim.o.foldlevel = 99
 vim.o.wrap = true
 vim.o.breakindent = true
 vim.o.lbr = true
