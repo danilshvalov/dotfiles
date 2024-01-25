@@ -218,9 +218,6 @@ return {
     config = function()
       local treesitter = require("nvim-treesitter.configs")
 
-      -- vim.o.foldlevel = 99
-      -- vim.o.foldlevelstart = 99
-
       treesitter.setup({
         ensure_installed = {
           "cpp",
@@ -730,16 +727,16 @@ return {
       },
     },
   },
-  -- {
-  --   "uga-rosa/ccc.nvim",
-  --   opts = {
-  --     highlighter = {
-  --       auto_enable = true,
-  --       lsp = true,
-  --       excludes = { "git" },
-  --     },
-  --   },
-  -- },
+  {
+    "uga-rosa/ccc.nvim",
+    opts = {
+      highlighter = {
+        auto_enable = true,
+        lsp = true,
+        excludes = { "git" },
+      },
+    },
+  },
   {
     "AckslD/nvim-FeMaco.lua",
     ft = { "markdown" },
@@ -860,21 +857,6 @@ return {
       })
     end,
   },
-  -- {
-  --   "kevinhwang91/nvim-ufo",
-  --   dependencies = "kevinhwang91/promise-async",
-  --   config = function()
-  --     local ft_options = {
-  --       org = "",
-  --     }
-
-  --     require("ufo").setup({
-  --       provider_selector = function(_, filetype)
-  --         return ft_options[filetype] or { "treesitter", "indent" }
-  --       end,
-  --     })
-  --   end,
-  -- },
   {
     "echasnovski/mini.nvim",
     config = function()
@@ -959,6 +941,14 @@ return {
           end
           return fallback()
         end)
+
+      map:mode("c"):amend("<CR>", function(fallback)
+        if vim.fn.wildmenumode() == 1 then
+          vim.api.nvim_feedkeys(vim.keycode("<Down>"), "n", false)
+        else
+          fallback()
+        end
+      end)
     end,
     config = function()
       local ls = require("luasnip")
@@ -1035,11 +1025,6 @@ return {
         complete = function()
           return vim.tbl_keys(arc_commands)
         end,
-      })
-
-      vim.api.nvim_create_autocmd({ "BufDelete", "BufWipeout" }, {
-        pattern = "*",
-        command = "wshada",
       })
 
       fzf.setup({
@@ -1357,97 +1342,6 @@ return {
       })
     end,
   },
-  -- {
-  --   "nvim-telescope/telescope.nvim",
-  --   branch = "0.1.x",
-  --   dependencies = {
-  --     "nvim-lua/plenary.nvim",
-  --     { "nvim-telescope/telescope-fzf-native.nvim", build = "make" },
-  --     "nvim-telescope/telescope-ui-select.nvim",
-  --   },
-  --   config = function()
-  --     local telescope = require("telescope")
-  --     local builtin = require("telescope.builtin")
-  --     local actions = require("telescope.actions")
-
-  --     map
-  --         :prefix("<leader>f", "+find")
-  --         :set("f", builtin.find_files, { desc = "Find files" })
-  --         :set("g", builtin.live_grep, { desc = "Grep files" })
-  --         :set("r", builtin.oldfiles, { desc = "Recent files" })
-  --         :set("h", builtin.help_tags, { desc = "Help tags" })
-  --         :set("p", builtin.resume, { desc = "Resume last search" })
-
-  --     map:set("z=", builtin.spell_suggest)
-
-  --     map
-  --         :prefix("<leader>n", "+notes")
-  --         :set("f", function()
-  --           builtin.find_files({ cwd = "~/obsidian" })
-  --         end)
-  --         :set("o", function()
-  --           vim.cmd.edit("~/obsidian")
-  --         end)
-
-  --     telescope.setup({
-  --       defaults = {
-  --         preview = false,
-  --         border = true,
-  --         borderchars = {
-  --           preview = { "─", "│", "─", "│", "╭", "╮", "╯", "╰" },
-  --           prompt = { "─", " ", " ", " ", "─", "─", " ", " " },
-  --           results = { " " },
-  --         },
-  --         layout_config = {
-  --           height = 0.35,
-  --         },
-  --         file_ignore_patterns = {
-  --           "%.obsidian/",
-  --           "%.git/",
-  --           "build/",
-  --         },
-  --         layout_strategy = "bottom_pane",
-  --         sorting_strategy = "ascending",
-  --         theme = "ivy",
-  --         mappings = {
-  --           i = {
-  --             ["<C-j>"] = actions.move_selection_next,
-  --             ["<C-k>"] = actions.move_selection_previous,
-  --             ["<C-n>"] = actions.cycle_history_next,
-  --             ["<C-p>"] = actions.cycle_history_prev,
-  --             ["<C-f>"] = actions.to_fuzzy_refine,
-  --             ["<C-q>"] = actions.send_selected_to_qflist + actions.open_qflist,
-  --             ["<C-u>"] = false,
-  --           },
-  --         },
-  --         path_display = function(_, path)
-  --           local cwd = vim.uv.cwd() .. "/"
-  --           if path:sub(1, #cwd) == cwd then
-  --             path = path:sub(#cwd + 1)
-  --           end
-  --           return path:gsub(vim.env.HOME, "~", 1)
-  --         end,
-  --       },
-  --       pickers = {
-  --         find_files = {
-  --           hidden = true,
-  --         },
-  --       },
-  --       extensions = {
-  --         fzf = {
-  --           fuzzy = true,
-  --           override_generic_sorter = true,
-  --           override_file_sorter = true,
-  --           case_mode = "smart_case",
-  --         },
-  --         ["ui-select"] = {},
-  --       },
-  --     })
-
-  --     telescope.load_extension("fzf")
-  --     telescope.load_extension("ui-select")
-  --   end,
-  -- },
   {
     "lervag/vimtex",
     ft = "tex",
@@ -1516,6 +1410,48 @@ return {
       })
     end,
   },
-  { "tpope/vim-eunuch" },
+  { "lambdalisue/suda.vim" },
   { "jamessan/vim-gnupg" },
+  {
+    "notomo/cmdbuf.nvim",
+    config = function()
+      vim.keymap.set("n", "q:", function()
+        require("cmdbuf").split_open(vim.o.cmdwinheight)
+      end)
+      vim.keymap.set("c", "<C-f>", function()
+        require("cmdbuf").split_open(vim.o.cmdwinheight, { line = vim.fn.getcmdline(), column = vim.fn.getcmdpos() })
+        vim.api.nvim_feedkeys(vim.keycode("<C-c>"), "n", true)
+      end)
+
+      -- Custom buffer mappings
+      vim.api.nvim_create_autocmd({ "User" }, {
+        group = vim.api.nvim_create_augroup("cmdbuf_setting", {}),
+        pattern = { "CmdbufNew" },
+        callback = function(args)
+          vim.bo.bufhidden = "wipe" -- if you don't need previous opened buffer state
+          vim.keymap.set("n", "q", [[<Cmd>quit<CR>]], { nowait = true, buffer = true })
+          vim.keymap.set("n", "dd", [[<Cmd>lua require('cmdbuf').delete()<CR>]], { buffer = true })
+
+          -- you can filter buffer lines
+          local lines = vim.tbl_filter(function(line)
+            return line ~= "q"
+          end, vim.api.nvim_buf_get_lines(args.buf, 0, -1, false))
+          vim.api.nvim_buf_set_lines(args.buf, 0, -1, false, lines)
+        end,
+      })
+
+      -- open lua command-line window
+      vim.keymap.set("n", "ql", function()
+        require("cmdbuf").split_open(vim.o.cmdwinheight, { type = "lua/cmd" })
+      end)
+
+      -- q/, q? alternative
+      vim.keymap.set("n", "q/", function()
+        require("cmdbuf").split_open(vim.o.cmdwinheight, { type = "vim/search/forward" })
+      end)
+      vim.keymap.set("n", "q?", function()
+        require("cmdbuf").split_open(vim.o.cmdwinheight, { type = "vim/search/backward" })
+      end)
+    end
+  }
 }

@@ -197,7 +197,7 @@ function _G.make_comment(str)
   return vim.bo.commentstring:gsub("%%s", str)
 end
 
-map:ft({ "tex", "markdown" }):mode("i"):set("<A-CR>", insert_item)
+-- map:ft({ "tex", "markdown" }):mode("i"):set("<A-CR>", insert_item)
 
 kit.call_at_ft({ "markdown", "org", "tex" }, function()
   vim.bo.textwidth = 80
