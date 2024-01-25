@@ -7,7 +7,6 @@ return {
     "Wansmer/langmapper.nvim",
     config = function()
       local langmapper = require("langmapper")
-      local utils = require("langmapper.utils")
 
       langmapper.setup({
         hack_keymap = true,
@@ -36,6 +35,9 @@ return {
     keymap = function(map)
       map:set("<leader>l", vim.cmd.Lazy)
 
+      -- see https://vi.stackexchange.com/questions/5605/how-to-fix-cmap-breaking-cabbrev
+      map:mode("c"):set("<CR>", "<C-]><CR>")
+
       map:set("х", "[")
 
       map:set("Y", "y$")
@@ -49,9 +51,9 @@ return {
       map:mode("i"):set("<C-k>", "<C-p>"):set("<C-j>", "<C-n>")
 
       map
-        :mode("nvo")
-        :set("H", "^", { desc = "Start of line" })
-        :set("L", "$", { desc = "End of line" })
+          :mode("nvo")
+          :set("H", "^", { desc = "Start of line" })
+          :set("L", "$", { desc = "End of line" })
 
       map:prefix("<leader>t", "+toggle"):set("w", function()
         if not vim.opt_local.formatoptions:get().a then
@@ -62,25 +64,25 @@ return {
       end, { desc = "Toggle wrap" })
 
       map
-        :new({ mode = "nv", expr = true })
-        :set("k", "(v:count? 'k' : 'gk')")
-        :set("j", "(v:count? 'j' : 'gj')")
+          :new({ mode = "nv", expr = true })
+          :set("k", "(v:count? 'k' : 'gk')")
+          :set("j", "(v:count? 'j' : 'gj')")
 
       map
-        :prefix("<leader>o", "+open")
-        :set("f", kit.wrap(vim.fn.system, "open ."), { desc = "Open in finder" })
+          :prefix("<leader>o", "+open")
+          :set("f", kit.wrap(vim.fn.system, "open ."), { desc = "Open in finder" })
 
       map
-        :prefix("<leader>d", "+dir")
-        :set("c", function()
-          local path, _ = vim.fn.expand("%:p:h"):gsub("oil://", "")
-          vim.cmd.cd(path)
-          vim.notify("Directory: " .. vim.fn.expand("%:p:~:h"):gsub("oil://", ""))
-        end, { desc = "Set cwd to current file directory" })
-        :set("y", function()
-          vim.fn.setreg("+", vim.fn.expand("%:p:h"))
-          vim.notify("Copied directory: " .. vim.fn.expand("%:p:~:h"))
-        end, { desc = "Yank cwd" })
+          :prefix("<leader>d", "+dir")
+          :set("c", function()
+            local path, _ = vim.fn.expand("%:p:h"):gsub("oil://", "")
+            vim.cmd.cd(path)
+            vim.notify("Directory: " .. vim.fn.expand("%:p:~:h"):gsub("oil://", ""))
+          end, { desc = "Set cwd to current file directory" })
+          :set("y", function()
+            vim.fn.setreg("+", vim.fn.expand("%:p:h"))
+            vim.notify("Copied directory: " .. vim.fn.expand("%:p:~:h"))
+          end, { desc = "Yank cwd" })
 
       map:set("<Esc>", vim.cmd.noh)
     end,
@@ -403,7 +405,7 @@ return {
             path = 3,
             fmt = function(str)
               if
-                str == "[No Name]" or vim.tbl_contains({ "toggleterm", "fzf" }, vim.bo.filetype)
+                  str == "[No Name]" or vim.tbl_contains({ "toggleterm", "fzf" }, vim.bo.filetype)
               then
                 return ""
               end
@@ -442,230 +444,65 @@ return {
     end,
   },
   -- {
-  --   "hrsh7th/nvim-cmp",
-  --   dependencies = {
-  --     "hrsh7th/cmp-nvim-lsp",
-  --     "hrsh7th/cmp-buffer",
-  --     "danilshvalov/cmp-path",
-  --     "hrsh7th/cmp-cmdline",
-  --     "saadparwaiz1/cmp_luasnip",
-  --   },
-  --   keymap = function(map)
-  --     --- see https://vi.stackexchange.com/questions/5605/how-to-fix-cmap-breaking-cabbrev
-  --     map:mode("c"):set("<CR>", "<C-]><CR>")
-  --   end,
+  --   "windwp/nvim-autopairs",
   --   config = function()
-  --     local cmp = require("cmp")
-  --     local cmp_autopairs = require("nvim-autopairs.completion.cmp")
-  --     local ls = kit.require_on_exported_call("luasnip")
+  --     local npairs = require("nvim-autopairs")
+  --     local cond = require("nvim-autopairs.conds")
+  --     local Rule = require("nvim-autopairs.rule")
 
-  --     local icons = {
-  --       Text = "",
-  --       Method = "󰆧",
-  --       Function = "󰊕",
-  --       Constructor = "",
-  --       Field = "󰜢",
-  --       Variable = "󰀫",
-  --       Class = "󰠱",
-  --       Interface = "",
-  --       Module = "",
-  --       Property = "󰜢",
-  --       Unit = "󰑭",
-  --       Value = "󰎠",
-  --       Enum = "",
-  --       Keyword = "󰌋",
-  --       Snippet = "",
-  --       Color = "󰏘",
-  --       File = "󰈙",
-  --       Reference = "",
-  --       Folder = "󰉋",
-  --       EnumMember = "",
-  --       Constant = "󰏿",
-  --       Struct = "󰙅",
-  --       Event = "",
-  --       Operator = "󰆕",
-  --       TypeParameter = "󰅲",
-  --     }
+  --     local ignore_regexp = "[%w%.А-Я%а-яЁё%(%[%{%'%\"]"
 
-  --     local mappings = {
-  --       ["<C-n>"] = cmp.mapping(cmp.mapping.complete(), { "i", "c" }),
-  --       ["<C-k>"] = cmp.mapping(cmp.mapping.select_prev_item(), { "i", "c", "s" }),
-  --       ["<C-j>"] = cmp.mapping(cmp.mapping.select_next_item(), { "i", "c", "s" }),
-  --       ["<C-e>"] = cmp.mapping({
-  --         i = cmp.mapping.abort(),
-  --         c = cmp.mapping.close(),
-  --       }),
-  --       ["<CR>"] = cmp.mapping(cmp.mapping.confirm(), { "i", "c", "s" }),
-  --       ["<Tab>"] = cmp.mapping({
-  --         i = function(fallback)
-  --           if cmp.get_selected_entry() then
-  --             cmp.confirm()
-  --           elseif ls.expand_or_jumpable() then
-  --             ls.expand_or_jump()
-  --           else
-  --             fallback()
-  --           end
-  --         end,
-  --         s = function(fallback)
-  --           if ls.jumpable(1) then
-  --             ls.jump(1)
-  --           else
-  --             fallback()
-  --           end
-  --         end,
-  --       }),
-  --       ["<S-Tab>"] = cmp.mapping({
-  --         i = function(fallback)
-  --           if ls.jumpable(-1) then
-  --             ls.jump(-1)
-  --           else
-  --             fallback()
-  --           end
-  --         end,
-  --         s = function(fallback)
-  --           if ls.jumpable(-1) then
-  --             ls.jump(-1)
-  --           else
-  --             fallback()
-  --           end
-  --         end,
-  --       }),
-  --     }
-
-  --     local sources = {
-  --       {
-  --         name = "buffer",
-  --         option = {
-  --           keyword_pattern = [[\k\+]],
-  --         },
+  --     npairs.setup({
+  --       enable_check_bracket_line = false,
+  --       fast_wrap = {
+  --         map = "<A-x>",
+  --         pattern = string.gsub("[%'%\"%)%>%]%)%}%%s%^]", "%s+", ""),
   --       },
-  --       {
-  --         name = "path",
-  --         option = {
-  --           get_cwd = function()
-  --             return vim.fn.getcwd()
-  --           end,
-  --         },
-  --       },
-  --       "nvim_lsp",
-  --       "luasnip",
-  --       "orgmode",
+  --       ignored_next_char = string.gsub(ignore_regexp, "%s+", ""),
+  --       disable_filetype = {},
+  --     })
+
+  --     npairs.add_rule(Rule("/*", "*/"))
+  --     npairs.add_rule(Rule('r#"', '"#', "rust"))
+
+  --     npairs.add_rule(Rule('"', "", "tex"))
+
+  --     npairs.add_rule(Rule("~", "~", "org"):with_move(cond.done))
+
+  --     npairs.add_rule(Rule("<<", ">>", "tex"))
+
+  --     npairs.add_rule(Rule("{", "};", "cpp"):with_pair(function(opts)
+  --       return opts.line:match("struct%s+") ~= nil or opts.line:match("class%s+") ~= nil
+  --     end))
+
+  --     npairs.add_rules({
+  --       Rule("<", ">"):with_pair(cond.before_regex("%w+")):with_move(function(opts)
+  --         return opts.char == ">"
+  --       end),
+  --     })
+
+  --     local big_pairs = {
+  --       { "[", "]" },
+  --       { "{", "}" },
+  --       -- { "(", ")" },
+  --       { "|", "|" },
   --     }
 
-  --     local priorities = {}
+  --     local big_kinds = { "", "big", "bigg", "Big", "Bigg" }
 
-  --     for index, value in ipairs(sources) do
-  --       if type(value) == "table" then
-  --         value.priority = index
-  --         priorities[index] = value
-  --       else
-  --         priorities[index] = { name = value, priority = index }
+  --     for _, kind in ipairs(big_kinds) do
+  --       for _, pair in pairs(big_pairs) do
+  --         npairs.add_rule(
+  --           Rule(
+  --             string.format("\\%s%s", kind, pair[1]),
+  --             string.format("\\%s%s", kind, pair[2]),
+  --             "tex"
+  --           ):with_move(cond.done())
+  --         )
   --       end
   --     end
-
-  --     cmp.setup({
-  --       snippet = {
-  --         expand = function(args)
-  --           return ls.lsp_expand(args.body)
-  --         end,
-  --       },
-  --       mapping = mappings,
-  --       sources = priorities,
-  --       formatting = {
-  --         fields = { "kind", "abbr", "menu" },
-  --         format = function(_, vim_item)
-  --           vim_item.menu = vim_item.kind
-  --           vim_item.kind = icons[vim_item.kind]
-  --           return vim_item
-  --         end,
-  --       },
-  --       completion = {
-  --         autocomplete = false,
-  --         keyword_pattern = [[\k\+]],
-  --         completeopt = "menu,menuone",
-  --       },
-  --     })
-
-  --     cmp.event:on("confirm_done", cmp_autopairs.on_confirm_done())
-
-  --     cmp.setup.cmdline({ "/", "?" }, {
-  --       mapping = cmp.mapping.preset.cmdline(),
-  --       sources = {
-  --         { name = "buffer" },
-  --       },
-  --       completion = {
-  --         keyword_pattern = [[\k\+]],
-  --       },
-  --     })
-
-  --     cmp.setup.cmdline(":", {
-  --       mapping = cmp.mapping.preset.cmdline(),
-  --       sources = cmp.config.sources({
-  --         { name = "cmdline" },
-  --       }),
-  --     })
   --   end,
   -- },
-  {
-    "windwp/nvim-autopairs",
-    config = function()
-      local npairs = require("nvim-autopairs")
-      local cond = require("nvim-autopairs.conds")
-      local Rule = require("nvim-autopairs.rule")
-
-      local ignore_regexp = "[%w%.А-Я%а-яЁё%(%[%{%'%\"]"
-
-      npairs.setup({
-        enable_check_bracket_line = false,
-        fast_wrap = {
-          map = "<A-x>",
-          pattern = string.gsub("[%'%\"%)%>%]%)%}%%s%^]", "%s+", ""),
-        },
-        ignored_next_char = string.gsub(ignore_regexp, "%s+", ""),
-        disable_filetype = {},
-      })
-
-      npairs.add_rule(Rule("/*", "*/"))
-      npairs.add_rule(Rule('r#"', '"#', "rust"))
-
-      npairs.add_rule(Rule('"', "", "tex"))
-
-      npairs.add_rule(Rule("~", "~", "org"):with_move(cond.done))
-
-      npairs.add_rule(Rule("<<", ">>", "tex"))
-
-      npairs.add_rule(Rule("{", "};", "cpp"):with_pair(function(opts)
-        return opts.line:match("struct%s+") ~= nil or opts.line:match("class%s+") ~= nil
-      end))
-
-      npairs.add_rules({
-        Rule("<", ">"):with_pair(cond.before_regex("%w+")):with_move(function(opts)
-          return opts.char == ">"
-        end),
-      })
-
-      local big_pairs = {
-        { "[", "]" },
-        { "{", "}" },
-        -- { "(", ")" },
-        { "|", "|" },
-      }
-
-      local big_kinds = { "", "big", "bigg", "Big", "Bigg" }
-
-      for _, kind in ipairs(big_kinds) do
-        for _, pair in pairs(big_pairs) do
-          npairs.add_rule(
-            Rule(
-              string.format("\\%s%s", kind, pair[1]),
-              string.format("\\%s%s", kind, pair[2]),
-              "tex"
-            ):with_move(cond.done())
-          )
-        end
-      end
-    end,
-  },
   {
     "folke/trouble.nvim",
     dependencies = "nvim-tree/nvim-web-devicons",
@@ -677,24 +514,24 @@ return {
       end
 
       map
-        :prefix("<leader>x")
-        :set("q", open("quickfix"))
-        :set("x", open("workspace_diagnostics"), { desc = "Show code errors" })
+          :prefix("<leader>x")
+          :set("q", open("quickfix"))
+          :set("x", open("workspace_diagnostics"), { desc = "Show code errors" })
 
       map
-        :new({ prefix = "<leader>c" })
-        :set("r", vim.lsp.buf.rename)
-        :set("h", vim.diagnostic.open_float)
-        :set("a", vim.lsp.buf.code_action)
+          :new({ prefix = "<leader>c" })
+          :set("r", vim.lsp.buf.rename)
+          :set("h", vim.diagnostic.open_float)
+          :set("a", vim.lsp.buf.code_action)
 
       map
-        :prefix("g", "+goto")
-        :set("d", open("lsp_definitions"), { desc = "Go definitions" })
-        :set("D", vim.lsp.buf.declaration, { desc = "Go declaration" })
-        :set("r", open("lsp_references"), { desc = "Go references" })
-        :set("i", open("lsp_implementations"), { desc = "Go implementations" })
-        :set("n", vim.diagnostic.goto_next, { desc = "Go next error" })
-        :set("p", vim.diagnostic.goto_prev, { desc = "Go prev error" })
+          :prefix("g", "+goto")
+          :set("d", open("lsp_definitions"), { desc = "Go definitions" })
+          :set("D", vim.lsp.buf.declaration, { desc = "Go declaration" })
+          :set("r", open("lsp_references"), { desc = "Go references" })
+          :set("i", open("lsp_implementations"), { desc = "Go implementations" })
+          :set("n", vim.diagnostic.goto_next, { desc = "Go next error" })
+          :set("p", vim.diagnostic.goto_prev, { desc = "Go prev error" })
 
       require("trouble").setup()
     end,
@@ -769,13 +606,13 @@ return {
       local toggleterm = kit.require_on_exported_call("toggleterm")
 
       map
-        :prefix("<leader>t", "+toggle")
-        :set("t", function()
-          toggleterm.toggle(vim.v.count, nil, nil, "horizontal")
-        end)
-        :set("T", function()
-          toggleterm.toggle(vim.v.count, nil, nil, "tab")
-        end)
+          :prefix("<leader>t", "+toggle")
+          :set("t", function()
+            toggleterm.toggle(vim.v.count, nil, nil, "horizontal")
+          end)
+          :set("T", function()
+            toggleterm.toggle(vim.v.count, nil, nil, "tab")
+          end)
 
       map:ft("toggleterm"):mode("t"):set("<Esc><Esc>", "<C-\\><C-n>")
     end,
@@ -806,7 +643,7 @@ return {
     config = function()
       local get_input = function(prompt, default)
         local ok, result =
-          pcall(vim.fn.input, { prompt = prompt, default = default, cancelreturn = vim.NIL })
+            pcall(vim.fn.input, { prompt = prompt, default = default, cancelreturn = vim.NIL })
         if ok and result ~= vim.NIL then
           return result
         end
@@ -928,19 +765,19 @@ return {
       local ls = kit.require_on_exported_call("luasnip")
 
       map
-        :mode("i")
-        :amend("<Tab>", function(fallback)
-          if ls.expand_or_jumpable() then
-            return ls.expand_or_jump()
-          end
-          return fallback()
-        end)
-        :amend("<S-Tab>", function(fallback)
-          if ls.jumpable(-1) then
-            ls.jump(-1)
-          end
-          return fallback()
-        end)
+          :mode("i")
+          :amend("<Tab>", function(fallback)
+            if ls.expand_or_jumpable() then
+              return ls.expand_or_jump()
+            end
+            return fallback()
+          end)
+          :amend("<S-Tab>", function(fallback)
+            if ls.jumpable(-1) then
+              ls.jump(-1)
+            end
+            return fallback()
+          end)
 
       map:mode("c"):amend("<CR>", function(fallback)
         if vim.fn.wildmenumode() == 1 then
@@ -976,11 +813,12 @@ return {
       map:mode("t"):ft("fzf"):set("<Esc>", vim.cmd.quit)
 
       map
-        :prefix("<leader>f", "+find")
-        :set("f", fzf.files, { desc = "Find files" })
-        :set("g", fzf.live_grep, { desc = "Grep files" })
-        :set("r", fzf.oldfiles, { desc = "Recent files" })
-        :set("p", fzf.resume, { desc = "Resume last search" })
+          :prefix("<leader>f", "+find")
+          :set("c", fzf.commands, { desc = "Commands" })
+          :set("f", fzf.files, { desc = "Find files" })
+          :set("g", fzf.live_grep, { desc = "Grep files" })
+          :set("r", fzf.oldfiles, { desc = "Recent files" })
+          :set("p", fzf.resume, { desc = "Resume last search" })
 
       map:mode("t"):set("<C-r>", [['<C-\><C-N>"'.nr2char(getchar()).'pi']], { expr = true })
 
@@ -994,11 +832,11 @@ return {
         local result = vim.system({ "arc", "branch", "--json" }, { text = true }):wait()
         local data = vim.json.decode(result.stdout)
         local branch_names = vim
-          .iter(data)
-          :map(function(value)
-            return value["name"]
-          end)
-          :totable()
+            .iter(data)
+            :map(function(value)
+              return value["name"]
+            end)
+            :totable()
 
         vim.ui.select(branch_names, { prompt = "Select branch: " }, function(choice)
           if not choice then
@@ -1047,7 +885,8 @@ return {
           },
         },
         files = {
-          fd_opts = "--color=never --type f --hidden --follow --exclude .git --exclude .obsidian --exclude build --exclude .DS_Store --exclude Вложения",
+          fd_opts =
+          "--color=never --type f --hidden --follow --exclude .git --exclude .obsidian --exclude build --exclude .DS_Store --exclude Вложения",
           fzf_opts = {
             ["--history"] = vim.fn.stdpath("data") .. "/fzf-lua-files-history",
           },
@@ -1419,7 +1258,10 @@ return {
         require("cmdbuf").split_open(vim.o.cmdwinheight)
       end)
       vim.keymap.set("c", "<C-f>", function()
-        require("cmdbuf").split_open(vim.o.cmdwinheight, { line = vim.fn.getcmdline(), column = vim.fn.getcmdpos() })
+        require("cmdbuf").split_open(
+          vim.o.cmdwinheight,
+          { line = vim.fn.getcmdline(), column = vim.fn.getcmdpos() }
+        )
         vim.api.nvim_feedkeys(vim.keycode("<C-c>"), "n", true)
       end)
 
@@ -1452,6 +1294,135 @@ return {
       vim.keymap.set("n", "q?", function()
         require("cmdbuf").split_open(vim.o.cmdwinheight, { type = "vim/search/backward" })
       end)
-    end
-  }
+    end,
+  },
+  {
+    "altermo/ultimate-autopair.nvim",
+    config = function()
+      local function is_cpp_class()
+        local pattern = "^%%s*%s.+"
+        local line = vim.api.nvim_get_current_line()
+        return line:match(pattern:format("class")) ~= nil
+            or line:match(pattern:format("struct")) ~= nil
+      end
+
+      local function not_fn(fn)
+        return function(...)
+          return not fn(...)
+        end
+      end
+
+      local my_pairs = {
+        {
+          "{",
+          "};",
+          cond = is_cpp_class,
+          newline = true,
+          ft = { "cpp" },
+        },
+        {
+          "(",
+          ")",
+          dosuround = true,
+          newline = true,
+          space = true,
+        },
+        {
+          "{",
+          "}",
+          dosuround = true,
+          newline = true,
+          space = true,
+          cond = not_fn(is_cpp_class),
+        },
+        {
+          '"',
+          '"',
+          suround = true,
+          multiline = false,
+        },
+        {
+          "'",
+          "'",
+          suround = true,
+          cond = function(fn)
+            return not fn.in_lisp() or fn.in_string()
+          end,
+          alpha = true,
+          nft = {
+            "tex",
+          },
+          multiline = false,
+        },
+        {
+          "`",
+          "`",
+          cond = function(fn)
+            return not fn.in_lisp() or fn.in_string()
+          end,
+          nft = { "tex" },
+          multiline = false,
+        },
+        { "``", "''", ft = { "tex" } },
+        {
+          "```",
+          "```",
+          newline = true,
+          ft = { "markdown" },
+        },
+        {
+          "<!--",
+          "-->",
+          ft = { "markdown", "html" },
+          space = true,
+        },
+        {
+          '"""',
+          '"""',
+          newline = true,
+          ft = { "python" },
+        },
+        {
+          "'''",
+          "'''",
+          newline = true,
+          ft = { "python" },
+        },
+      }
+
+      local big_pairs = {
+        { "[", "]" },
+        { "{", "}" },
+        { "(", ")" },
+        { "|", "|" },
+      }
+
+      local big_kinds = { "", "big", "bigg", "Big", "Bigg" }
+
+      for _, kind in ipairs(big_kinds) do
+        for _, pair in pairs(big_pairs) do
+          table.insert(my_pairs, {
+            string.format("\\%s%s", kind, pair[1]),
+            string.format("\\%s%s", kind, pair[2]),
+            newline = true,
+            space = true,
+            ft = { "tex" },
+          })
+        end
+      end
+
+      require("ultimate-autopair").setup({
+        cmap = false,
+        multiline = false,
+        close = {
+          enable = false,
+        },
+        tabout = {
+          enable = true,
+          hopout = true,
+        },
+        internal_pairs = my_pairs,
+      })
+    end,
+  },
 }
