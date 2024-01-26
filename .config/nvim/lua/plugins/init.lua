@@ -1191,6 +1191,41 @@ return {
           return suffix
         end,
       })
+
+_G.ObsidianTagCompletion = function(findstart, base)
+	if findstart == 1 then
+		local startcol = utf8.len(vim.fn.getline("."))
+		while startcol > 1 and utf8.sub(vim.fn.getline("."), startcol - 1, startcol - 1):match("[#%w_/-]") do
+			startcol = startcol - 1
+		end
+		return startcol
+	end
+
+	if #base == 0 then
+		return {}
+	end
+
+	local client = assert(obsidian.get_client())
+	local seen = {}
+	local matches = {}
+	local entries = client:find_tags(base)
+
+	for _, entry in ipairs(entries) do
+		local tag = entry.tag
+		if not seen[tag] then
+			seen[tag] = true
+			table.insert(matches, tag)
+		end
+	end
+
+	return matches
+end
+
+kit.call_at_ft({ "markdown" }, function()
+vim.bo.completefunc = "v:lua.ObsidianTagCompletion"
+end)
+
+
     end,
   },
   {
@@ -1602,5 +1637,12 @@ return {
         }),
       })
     end,
+  },
+  {
+    'Darazaki/indent-o-matic',
+    config = function()
+      vim.g.editorconfig = false
+      require("indent-o-matic").setup({})
+    end
   },
 }
