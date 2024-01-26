@@ -1768,3 +1768,57 @@ Note that these rules can't contain anchored rules themselves."
 
 (define-advice server-eval-and-print (:filter-args (args) no-print)
   (list (car args) nil))
+
+(defun obsidian-daily-note (&optional day-offset)
+  (interactive)
+  (let* ((day-offset (or day-offset (read-number "Enter day offset: " 0)))
+         (obsidian-root "~/obsidian")
+         (daily-note-directory "ежедневник")
+         (daily-note-root (file-name-concat obsidian-root daily-note-directory))
+         (template-path "~/obsidian/шаблоны/Ежедневник.md")
+         (note-date (time-add (current-time) (days-to-time day-offset)))
+         (date-format "%F")
+         (note-format "%Y/%m/%d.md")
+         (note-path (format-time-string
+                     (file-name-concat daily-note-root note-format)
+                     note-date)))
+    (find-file note-path)
+    (make-directory (file-name-directory note-path) t)
+
+    (when (string-empty-p (string-trim (buffer-string)))
+      (insert-file-contents template-path)
+      (replace-string "{{date}}" (format-time-string date-format note-date)))
+
+    (write-file note-path)))
+
+(defun obsidian-today ()
+  (interactive)
+  (obsidian-daily-note 0))
+
+(defun obsidian-yesterday ()
+  (interactive)
+  (obsidian-daily-note -1))
+
+(defun obsidian-tomorrow ()
+  (interactive)
+  (obsidian-daily-note +1))
+
+(defun obsidian-open (&optional filename)
+  (interactive)
+  (let* ((obsidian-root "~/obsidian")
+         (filename (file-relative-name (or filename (buffer-file-name)) obsidian-root))
+         (vault-name (file-name-base (file-truename obsidian-root))))
+    (shell-command (format "open -a /Applications/Obsidian.app 'obsidian://open?vault=%s&file=%s'" vault-name filename))))
+
+(defun obsidian-new ()
+  (interactive)
+  (let* ((obsidian-root "~/obsidian")
+         (filename (read-string "Enter filename: "))
+         (filename (downcase filename))
+         (filename (replace-regexp-in-string "[[:space:]]+" "-" filename))
+         (filename (replace-regexp-in-string "[^[:alnum:]-/]" "" filename))
+         (filename (file-name-with-extension filename "md"))
+         (note-path (file-name-concat obsidian-root filename)))
+    (find-file note-path)
+    (make-directory (file-name-directory note-path) t)
+    (write-file note-path)))
