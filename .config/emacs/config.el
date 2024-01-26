@@ -220,11 +220,11 @@
 
 (use-package project
   :requires consult
-  ;; :preface
-  ;; (defun dired-project-root ()
-  ;;   (interactive)
-  ;;   (let ((default-directory (project-root-current)))
-  ;;     (dired default-directory)))
+  :preface
+  (defun dired-project-root ()
+    (interactive)
+    (let ((default-directory (project-root-current)))
+      (dired default-directory)))
   :custom
   (project-switch-commands '((consult-fd "Find file")
                              (dired-project-root "Dired")))
@@ -277,7 +277,7 @@
   :elpaca (:host github :repo "karthink/project-x")
   :after project
   :custom
-  (project-x-local-identifier '(".project" "ya.make"))
+  (project-x-local-identifier '(".project" "a.yaml"))
   :config
   (add-hook 'project-find-functions 'project-x-try-local 90)
   ;; (add-hook 'kill-emacs-hook 'project-x--window-state-write)
@@ -841,7 +841,7 @@ Quit if no candidate is selected."
 
   (add-to-list! 'apheleia-mode-alist
                 '(sql-mode . sqlfluff)
-                '(python-mode . taxi-black)
+                '(python-ts-mode . taxi-black)
                 '(c++-mode . taxi-clang-format)
                 '(conf-toml-mode . taplo)
                 '(csharp-mode . csharpier)
@@ -939,8 +939,9 @@ Quit if no candidate is selected."
      (reusable-frames . visible)
      (window-height . 0.4))))
 
-;; (use-package editorconfig
-;;   :config (editorconfig-mode 1))
+(use-package editorconfig
+  :demand t
+  :config (editorconfig-mode 1))
 
 (use-package reverse-im
   :demand t
@@ -1759,6 +1760,11 @@ Note that these rules can't contain anchored rules themselves."
   :demand t
   :config
   (global-clipetty-mode))
+
+(use-package with-editor
+  :demand t
+  :config
+  (add-hook 'vterm-mode-hook 'with-editor-export-editor))
 
 (define-advice server-eval-and-print (:filter-args (args) no-print)
   (list (car args) nil))
