@@ -190,6 +190,11 @@
   :config
   (load-theme 'doom-tokyonight-storm t)
 
+  (defface obsidian-tag
+    `((t (:foreground ,(doom-color 'cyan))))
+    "Any documentation."
+    :group nil)
+
   (doom-themes-set-faces 'user
     `(highlight
       :foreground 'unspecified
@@ -208,6 +213,7 @@
     `(font-lock-operator-face :foreground ,(doom-color 'operators))
     `(font-lock-punctuation-face :foreground ,(doom-color 'punctuations))
     `(tab-bar-tab :background ,(doom-color 'region))
+    `(markdown-header-face :foreground ,(doom-color 'blue))
     `(flymake-end-of-line-diagnostics-face :height 'unspecified :box 'unspecified))
 
   (add-hook 'image-mode-hook
@@ -280,9 +286,6 @@
   (project-x-local-identifier '(".project" "a.yaml"))
   :config
   (add-hook 'project-find-functions 'project-x-try-local 90)
-  ;; (add-hook 'kill-emacs-hook 'project-x--window-state-write)
-  ;; (add-to-list 'project-switch-commands
-  ;;              '(?j "Restore windows" project-x-windows) t)
   :bind (("C-x p w" . project-x-window-state-save)
          ("C-x p j" . project-x-window-state-load)))
 
@@ -553,6 +556,7 @@
   (consult-ripgrep-args
    "rg --null --line-buffered --color=never --max-columns=1000 --path-separator / --smart-case --no-heading --with-filename --line-number --search-zip")
   (consult-async-split-style 'semicolon)
+  (consult-preview-key nil)
   :general
   (nvmap
     :keymaps 'override
@@ -600,15 +604,7 @@
         :require-match t
         :category 'file
         :state (consult--file-preview)
-        :history 'file-name-history))))
-
-  :config
-  (consult-customize
-   +consult-recent-file
-   consult-find
-   consult-ripgrep
-   consult-buffer
-   :preview-key nil))
+        :history 'file-name-history)))))
 
 (use-builtin recentf
   :custom
@@ -830,6 +826,7 @@ Quit if no candidate is selected."
                 '(taplo . ("taplo" "fmt"))
                 '(csharpier . ("dotnet" "csharpier"))
                 '(prettier . ("prettier" "--stdin-filepath" filepath))
+                '(markdownlint . ("markdownlint" "--quiet" "--fix" filepath))
                 '(phpcs . ("my-phpcs" "fix" "-n" "-q" filepath))
                 '(taxi-black . ("taxi-black" "--quiet" "--force" filepath "-"))
                 '(taxi-clang-format . ("taxi-clang-format" "--quiet" "--force" filepath "-")))
@@ -845,7 +842,7 @@ Quit if no candidate is selected."
                 '(c++-mode . taxi-clang-format)
                 '(conf-toml-mode . taplo)
                 '(csharp-mode . csharpier)
-                '(markdown-mode . prettier)))
+                '(markdown-mode . markdownlint)))
 
 (use-package jinx
   :custom
@@ -1030,7 +1027,9 @@ Quit if no candidate is selected."
 (use-package markdown-mode
   :requires edit-indirect
   :commands markdown-mode
-  :hook (markdown-mode . auto-fill-mode)
+  :hook
+  (markdown-mode . auto-fill-mode)
+  (markdown-mode . (lambda () (setq-local tab-width 2)))
   :custom
   (markdown-fontify-code-blocks-natively t)
   (markdown-code-lang-modes
@@ -1769,56 +1768,25 @@ Note that these rules can't contain anchored rules themselves."
 (define-advice server-eval-and-print (:filter-args (args) no-print)
   (list (car args) nil))
 
-(defun obsidian-daily-note (&optional day-offset)
-  (interactive)
-  (let* ((day-offset (or day-offset (read-number "Enter day offset: " 0)))
-         (obsidian-root "~/obsidian")
-         (daily-note-directory "ежедневник")
-         (daily-note-root (file-name-concat obsidian-root daily-note-directory))
-         (template-path "~/obsidian/шаблоны/Ежедневник.md")
-         (note-date (time-add (current-time) (days-to-time day-offset)))
-         (date-format "%F")
-         (note-format "%Y/%m/%d.md")
-         (note-path (format-time-string
-                     (file-name-concat daily-note-root note-format)
-                     note-date)))
-    (find-file note-path)
-    (make-directory (file-name-directory note-path) t)
-
-    (when (string-empty-p (string-trim (buffer-string)))
-      (insert-file-contents template-path)
-      (replace-string "{{date}}" (format-time-string date-format note-date)))
-
-    (write-file note-path)))
-
-(defun obsidian-today ()
-  (interactive)
-  (obsidian-daily-note 0))
-
-(defun obsidian-yesterday ()
-  (interactive)
-  (obsidian-daily-note -1))
-
-(defun obsidian-tomorrow ()
-  (interactive)
-  (obsidian-daily-note +1))
-
-(defun obsidian-open (&optional filename)
-  (interactive)
-  (let* ((obsidian-root "~/obsidian")
-         (filename (file-relative-name (or filename (buffer-file-name)) obsidian-root))
-         (vault-name (file-name-base (file-truename obsidian-root))))
-    (shell-command (format "open -a /Applications/Obsidian.app 'obsidian://open?vault=%s&file=%s'" vault-name filename))))
-
-(defun obsidian-new ()
-  (interactive)
-  (let* ((obsidian-root "~/obsidian")
-         (filename (read-string "Enter filename: "))
-         (filename (downcase filename))
-         (filename (replace-regexp-in-string "[[:space:]]+" "-" filename))
-         (filename (replace-regexp-in-string "[^[:alnum:]-/]" "" filename))
-         (filename (file-name-with-extension filename "md"))
-         (note-path (file-name-concat obsidian-root filename)))
-    (find-file note-path)
-    (make-directory (file-name-directory note-path) t)
-    (write-file note-path)))
+(use-package obsidian
+  :demand t
+  :elpaca nil
+  :custom
+  (obsidian-workspaces '((notes . "~/obsidian")))
+  (obsidian-daily-note-directory "ежедневник")
+  :general
+  (nvmap
+    :keymaps 'override
+    :prefix "SPC o"
+    "t" 'obsidian-today
+    "o" 'obsidian-open
+    "i" 'obsidian-insert-tag
+    "f" (lambda ()
+          (interactive)
+          (consult-fd "~/obsidian"))
+    "g" (lambda ()
+          (interactive)
+          (consult-ripgrep "~/obsidian")))
+  :config
+  (font-lock-add-keywords 'markdown-mode
+                          '(("\\(^\\|[[:space:]]+\\)\\(#[[:alnum:]-_/]+\\)" 2 'obsidian-tag prepend)) t))
