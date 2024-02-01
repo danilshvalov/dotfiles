@@ -29,7 +29,7 @@
   (or obsidian--current-workspace (car obsidian-workspaces)))
 
 (defun obsidian-current-root ()
-  (cdr (obsidian-current-workspace)))
+  (file-name-as-directory (cdr (obsidian-current-workspace))))
 
 (defun obsidian--select-workspace ()
   (completing-read "Select workspace: " obsidian-workspaces nil t))
@@ -79,20 +79,20 @@
 
 (defun obsidian-open (&optional filename)
   (interactive)
-  (let* ((obsidian-root "~/obsidian")
+  (let* ((obsidian-root (obsidian-current-root))
          (filename (file-relative-name (or filename (buffer-file-name)) obsidian-root))
          (vault-name (file-name-base (file-truename obsidian-root))))
     (shell-command (format "open -a /Applications/Obsidian.app 'obsidian://open?vault=%s&file=%s'" vault-name filename))))
 
 (defun obsidian-new ()
   (interactive)
-  (let* ((obsidian-root "~/obsidian")
-         (filename (read-string "Enter filename: " "заметки/"))
+  (let* ((directory (read-file-name "Enter directory: " (obsidian-current-root)))
+         (filename (read-string "Enter filename: "))
          (filename (downcase filename))
          (filename (replace-regexp-in-string "[[:space:]]+" "-" filename))
          (filename (replace-regexp-in-string "[^[:alnum:]-/]" "" filename))
          (filename (file-name-with-extension filename "md"))
-         (note-path (file-name-concat obsidian-root filename)))
+         (note-path (file-name-concat directory filename)))
     (find-file note-path)
     (make-directory (file-name-directory note-path) t)
     (write-file note-path)))

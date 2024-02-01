@@ -628,7 +628,6 @@
 (use-package orderless
   :init
   (setq
-   orderless-component-separator "; "
    completion-styles '(orderless basic)
    completion-category-defaults nil
    completion-category-overrides '((file (styles partial-completion)))))
@@ -1038,8 +1037,10 @@ Quit if no candidate is selected."
   :hook
   (markdown-mode . auto-fill-mode)
   (markdown-mode . (lambda () (setq-local tab-width 2)))
+  (markdown-mode . markdown-toggle-markup-hiding)
   :custom
   (markdown-fontify-code-blocks-natively t)
+  (markdown-list-item-bullets '("—"))
   (markdown-code-lang-modes
    '(("ocaml" . tuareg-mode)
      ("elisp" . emacs-lisp-mode)
@@ -1806,10 +1807,10 @@ Note that these rules can't contain anchored rules themselves."
     "i" 'obsidian-insert-tag
     "f" (lambda ()
           (interactive)
-          (consult-fd "~/obsidian"))
+          (affe-find "~/obsidian"))
     "g" (lambda ()
           (interactive)
-          (consult-ripgrep "~/obsidian")))
+          (affe-grep "~/obsidian")))
   :config
   (font-lock-add-keywords 'markdown-mode
                           '(("\\(^\\|[[:space:]]+\\)\\(#[[:alnum:]-_/]+\\)" 2 'obsidian-tag prepend)) t))
