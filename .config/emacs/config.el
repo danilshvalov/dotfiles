@@ -564,8 +564,8 @@
     "" '(nil :wk "find")
     "r" '+consult-recent-file
     "b" 'consult-buffer
-    "f" 'consult-fd
-    "g" 'consult-ripgrep
+    "f" 'affe-find
+    "g" 'affe-grep
     "o" 'ff-find-other-file
     "e" 'consult-flymake
     "." (lambda ()
@@ -618,9 +618,17 @@
 (use-package marginalia
   :init (marginalia-mode))
 
+(use-package affe
+  :config
+  (defun affe-orderless-regexp-compiler (input _type _ignorecase)
+    (setq input (orderless-pattern-compiler input))
+    (cons input (apply-partially #'orderless--highlight input t)))
+  (setq affe-regexp-compiler #'affe-orderless-regexp-compiler))
+
 (use-package orderless
   :init
   (setq
+   orderless-component-separator "; "
    completion-styles '(orderless basic)
    completion-category-defaults nil
    completion-category-overrides '((file (styles partial-completion)))))
@@ -1758,6 +1766,21 @@ Note that these rules can't contain anchored rules themselves."
 (use-package clipetty
   :demand t
   :config
+  ;; (defun clipetty--emit (string)
+  ;;   "Emit STRING, optionally wrapped in a DCS, to an appropriate tty."
+  ;;   (let ((tmux    (getenv "TMUX" (selected-frame)))
+  ;;         (term    (getenv "TERM" (selected-frame)))
+  ;;         (ssh-tty (getenv "SSH_TTY" (selected-frame))))
+  ;;     (if (<= (length string) clipetty--max-cut)
+  ;;         (write-region
+  ;;          string
+  ;;          ;; (clipetty--dcs-wrap string tmux term ssh-tty)
+  ;;          nil
+  ;;          "/dev/fd/2"
+  ;;          nil
+  ;;          0)
+  ;;       (message "Selection too long to send to terminal %d" (length string))
+  ;;       (sit-for 1))))
   (global-clipetty-mode))
 
 (use-package with-editor
