@@ -47,7 +47,7 @@ return {
       map:mode({ "i", "n", "t" }):set("<A-j>", vim.cmd.bnext):set("<A-k>", vim.cmd.bprev)
       map:set("<C-b>", "<Cmd>b#<CR>")
 
-      map:ft("help"):set("q", vim.cmd.bd)
+      map:ft("help"):set("q", vim.cmd.bd, { nowait = true })
       map:mode("nv"):set("<Space>", "<Leader>", { remap = true })
       map:set("<C-g>", "2<C-g>")
 
@@ -1304,9 +1304,9 @@ return {
   {
     "notomo/cmdbuf.nvim",
     config = function()
-      vim.keymap.set("n", "q:", function()
-        require("cmdbuf").split_open(vim.o.cmdwinheight)
-      end)
+      -- vim.keymap.set("n", "q:", function()
+      --   require("cmdbuf").split_open(vim.o.cmdwinheight)
+      -- end)
       vim.keymap.set("c", "<C-f>", function()
         require("cmdbuf").split_open(
           vim.o.cmdwinheight,
@@ -1333,17 +1333,17 @@ return {
       })
 
       -- open lua command-line window
-      vim.keymap.set("n", "ql", function()
-        require("cmdbuf").split_open(vim.o.cmdwinheight, { type = "lua/cmd" })
-      end)
+      -- vim.keymap.set("n", "ql", function()
+      --   require("cmdbuf").split_open(vim.o.cmdwinheight, { type = "lua/cmd" })
+      -- end)
 
-      -- q/, q? alternative
-      vim.keymap.set("n", "q/", function()
-        require("cmdbuf").split_open(vim.o.cmdwinheight, { type = "vim/search/forward" })
-      end)
-      vim.keymap.set("n", "q?", function()
-        require("cmdbuf").split_open(vim.o.cmdwinheight, { type = "vim/search/backward" })
-      end)
+      -- -- q/, q? alternative
+      -- vim.keymap.set("n", "q/", function()
+      --   require("cmdbuf").split_open(vim.o.cmdwinheight, { type = "vim/search/forward" })
+      -- end)
+      -- vim.keymap.set("n", "q?", function()
+      --   require("cmdbuf").split_open(vim.o.cmdwinheight, { type = "vim/search/backward" })
+      -- end)
     end,
   },
   -- {
