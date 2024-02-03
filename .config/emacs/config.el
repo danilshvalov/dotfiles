@@ -213,7 +213,12 @@
     `(font-lock-operator-face :foreground ,(doom-color 'operators))
     `(font-lock-punctuation-face :foreground ,(doom-color 'punctuations))
     `(tab-bar-tab :background ,(doom-color 'region))
-    `(markdown-header-face :foreground ,(doom-color 'blue))
+    `(markdown-header-face-1 :foreground ,(doom-color 'blue))
+    `(markdown-header-face-2 :foreground ,(doom-color 'yellow))
+    `(markdown-header-face-3 :foreground ,(doom-color 'green))
+    `(markdown-header-face-4 :foreground ,(doom-color 'teal))
+    `(markdown-header-face-5 :foreground ,(doom-color 'magenta))
+    `(markdown-header-face-6 :foreground ,(doom-color 'violet))
     `(flymake-end-of-line-diagnostics-face :height 'unspecified :box 'unspecified))
 
   (add-hook 'image-mode-hook
@@ -849,7 +854,7 @@ Quit if no candidate is selected."
                 '(c++-mode . taxi-clang-format)
                 '(conf-toml-mode . taplo)
                 '(csharp-mode . csharpier)
-                '(markdown-mode . markdownlint)))
+                '(markdown-ts-mode . markdownlint)))
 
 (use-package jinx
   :custom
@@ -1031,48 +1036,48 @@ Quit if no candidate is selected."
 
 (setq-default css-indent-offset 2)
 
-(use-package markdown-mode
-  :requires edit-indirect
-  :commands markdown-mode
-  :hook
-  (markdown-mode . auto-fill-mode)
-  (markdown-mode . (lambda () (setq-local tab-width 2)))
-  (markdown-mode . markdown-toggle-markup-hiding)
-  :custom
-  (markdown-fontify-code-blocks-natively t)
-  (markdown-list-item-bullets '("—"))
-  (markdown-code-lang-modes
-   '(("ocaml" . tuareg-mode)
-     ("elisp" . emacs-lisp-mode)
-     ("ditaa" . artist-mode)
-     ("asymptote" . asy-mode)
-     ("dot" . fundamental-mode)
-     ("sqlite" . sql-mode)
-     ("calc" . fundamental-mode)
-     ("C" . c-ts-mode)
-     ("cpp" . c++-ts-mode)
-     ("C++" . c++-ts-mode)
-     ("html" . mhtml-mode)
-     ;; ("python" . python-ts-mode)
-     ("screen" . shell-script-mode)
-     ("shell" . sh-mode)
-     ("bash" . sh-mode)))
-  :general
-  (general-define-key
-   :keymaps 'markdown-mode-map
-   "C-c C-c" 'markdown-toggle-gfm-checkbox)
-  :config
-  (defun markdown-fontify-tables (last)
-    ;; (when (re-search-forward "|" last t)
-    ;;   (when (markdown-table-at-point-p)
-    ;;     (font-lock-append-text-property
-    ;;      (line-beginning-position) (min (1+ (line-end-position)) (point-max))
-    ;;      'face 'markdown-table-face))
-    ;;   (forward-line 1)
-    ;;   t)
-    )
+;; (use-package markdown-mode
+;;   :requires edit-indirect
+;;   :commands markdown-mode
+;;   :hook
+;;   (markdown-mode . auto-fill-mode)
+;;   (markdown-mode . (lambda () (setq-local tab-width 2)))
+;;   (markdown-mode . markdown-toggle-markup-hiding)
+;;   :custom
+;;   (markdown-fontify-code-blocks-natively t)
+;;   (markdown-list-item-bullets '("—"))
+;;   (markdown-code-lang-modes
+;;    '(("ocaml" . tuareg-mode)
+;;      ("elisp" . emacs-lisp-mode)
+;;      ("ditaa" . artist-mode)
+;;      ("asymptote" . asy-mode)
+;;      ("dot" . fundamental-mode)
+;;      ("sqlite" . sql-mode)
+;;      ("calc" . fundamental-mode)
+;;      ("C" . c-ts-mode)
+;;      ("cpp" . c++-ts-mode)
+;;      ("C++" . c++-ts-mode)
+;;      ("html" . mhtml-mode)
+;;      ;; ("python" . python-ts-mode)
+;;      ("screen" . shell-script-mode)
+;;      ("shell" . sh-mode)
+;;      ("bash" . sh-mode)))
+;;   :general
+;;   (general-define-key
+;;    :keymaps 'markdown-mode-map
+;;    "C-c C-c" 'markdown-toggle-gfm-checkbox)
+;;   :config
+;;   (defun markdown-fontify-tables (last)
+;;     ;; (when (re-search-forward "|" last t)
+;;     ;;   (when (markdown-table-at-point-p)
+;;     ;;     (font-lock-append-text-property
+;;     ;;      (line-beginning-position) (min (1+ (line-end-position)) (point-max))
+;;     ;;      'face 'markdown-table-face))
+;;     ;;   (forward-line 1)
+;;     ;;   t)
+;;     )
 
-  (setq markdown-regex-gfm-checkbox " \\(\\[[xX-]\\]\\) "))
+;;   (setq markdown-regex-gfm-checkbox " \\(\\[[xX-]\\]\\) "))
 
 (use-package sql-indent
   :custom (sqlind-basic-offset 4))
@@ -1149,42 +1154,42 @@ Quit if no candidate is selected."
   :general
   (nvmap "SPC h" `(,(general-simulate-key "C-h") :wk "+help")))
 
-(use-package markdown-preview-mode
-  :commands markdown-preview-mode
-  :config
-  (setq markdown-preview-stylesheets
-        (list
-         "https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/2.9.0/github-markdown.min.css"
-         "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"
-         "
-  <style>
-   .markdown-body {
-     box-sizing: border-box;
-     min-width: 200px;
-     max-width: 980px;
-     margin: 0 auto;
-     padding: 45px;
-   }
+;; (use-package markdown-preview-mode
+;;   :commands markdown-preview-mode
+;;   :config
+;;   (setq markdown-preview-stylesheets
+;;         (list
+;;          "https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/2.9.0/github-markdown.min.css"
+;;          "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"
+;;          "
+;;   <style>
+;;    .markdown-body {
+;;      box-sizing: border-box;
+;;      min-width: 200px;
+;;      max-width: 980px;
+;;      margin: 0 auto;
+;;      padding: 45px;
+;;    }
 
-   @media (max-width: 767px) {
-     .markdown-body {
-       padding: 15px;
-     }
-   }
-  </style>
-"))
-  (setq markdown-preview-javascript
-        (list
-         "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"
-         "
-  <script>
-   $(document).on('mdContentChange', function() {
-     $('pre code').each(function(i, block) {
-       hljs.highlightBlock(block);
-     });
-   });
-  </script>
-")))
+;;    @media (max-width: 767px) {
+;;      .markdown-body {
+;;        padding: 15px;
+;;      }
+;;    }
+;;   </style>
+;; "))
+;;   (setq markdown-preview-javascript
+;;         (list
+;;          "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"
+;;          "
+;;   <script>
+;;    $(document).on('mdContentChange', function() {
+;;      $('pre code').each(function(i, block) {
+;;        hljs.highlightBlock(block);
+;;      });
+;;    });
+;;   </script>
+;; ")))
 
 (use-package treesit-auto
   :demand t
@@ -1198,6 +1203,9 @@ Quit if no candidate is selected."
          :revision "gh-pages"
          :source-dir "src"))
 
+  ;; (setq treesit-language-source-alist (treesit-auto--build-treesit-source-alist))
+  (setq treesit-language-source-alist '((markdown-inline markdown-inline "https://github.com/MDeiml/tree-sitter-markdown" nil "tree-sitter-markdown-inline/src" nil nil)
+ (markdown markdown "https://github.com/MDeiml/tree-sitter-markdown" nil "tree-sitter-markdown/src" nil nil)))
   (add-to-list 'treesit-auto-recipe-list my-sql-tsauto-config)
 
   (global-treesit-auto-mode))
@@ -1812,5 +1820,18 @@ Note that these rules can't contain anchored rules themselves."
           (interactive)
           (affe-grep "~/obsidian")))
   :config
-  (font-lock-add-keywords 'markdown-mode
+  (font-lock-add-keywords 'markdown-ts-mode
                           '(("\\(^\\|[[:space:]]+\\)\\(#[[:alnum:]-_/]+\\)" 2 'obsidian-tag prepend)) t))
+
+(use-package markdown-ts-mode
+  :elpaca nil
+  :custom
+  (markdown-fontify-code-blocks-natively t)
+  ;; :hook
+  ;; (markdown-ts-mode . markdown-toggle-markup-hiding)
+  :config
+  (add-hook 'markdown-ts-mode-hook 'markdown-toggle-markup-hiding)
+  (general-define-key
+   :keymaps 'markdown-ts-mode-map
+   "C-c C-c" 'markdown-toggle-gfm-checkbox)
+  )

@@ -2148,22 +2148,22 @@ Depending on your font, some reasonable choices are:
     (markdown-match-yaml-metadata-key . ((1 'markdown-metadata-key-face)
                                          (2 'markdown-markup-face)
                                          (3 'markdown-metadata-value-face)))
-    (markdown-match-gfm-open-code-blocks . ((1 markdown-markup-properties)
-                                            (2 markdown-markup-properties nil t)
-                                            (3 markdown-language-keyword-properties nil t)
-                                            (4 markdown-language-info-properties nil t)
-                                            (5 markdown-markup-properties nil t)))
-    (markdown-match-gfm-close-code-blocks . ((0 markdown-markup-properties)))
+    ;; (markdown-match-gfm-open-code-blocks . ((1 markdown-markup-properties)
+    ;;                                         (2 markdown-markup-properties nil t)
+    ;;                                         (3 markdown-language-keyword-properties nil t)
+    ;;                                         (4 markdown-language-info-properties nil t)
+    ;;                                         (5 markdown-markup-properties nil t)))
+    ;; (markdown-match-gfm-close-code-blocks . ((0 markdown-markup-properties)))
     (markdown-fontify-gfm-code-blocks)
     ;; (markdown-fontify-tables)
-    (markdown-match-fenced-start-code-block . ((1 markdown-markup-properties)
-                                               (2 markdown-markup-properties nil t)
-                                               (3 markdown-language-keyword-properties nil t)
-                                               (4 markdown-language-info-properties nil t)
-                                               (5 markdown-markup-properties nil t)))
-    (markdown-match-fenced-end-code-block . ((0 markdown-markup-properties)))
-    (markdown-fontify-fenced-code-blocks)
-    (markdown-match-pre-blocks . ((0 'markdown-pre-face)))
+    ;; (markdown-match-fenced-start-code-block . ((1 markdown-markup-properties)
+    ;;                                            (2 markdown-markup-properties nil t)
+    ;;                                            (3 markdown-language-keyword-properties nil t)
+    ;;                                            (4 markdown-language-info-properties nil t)
+    ;;                                            (5 markdown-markup-properties nil t)))
+    ;; (markdown-match-fenced-end-code-block . ((0 markdown-markup-properties)))
+    ;; (markdown-fontify-fenced-code-blocks)
+    ;; (markdown-match-pre-blocks . ((0 'markdown-pre-face)))
     ;; (markdown-fontify-headings)
     ;; (markdown-match-declarative-metadata . ((1 'markdown-metadata-key-face)
     ;;                                         (2 'markdown-markup-face)
@@ -2209,33 +2209,33 @@ Depending on your font, some reasonable choices are:
     ;;                             (5 markdown-markup-properties)
     ;;                             (6 'markdown-url-face)
     ;;                             (7 markdown-markup-properties)))
-    ;; (markdown-fontify-inline-links)
-    ;; (markdown-fontify-reference-links)
-    ;; (,markdown-regex-reference-definition . ((1 'markdown-markup-face) ; [
-    ;;                                          (2 'markdown-reference-face) ; label
-    ;;                                          (3 'markdown-markup-face)    ; ]
-    ;;                                          (4 'markdown-markup-face)    ; :
-    ;;                                          (5 'markdown-url-face)       ; url
-    ;;                                          (6 'markdown-link-title-face))) ; "title" (optional)
-    ;; (markdown-fontify-plain-uris)
+    (markdown-fontify-inline-links)
+    (markdown-fontify-reference-links)
+    (,markdown-regex-reference-definition . ((1 'markdown-markup-face) ; [
+                                             (2 'markdown-reference-face) ; label
+                                             (3 'markdown-markup-face)    ; ]
+                                             (4 'markdown-markup-face)    ; :
+                                             (5 'markdown-url-face)       ; url
+                                             (6 'markdown-link-title-face))) ; "title" (optional)
+    (markdown-fontify-plain-uris)
     ;; Math mode $..$
-    (markdown-match-math-single . ((1 'markdown-markup-face prepend)
-                                   (2 'markdown-math-face append)
-                                   (3 'markdown-markup-face prepend)))
-    ;; Math mode $$..$$
-    (markdown-match-math-double . ((1 'markdown-markup-face prepend)
-                                   (2 'markdown-math-face append)
-                                   (3 'markdown-markup-face prepend)))
-    ;; Math mode \[..\] and \\[..\\]
-    (markdown-match-math-display . ((1 'markdown-markup-face prepend)
-                                    (3 'markdown-math-face append)
-                                    (4 'markdown-markup-face prepend)))
-    (markdown-match-bold . ((1 markdown-markup-properties prepend)
-                            (2 'markdown-bold-face append)
-                            (3 markdown-markup-properties prepend)))
-    (markdown-match-italic . ((1 markdown-markup-properties prepend)
-                              (2 'markdown-italic-face append)
-                              (3 markdown-markup-properties prepend)))
+    ;; (markdown-match-math-single . ((1 'markdown-markup-face prepend)
+    ;;                                (2 'markdown-math-face append)
+    ;;                                (3 'markdown-markup-face prepend)))
+    ;; ;; Math mode $$..$$
+    ;; (markdown-match-math-double . ((1 'markdown-markup-face prepend)
+    ;;                                (2 'markdown-math-face append)
+    ;;                                (3 'markdown-markup-face prepend)))
+    ;; ;; Math mode \[..\] and \\[..\\]
+    ;; (markdown-match-math-display . ((1 'markdown-markup-face prepend)
+    ;;                                 (3 'markdown-math-face append)
+    ;;                                 (4 'markdown-markup-face prepend)))
+    ;; (markdown-match-bold . ((1 markdown-markup-properties prepend)
+    ;;                         (2 'markdown-bold-face append)
+    ;;                         (3 markdown-markup-properties prepend)))
+    ;; (markdown-match-italic . ((1 markdown-markup-properties prepend)
+    ;;                           (2 'markdown-italic-face append)
+    ;;                           (3 markdown-markup-properties prepend)))
     ;; (,markdown-regex-strike-through . ((3 markdown-markup-properties)
     ;;                                    (4 'markdown-strike-through-face)
     ;;                                    (5 markdown-markup-properties)))
@@ -2248,7 +2248,8 @@ Depending on your font, some reasonable choices are:
     ;; (markdown-match-inline-attributes . ((0 markdown-markup-properties prepend)))
     ;; (markdown-match-leanpub-sections . ((0 markdown-markup-properties)))
     ;; (markdown-fontify-blockquotes)
-    (markdown-match-wiki-link . ((0 'markdown-link-face prepend))))
+    ;; (markdown-match-wiki-link . ((0 'markdown-link-face prepend)))
+    )
   "Syntax highlighting for Markdown files.")
 
 ;; Footnotes
@@ -8296,28 +8297,28 @@ and disable it otherwise."
     (message "markdown-ts-mode wiki link support disabled"))
   (markdown-reload-extensions))
 
-(defun markdown-setup-wiki-link-hooks ()
-  "Add or remove hooks for fontifying wiki links.
-These are only enabled when `markdown-wiki-link-fontify-missing' is non-nil."
-  ;; Anytime text changes make sure it gets fontified correctly
-  (if (and markdown-enable-wiki-links
-           markdown-wiki-link-fontify-missing)
-      (add-hook 'after-change-functions
-                #'markdown-check-change-for-wiki-link-after-change t t)
-    (remove-hook 'after-change-functions
-                 #'markdown-check-change-for-wiki-link-after-change t))
-  ;; If we left the buffer there is a really good chance we were
-  ;; creating one of the wiki link documents. Make sure we get
-  ;; refontified when we come back.
-  (if (and markdown-enable-wiki-links
-           markdown-wiki-link-fontify-missing)
-      (progn
-        (add-hook 'window-configuration-change-hook
-                  #'markdown-fontify-buffer-wiki-links t t)
-        (markdown-fontify-buffer-wiki-links))
-    (remove-hook 'window-configuration-change-hook
-                 #'markdown-fontify-buffer-wiki-links t)
-    (markdown-unfontify-region-wiki-links (point-min) (point-max))))
+;; (defun markdown-setup-wiki-link-hooks ()
+;;   "Add or remove hooks for fontifying wiki links.
+;; These are only enabled when `markdown-wiki-link-fontify-missing' is non-nil."
+;;   ;; Anytime text changes make sure it gets fontified correctly
+;;   (if (and markdown-enable-wiki-links
+;;            markdown-wiki-link-fontify-missing)
+;;       (add-hook 'after-change-functions
+;;                 #'markdown-check-change-for-wiki-link-after-change t t)
+;;     (remove-hook 'after-change-functions
+;;                  #'markdown-check-change-for-wiki-link-after-change t))
+;;   ;; If we left the buffer there is a really good chance we were
+;;   ;; creating one of the wiki link documents. Make sure we get
+;;   ;; refontified when we come back.
+;;   (if (and markdown-enable-wiki-links
+;;            markdown-wiki-link-fontify-missing)
+;;       (progn
+;;         (add-hook 'window-configuration-change-hook
+;;                   #'markdown-fontify-buffer-wiki-links t t)
+;;         (markdown-fontify-buffer-wiki-links))
+;;     (remove-hook 'window-configuration-change-hook
+;;                  #'markdown-fontify-buffer-wiki-links t)
+;;     (markdown-unfontify-region-wiki-links (point-min) (point-max))))
 
 
 ;;; Following & Doing =========================================================
@@ -8508,7 +8509,8 @@ or span."
     ;; Refontify buffer
     (font-lock-flush)
     ;; Add or remove hooks related to extensions
-    (markdown-setup-wiki-link-hooks)))
+    ;; (markdown-setup-wiki-link-hooks)
+    ))
 
 (defun markdown-handle-local-variables ()
   "Run in `hack-local-variables-hook' to update font lock rules.
@@ -8881,8 +8883,9 @@ Use matching function MATCHER."
           (font-lock-append-text-property
            bol-prev eol-next 'face 'markdown-code-face)
           ;; Set invisible property for lines before and after, including newline.
-          (add-text-properties bol-prev start '(invisible markdown-markup))
-          (add-text-properties end eol-next '(invisible markdown-markup)))))
+          ;; (add-text-properties bol-prev start '(invisible markdown-markup))
+          ;; (add-text-properties end eol-next '(invisible markdown-markup))
+          )))
     t))
 
 (defun markdown-fontify-gfm-code-blocks (last)
@@ -9847,29 +9850,35 @@ rows and columns and the column alignment."
      (atx_heading (atx_h5_marker)) @markdown-header-face-5
      (atx_heading (atx_h6_marker)) @markdown-header-face-6)
 
-   :language 'markdown
-   :feature 'keyword
-   `((fenced_code_block
-      (info_string (text) @markdown-language-keyword-face)))
+   ;; :language 'markdown
+   ;; :feature 'keyword
+   ;; `((fenced_code_block
+   ;;    (info_string (text) @markdown-language-keyword-face)))
 
-   :language 'markdown
-   :feature 'markup
-   `((fenced_code_block) @markdown-markup-face)
+   ;; :language 'markdown
+   ;; :feature 'markup
+   ;; `((fenced_code_block) @markdown-markup-face)
 
-   :language 'markdown
+   :language 'markdown-inline
    :feature 'inline-code
    `((code_span) @markdown-inline-code-face)
 
-   :language 'markdown
+   :language 'markdown-inline
    :feature 'emphasis
    `((strong_emphasis) @markdown-bold-face
      (emphasis) @markdown-italic-face)
 
    :language 'markdown
+   :feature 'emphasis ; TODO: change
+   `((list_marker_minus) @markdown-gfm-checkbox-face
+     (task_list_marker_unchecked) @markdown-gfm-checkbox-face
+     (task_list_marker_checked) @markdown-gfm-checkbox-face)
+
+   :language 'markdown-inline
    :feature 'link
-   `((link_text) @markdown-link-face
-     (link_destination) @markdown-url-face
-     (link_label) @markdown-reference-face)
+   `((inline_link
+      (link_text) @markdown-link-face
+      (link_destination) @markdown-url-face))
 
 ;; (setext_heading (paragraph) @text.title.1 (setext_h1_underline) @text.title.1.marker)
 ;; (setext_heading (paragraph) @text.title.2 (setext_h2_underline) @text.title.2.marker)
@@ -9934,117 +9943,6 @@ rows and columns and the column alignment."
 ;; ] @string.escape
 
 ;; (inline) @spell
-
-       ;; :language 'php
-       ;; :feature 'preprocessor
-       ;; `((php_tag) @font-lock-preprocessor-face
-       ;;   ("?>") @font-lock-preprocessor-face)
-
-       ;; :language 'php
-       ;; :feature 'constant
-       ;; `((const_declaration (const_element (name) @font-lock-type-face))
-       ;;   (null) @php-constant)
-
-       ;; :language 'php
-       ;; :feature 'type
-       ;; `([(primitive_type)
-       ;;    (cast_type)
-       ;;    (bottom_type)
-       ;;    (named_type (name) @type)
-       ;;    (named_type (qualified_name) @type)
-       ;;    (namespace_use_clause)
-       ;;    (namespace_name (name))
-       ;;    (boolean)]
-       ;;   @font-lock-type-face
-       ;;   (class_interface_clause (name) @font-lock-type-face)
-       ;;   [(integer)
-       ;;    (float)]
-       ;;   @font-lock-number-face)
-
-       ;; :language 'php
-       ;; :feature 'definition
-       ;; `((class_declaration
-       ;;    name: (name) @font-lock-type-face)
-       ;;   (interface_declaration
-       ;;    name: (name) @font-lock-type-face)
-       ;;   (enum_declaration
-       ;;    name: (name) @font-lock-type-face)
-       ;;   (trait_declaration
-       ;;    name: (name) @font-lock-type-face)
-       ;;   (enum_case
-       ;;    name: (name) @font-lock-type-face))
-
-       ;; :language 'php
-       ;; :feature 'function
-       ;; `((array_creation_expression "array" @font-lock-builtin-face)
-       ;;   (list_literal "list" @font-lock-builtin-face)
-       ;;   (method_declaration
-       ;;    name: (name) @font-lock-function-name-face)
-       ;;   (function_call_expression
-       ;;    function: [(qualified_name (name)) (name)] @font-lock-function-call-face)
-       ;;   (scoped_call_expression
-       ;;    name: (name) @font-lock-function-call-face)
-       ;;   (member_call_expression
-       ;;    name: (name) @font-lock-function-call-face)
-       ;;   (function_definition
-       ;;    name: (name) @font-lock-function-name-face))
-
-       ;; :language 'php
-       ;; :feature 'variables
-       ;; `((relative_scope) @font-lock-builtin-face
-       ;;   ((name) @font-lock-constant-face
-       ;;    (:match ,(rx bos (? "_") (in "A-Z") (in "0-9A-Z_") eos)
-       ;;            @font-lock-constant-face))
-       ;;   ((name) @font-lock-builtin-face
-       ;;    (:match ,(rx-to-string `(: bos (or ,@php-ts-mode--magical-constants) eos))
-       ;;            @font-lock-builtin-face))
-
-       ;;   ;; ((name) @constructor
-       ;;   ;;  (:match ,(rx-to-string '(: bos (in "A-Z")))))
-
-       ;;   ;; ((name) @font-lock-variable-name-face
-       ;;   ;;  (#eq? @php-$this "this"))
-       ;;   (member_access_expression name: (name) @php-property-name)
-       ;;   (variable_name (name) @font-lock-variable-name-face)
-       ;;   (variable_name "$" @php-variable-sigil))
-
-       ;; :language 'php
-       ;; :feature 'comment
-       ;; `(((comment) @font-lock-doc-face
-       ;;    (:match ,(rx bos "/**")
-       ;;            @font-lock-doc-face))
-       ;;   (comment) @font-lock-comment-face)
-
-       ;; :language 'php
-       ;; :feature 'string
-       ;; `([(string)
-       ;;    (string_value)
-       ;;    (encapsed_string)
-       ;;    (heredoc)
-       ;;    (heredoc_body)
-       ;;    (nowdoc_body)]
-       ;;   @font-lock-string-face)
-
-       ;; :language 'php
-       ;; :feature 'operator
-       ;; `([,@php-ts-mode--operators] @font-lock-operator-face
-       ;;   (binary_expression operator: "xor" @font-lock-operator-face)
-       ;;   (binary_expression operator: "and" @font-lock-operator-face)
-       ;;   (binary_expression operator: "or" @font-lock-operator-face))
-
-       ;; :language 'php
-       ;; :feature 'keyword
-       ;; `([,@php-ts-mode--keywords] @font-lock-keyword-face
-       ;;   (yield_expression "from" @font-lock-keyword-face))
-
-       ;; :language 'php
-       ;; :feature 'delimiter
-       ;; '((["," ":" ";" "\\"]) @font-lock-delimiter-face)
-
-       ;; :language 'php
-       ;; :feature 'bracket
-       ;; `((["(" ")" "[" "]" "{" "}"]) @font-lock-bracket-face))
-;; "Tree-sitter font-lock settings for `php-ts-mode'."
    ))
 
 ;;;###autoload
@@ -10053,6 +9951,13 @@ rows and columns and the column alignment."
 
 
   (treesit-parser-create 'markdown)
+  ;; (treesit-parser-create 'markdown-inline)
+
+  ;; (setq treesit-range-settings
+  ;;       (treesit-range-rules
+  ;;        :embed 'markdown-inline
+  ;;        :host 'markdown
+  ;;        '((inline) @capture)))
 
   (setq-local treesit-font-lock-settings markdown-ts-mode--font-lock-settings)
 
@@ -10087,7 +9992,7 @@ rows and columns and the column alignment."
     ;; `font-lock-mode' wouldn't set up properly if
     ;; `font-lock-defaults' is nil, see `font-lock-specified-p'.
     (setq-local font-lock-defaults
-                '(markdown-mode-font-lock-keywords
+                '(markdown-ts-mode-font-lock-keywords
                   nil nil nil nil
                   (font-lock-fontify-syntactically-function . treesit-font-lock-fontify-region)
                   (font-lock-multiline . t)
@@ -10145,7 +10050,7 @@ rows and columns and the column alignment."
       (add-to-invisibility-spec 'markdown-markup)
     (remove-from-invisibility-spec 'markdown-markup))
   ;; Wiki links
-  (markdown-setup-wiki-link-hooks)
+  ;; (markdown-setup-wiki-link-hooks)
   ;; Math mode
   (when markdown-enable-math (markdown-toggle-math t))
   ;; Add a buffer-local hook to reload after file-local variables are read
@@ -10224,10 +10129,10 @@ rows and columns and the column alignment."
             #'markdown--inhibit-electric-quote nil :local)
 
   ;; Make checkboxes buttons
-  (when markdown-make-gfm-checkboxes-buttons
-    (markdown-make-gfm-checkboxes-buttons (point-min) (point-max))
-    (add-hook 'after-change-functions #'markdown-gfm-checkbox-after-change-function t t)
-    (add-hook 'change-major-mode-hook #'markdown-remove-gfm-checkbox-overlays t t))
+  ;; (when markdown-make-gfm-checkboxes-buttons
+  ;;   (markdown-make-gfm-checkboxes-buttons (point-min) (point-max))
+  ;;   (add-hook 'after-change-functions #'markdown-gfm-checkbox-after-change-function t t)
+  ;;   (add-hook 'change-major-mode-hook #'markdown-remove-gfm-checkbox-overlays t t))
 
   ;; edit-indirect
   (add-hook 'edit-indirect-after-commit-functions
