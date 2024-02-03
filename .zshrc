@@ -88,7 +88,8 @@ alias e=my-emacs
 
 alias cls='printf "\ec\e[3J"'
 
-export EDITOR=nvim
+# export EDITOR=nvim
+export EDITOR=my-emacs
 
 alias cfg='/usr/bin/git --git-dir=$HOME/dotfiles/ --work-tree=$HOME'
 
@@ -101,3 +102,9 @@ fi
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
 unsetopt PROMPT_SP
+
+eval "$(zoxide init zsh)"
+
+if [[ $- =~ i ]] && [[ -z "$TMUX" ]] && [[ -n "$SSH_TTY" ]]; then
+    tmux attach-session -t ssh_tmux || tmux new-session -s ssh_tmux
+fi

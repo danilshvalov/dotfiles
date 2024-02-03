@@ -221,3 +221,94 @@ if vim.env["SSH_TTY"] then
     },
   }
 end
+
+block_on = function(async_fn_with_callback, timeout)
+  local done = false
+  local result
+  timeout = timeout and timeout or 2000
+
+  local function collect_result(res)
+    result = res
+    done = true
+  end
+
+  async_fn_with_callback(collect_result)
+
+  vim.wait(timeout, function()
+    return done
+  end, 20, false)
+
+  return result
+end
+
+input = function(opts)
+  return block_on(function(cb)
+    vim.ui.input(opts, cb)
+  end)
+end
+
+echo = function(prompt)
+  vim.api.nvim_echo({{prompt}}, false, {})
+end
+
+confirm = function(opts)
+  echo(opts.prompt)
+  local answer = vim.fn.nr2char(vim.fn.getchar()):lower()
+  if answer ~= 'y' and answer ~= 'n' then
+    answer = opts.default and 'y' or 'n'
+  end
+
+  if answer == 'y' then
+    return true
+  elseif answer == 'n' then
+    return false
+  end
+end
+
+local Arc = {}
+
+function Arc.root(opts)
+  opts = opts or {}
+
+  local result = vim.system({'arc', 'root'}, {text = true, cwd = opts.cwd}):wait()
+  if result.code ~= 0 then
+    return
+  end
+  return vim.fs.normalize(vim.trim(result.stdout))
+end
+
+function Arc.make_link(opts)
+  opts = opts or {}
+  local path = vim.fs.normalize(vim.api.nvim_buf_get_name(0))
+  local cwd = vim.fs.dirname(path)
+
+  local root = Arc.root({cwd = cwd})
+  if not root then
+    vim.notify("Not a mounted arc repository")
+    return
+  end
+
+  path = path:sub(#root + 1)
+  local link = vim.fs.joinpath('https://a.yandex-team.ru/arcadia', path)
+
+    local line_number = confirm({prompt = "Add line number [Y/n] ", default = true})
+
+  if line_number then
+    local line = vim.api.nvim_win_get_cursor(0)[1]
+    link = link .. string.format("#L%s", line)
+  end
+
+  return link
+end
+
+function Arc.copy_link()
+  local link = Arc.make_link()
+  if not link then
+    return
+  end
+
+  vim.fn.setreg("*", link)
+  vim.notify(string.format("Copied link: %s", link))
+end
+
+map:prefix("<leader>a"):set("l", Arc.copy_link)

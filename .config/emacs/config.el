@@ -56,16 +56,16 @@
   (defvar my-directories nil)
   (defvar my-directory nil)
 
-  ;; (defun my-get-current-directory ()
-  ;;   (or my-directory (or (getenv "PWD") "~"))
-  ;;   ;; (or (assoc-default (my-tab-name-current) my-directories)
-  ;;   ;;     (or (getenv "PWD") "~"))
-  ;;   )
+  (defun my-get-current-directory ()
+    ;; (or my-directory (or (getenv "PWD") "~"))
+    (or (assoc-default (my-tab-name-current) my-directories)
+        (or (getenv "PWD") "~"))
+    )
 
-  ;; (defun my-set-current-directory (directory)
-  ;;   (setq my-directory directory)
-  ;;   ;; (add-to-list 'my-directories (cons (my-tab-name-current) directory))
-  ;;   )
+  (defun my-set-current-directory (directory)
+    ;; (setq my-directory directory)
+    (add-to-list 'my-directories (cons (my-tab-name-current) directory))
+    )
 
   ;; remove image resize delay
   (advice-add 'image--delayed-change-size :override 'image--change-size)
@@ -249,26 +249,26 @@
     "a" 'my-project-add)
 
   :preface
-  ;; (cl-defmethod project-root ((project (head local)))
-  ;;   "Return root directory of current PROJECT."
-  ;;   (cdr project))
+  (cl-defmethod project-root ((project (head local)))
+    "Return root directory of current PROJECT."
+    (cdr project))
 
   (defun project-root-current ()
-    (let ((current (project-current)))
-      (if current
-          (project-root current)
-        default-directory))
-    ;; (or project-current-directory-override
-    ;;     default-directory
-    ;;     ; (my-get-current-directory)
-    ;;     ;; my-default-directory
-    ;;     )
+    ;; (let ((current (project-current)))
+    ;;   (if current
+    ;;       (project-root current)
+    ;;     default-directory))
+    (or project-current-directory-override
+        ; default-directory
+        (my-get-current-directory)
+        ;my-default-directory
+        )
     )
 
-  ;; (defun project-find-root (dir)
-;;     "Determine if DIR is a non-VC project.
-;; DIR must include a .project file to be considered a project."
-;;     (cons 'local (project-root-current)))
+  (defun project-find-root (dir)
+    "Determine if DIR is a non-VC project.
+DIR must include a .project file to be considered a project."
+    (cons 'local (project-root-current)))
 
   (defun my-project-add (&optional dir)
     (interactive)
@@ -280,19 +280,19 @@
       (project-remember-project (cons 'local dir))))
   :init
 
-  ;; (add-hook 'project-find-functions #'project-find-root)
+  (add-hook 'project-find-functions #'project-find-root)
   )
 
-(use-package project-x
-  :demand t
-  :elpaca (:host github :repo "karthink/project-x")
-  :after project
-  :custom
-  (project-x-local-identifier '(".project" "a.yaml"))
-  :config
-  (add-hook 'project-find-functions 'project-x-try-local 90)
-  :bind (("C-x p w" . project-x-window-state-save)
-         ("C-x p j" . project-x-window-state-load)))
+;; (use-package project-x
+;;   :demand t
+;;   :elpaca (:host github :repo "karthink/project-x")
+;;   :after project
+;;   :custom
+;;   (project-x-local-identifier '(".project" "a.yaml"))
+;;   :config
+;;   (add-hook 'project-find-functions 'project-x-try-local 90)
+;;   :bind (("C-x p w" . project-x-window-state-save)
+;;          ("C-x p j" . project-x-window-state-load)))
 
 (set-frame-font "JetBrains Mono 17" nil t)
 
@@ -1622,12 +1622,11 @@ Note that these rules can't contain anchored rules themselves."
   (tab-bar-new-tab-to 'rightmost)
   :preface
   (defun my-tab-name-current ()
-    "1"
-    ;; (cdr (assoc 'name (cdr (tab-bar--current-tab-find nil nil))))
+    (cdr (assoc 'name (cdr (tab-bar--current-tab-find nil nil))))
     )
-
   :config
-  (tab-bar-rename-tab (number-to-string (random)))
+  (run-with-idle-timer 1 nil (lambda () (tab-bar-rename-tab (number-to-string (random)))))
+
   (advice-add
    'tab-bar-new-tab
    :around
@@ -1743,16 +1742,18 @@ Note that these rules can't contain anchored rules themselves."
     :prefix "SPC c"
     "d" (lambda ()
           (interactive)
-          (cd default-directory))
+          (cd default-directory)
+          (message "Directory: %s" default-directory))
     "D" 'cd)
   :config
-  ;; (advice-add
-  ;;  'cd
-  ;;  :around
-  ;;  (lambda (fun &rest args)
-  ;;    (apply fun args)
-  ;;    (my-set-current-directory (car args))
-  ;;    (message "Directory: %s" default-directory)))
+  (advice-add
+   'cd
+   :around
+   (lambda (fun &rest args)
+     (apply fun args)
+     (my-set-current-directory (car args))
+     ;; (message "Directory: %s" default-directory)
+     ))
   )
 
 (use-package web-mode
@@ -1835,3 +1836,29 @@ Note that these rules can't contain anchored rules themselves."
    :keymaps 'markdown-ts-mode-map
    "C-c C-c" 'markdown-toggle-gfm-checkbox)
   )
+
+(defun arc-root ()
+  (let ((exit-code (with-temp-message "" (shell-command "arc root")))
+        (content (with-current-buffer shell-command-buffer-name (buffer-string))))
+    (when (eq exit-code 0)
+      (string-trim content))))
+
+(defun arc-make-link ()
+  (when-let ((root (arc-root))
+             (path (file-relative-name (buffer-file-name) root))
+             (line-number (1+ (count-lines 1 (point))))
+             (link (format "https://a.yandex-team.ru/arcadia/%s#L%s" path line-number)))
+    link))
+
+(defun arc-copy-link ()
+  (interactive)
+  (when-let ((link (arc-make-link)))
+    (kill-new (arc-make-link))
+    (message "Arc link copied: %s" link)))
+
+(add-hook 'server-after-make-frame-hook
+          (lambda ()
+            (tab-bar-rename-tab (number-to-string (random)))
+            (cd (process-get (frame-parameter nil 'client) 'server-client-directory))
+            (dired (project-root-current))))
+>>>>>>> Stashed changes
