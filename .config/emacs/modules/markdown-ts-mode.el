@@ -8622,22 +8622,24 @@ Returns nil if non-applicable."
 Returns the resulting status as a string, either \"[x]\" or \"[ ]\".
 Returns nil if there is no task list item at the point."
   (interactive)
-  (save-match-data
-    (save-excursion
-      (let ((bounds (markdown-cur-list-item-bounds)))
-        (when bounds
-          ;; Move to beginning of task list item
-          (goto-char (cl-first bounds))
-          ;; Advance to column of first non-whitespace after marker
-          (forward-char (cl-fourth bounds))
-          (cond ((looking-at "\\[ \\]")
-                 (replace-match
-                  (if markdown-gfm-uppercase-checkbox "[X]" "[x]")
-                  nil t)
-                 (match-string-no-properties 0))
-                ((looking-at "\\[[xX]\\]")
-                 (replace-match "[ ]" nil t)
-                 (match-string-no-properties 0))))))))
+  (save-excursion
+    (when-let* ((parser (treesit-parser-create 'markdown))
+                (root (treesit-parser-root-node parser))
+                (unchecked-query '((list_item (task_list_marker_unchecked) @marker)))
+                (checked-query '((list_item (task_list_marker_checked) @marker)))
+                (beg (point-at-bol))
+                (end (point-at-eol)))
+      (let* ((checked-capture (treesit-query-capture root checked-query beg end))
+             (unchecked-capture (treesit-query-capture root unchecked-query beg end))
+             (capture (or checked-capture unchecked-capture)))
+        (when capture
+          (let* ((node (alist-get 'marker capture))
+                 (node-start (treesit-node-start node))
+                 (node-end (treesit-node-end node))
+                 (inhibit-message t))
+            (if (eq capture checked-capture)
+                (replace-string "[x]" "[ ]" nil node-start node-end)
+              (replace-string "[ ]" "[x]" nil node-start node-end))))))))
 
 (defun markdown-toggle-gfm-checkbox-button (button)
   "Toggle GFM checkbox BUTTON on click."
@@ -9880,6 +9882,13 @@ rows and columns and the column alignment."
       (link_text) @markdown-link-face
       (link_destination) @markdown-url-face))
 
+   :language 'markdown
+   :feature 'link ; TODO: change
+   `((pipe_table_header "|" @font-lock-punctuation-face)
+     (pipe_table_row "|" @font-lock-punctuation-face)
+     (pipe_table_delimiter_row "|" @font-lock-punctuation-face)
+     ((pipe_table_delimiter_cell) @font-lock-punctuation-face))
+
 ;; (setext_heading (paragraph) @text.title.1 (setext_h1_underline) @text.title.1.marker)
 ;; (setext_heading (paragraph) @text.title.2 (setext_h2_underline) @text.title.2.marker)
 
@@ -9890,11 +9899,6 @@ rows and columns and the column alignment."
 ;; (info_string) @label
 
 ;; (pipe_table_header (pipe_table_cell) @text.title)
-
-;; (pipe_table_header "|" @punctuation.special)
-;; (pipe_table_row "|" @punctuation.special)
-;; (pipe_table_delimiter_row "|" @punctuation.special)
-;; (pipe_table_delimiter_cell) @punctuation.special
 
 ;; [
 ;;   (fenced_code_block_delimiter)
@@ -9949,15 +9953,7 @@ rows and columns and the column alignment."
 (define-derived-mode markdown-ts-mode text-mode "Markdown"
   "Major mode for editing Markdown files."
 
-
   (treesit-parser-create 'markdown)
-  ;; (treesit-parser-create 'markdown-inline)
-
-  ;; (setq treesit-range-settings
-  ;;       (treesit-range-rules
-  ;;        :embed 'markdown-inline
-  ;;        :host 'markdown
-  ;;        '((inline) @capture)))
 
   (setq-local treesit-font-lock-settings markdown-ts-mode--font-lock-settings)
 

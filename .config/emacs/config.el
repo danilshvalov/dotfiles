@@ -473,7 +473,7 @@ DIR must include a .project file to be considered a project."
   ((text-mode prog-mode) . yas-minor-mode)
   (org-mode . (lambda () (yas-activate-extra-mode 'latex-mode)))
   :config
-  (yas-reload-all)
+  (yas-global-mode)
   (setq yas-indent-line 'fixed)
   (setq yas-triggers-in-field t))
 
@@ -829,7 +829,10 @@ Quit if no candidate is selected."
   :general
   (nvmap
     :prefix "SPC c"
-    "f" 'apheleia-format-buffer)
+    "f" (lambda ()
+          (interactive)
+          (save-buffer)
+          (call-interactively 'apheleia-format-buffer)))
   :config
   (rassq-delete-all 'cmake-format apheleia-mode-alist)
 
@@ -1765,7 +1768,7 @@ Note that these rules can't contain anchored rules themselves."
 
 (use-package git-commit)
 
-(imap "<backtab>" "C-d")
+;; (imap "<backtab>" "C-d")
 (advice-add 'indent-for-tab-command
             :around
             (lambda (fun &rest args)
@@ -1828,10 +1831,26 @@ Note that these rules can't contain anchored rules themselves."
   :elpaca nil
   :custom
   (markdown-fontify-code-blocks-natively t)
-  ;; :hook
-  ;; (markdown-ts-mode . markdown-toggle-markup-hiding)
+  (markdown-list-item-bullets '("—"))
+  (markdown-code-lang-modes
+   '(("ocaml" . tuareg-mode)
+     ("elisp" . emacs-lisp-mode)
+     ("ditaa" . artist-mode)
+     ("asymptote" . asy-mode)
+     ("dot" . fundamental-mode)
+     ("sqlite" . sql-mode)
+     ("calc" . fundamental-mode)
+     ("C" . c-ts-mode)
+     ("cpp" . c++-ts-mode)
+     ("C++" . c++-ts-mode)
+     ("html" . mhtml-mode)
+     ("python" . python-ts-mode)
+     ("screen" . shell-script-mode)
+     ("shell" . sh-mode)
+     ("bash" . sh-mode)))
   :config
   (add-hook 'markdown-ts-mode-hook 'markdown-toggle-markup-hiding)
+  (add-hook 'markdown-ts-mode-hook 'auto-fill-mode)
   (general-define-key
    :keymaps 'markdown-ts-mode-map
    "C-c C-c" 'markdown-toggle-gfm-checkbox)
@@ -1840,8 +1859,9 @@ Note that these rules can't contain anchored rules themselves."
 (defun arc-root ()
   (let ((exit-code (with-temp-message "" (shell-command "arc root")))
         (content (with-current-buffer shell-command-buffer-name (buffer-string))))
-    (when (eq exit-code 0)
-      (string-trim content))))
+    (if (eq exit-code 0)
+        (string-trim content)
+      (error "Not in arcadia"))))
 
 (defun arc-make-link ()
   (when-let ((root (arc-root))
@@ -1861,4 +1881,36 @@ Note that these rules can't contain anchored rules themselves."
             (tab-bar-rename-tab (number-to-string (random)))
             (cd (process-get (frame-parameter nil 'client) 'server-client-directory))
             (dired (project-root-current))))
->>>>>>> Stashed changes
+
+(require 'transient)
+
+(defun yank--file-name (format-fn &rest args)
+  (let ((filename (apply format-fn (buffer-file-name) args)))
+    (kill-new filename)
+    (message "Copied filename: %s" filename)))
+
+(transient-define-suffix yank-arcadia-path ()
+  (interactive)
+  (yank--file-name (lambda (f) (arc-make-link))))
+
+(transient-define-suffix yank-file-name ()
+  (interactive)
+  (yank--file-name 'file-relative-name))
+
+(transient-define-suffix yank-file-name-base ()
+  (interactive)
+  (yank--file-name 'file-name-base))
+
+(transient-define-suffix yank-path ()
+  (interactive)
+  (yank--file-name (lambda (f) f)))
+
+(transient-define-prefix yank-menu ()
+  ["File"
+   [("a" "Arcadia"       yank-arcadia-path)
+    ("f" "Filename"      yank-file-name)
+    ("b" "Filename base" yank-file-name-base)
+    ("p" "Path"          yank-path)]])
+
+(nvmap
+  "SPC y" 'yank-menu)
