@@ -225,6 +225,7 @@
     `(markdown-header-face-4 :foreground ,(doom-color 'teal))
     `(markdown-header-face-5 :foreground ,(doom-color 'magenta))
     `(markdown-header-face-6 :foreground ,(doom-color 'violet))
+    `(anzu-mode-line :foreground ,(doom-color 'fg))
     `(flymake-end-of-line-diagnostics-face :height 'unspecified :box 'unspecified))
 
   (add-hook 'image-mode-hook
@@ -1835,6 +1836,7 @@ Note that these rules can't contain anchored rules themselves."
     "t" 'obsidian-today
     "o" 'obsidian-open
     "i" 'obsidian-insert-tag
+    "n" 'obsidian-new
     "f" (lambda ()
           (interactive)
           (consult-fd "~/obsidian"))
@@ -1873,6 +1875,25 @@ Note that these rules can't contain anchored rules themselves."
    :keymaps 'markdown-ts-mode-map
    "C-c C-c" 'markdown-toggle-gfm-checkbox)
   )
+
+(use-package evil-anzu
+  :demand t
+  :after evil
+  :custom
+  (anzu-cons-mode-line-p nil)
+  :config
+  (global-anzu-mode t)
+
+  (defun my/anzu-update-func (here total)
+    (when anzu--state
+      (let ((status (cl-case anzu--state
+                      (search (format "%d/%d" here total))
+                      (replace-query (format "%d Replaces" total))
+                      (replace (format "%d/%d" here total)))))
+        (propertize status 'face 'anzu-mode-line))))
+
+  (custom-set-variables
+   '(anzu-mode-line-update-function #'my/anzu-update-func)))
 
 (defun arc-root ()
   (let ((exit-code (with-temp-message "" (shell-command "arc root")))

@@ -381,6 +381,7 @@ block selection."
               ;; (dash-modeline-flycheck) " "
               (dash-modeline-selection-info))
             '((dash-modeline-window-dedicated)
+              (anzu--update-mode-line) " "
               (dash-modeline-cursor-position))
             default))
 
