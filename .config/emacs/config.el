@@ -23,6 +23,12 @@
 
 (elpaca-wait)
 
+(defun get-pwd ()
+  (let ((client (frame-parameter nil 'client)))
+    (if client
+        (process-get client 'server-client-directory)
+      (getenv "PWD"))))
+
 (use-package emacs
   :elpaca nil
   :custom
@@ -51,7 +57,7 @@
   ((prog-mode text-mode) . display-fill-column-indicator-mode)
   :preface
   (defvar my-default-directory
-    (file-name-as-directory (or (getenv "PWD") "~")))
+    (file-name-as-directory (or (get-pwd) "~")))
 
   (defvar my-directories nil)
   (defvar my-directory nil)
@@ -59,7 +65,7 @@
   (defun my-get-current-directory ()
     ;; (or my-directory (or (getenv "PWD") "~"))
     (or (assoc-default (my-tab-name-current) my-directories)
-        (or (getenv "PWD") "~"))
+        (or (get-pwd) "~"))
     )
 
   (defun my-set-current-directory (directory)
@@ -489,7 +495,9 @@ DIR must include a .project file to be considered a project."
   (avy-lead-face-1 ((t (:background ,(doom-lighten 'yellow 0.60)))))
   (avy-lead-face-2 ((t (:background ,(doom-lighten 'yellow 0.80)))))
   :general
-  (nvmap "s" 'avy-goto-char-2))
+  (nvmap
+    :keymaps 'override
+    "s" 'avy-goto-char-2))
 
 (use-builtin eglot
   :custom
@@ -569,8 +577,10 @@ DIR must include a .project file to be considered a project."
     "" '(nil :wk "find")
     "r" '+consult-recent-file
     "b" 'consult-buffer
-    "f" 'affe-find
-    "g" 'affe-grep
+    "f" 'consult-fd
+    "F" 'consult-fd-at
+    "g" 'consult-ripgrep
+    "G" 'consult-ripgrep-at
     "o" 'ff-find-other-file
     "e" 'consult-flymake
     "." (lambda ()
@@ -578,6 +588,15 @@ DIR must include a .project file to be considered a project."
           (call-process-shell-command "open .")))
 
   :preface
+  (defun consult-fd-at ()
+    (interactive)
+    (let ((directory (read-directory-name "Directory: ")))
+      (consult-fd directory)))
+
+  (defun consult-ripgrep-at ()
+    (interactive)
+    (let ((directory (read-directory-name "Directory: ")))
+      (consult-ripgrep directory)))
   (defun +consult-recent-file ()
     (require 'consult)
     "Find recent file using `completing-read'."
@@ -623,12 +642,12 @@ DIR must include a .project file to be considered a project."
 (use-package marginalia
   :init (marginalia-mode))
 
-(use-package affe
-  :config
-  (defun affe-orderless-regexp-compiler (input _type _ignorecase)
-    (setq input (orderless-pattern-compiler input))
-    (cons input (apply-partially #'orderless--highlight input t)))
-  (setq affe-regexp-compiler #'affe-orderless-regexp-compiler))
+;; (use-package affe
+;;   :config
+;;   (defun affe-orderless-regexp-compiler (input _type _ignorecase)
+;;     (setq input (orderless-pattern-compiler input))
+;;     (cons input (apply-partially #'orderless--highlight input t)))
+;;   (setq affe-regexp-compiler #'affe-orderless-regexp-compiler))
 
 (use-package orderless
   :init
@@ -892,6 +911,7 @@ Quit if no candidate is selected."
   :custom
   (vterm-tramp-shells '(("ssh" "/bin/zsh")))
   (vterm-copy-mode-remove-fake-newlines t)
+  (vterm-max-scrollback 100000)
   :general
   (nmap
     :prefix "SPC t"
@@ -1573,11 +1593,6 @@ Note that these rules can't contain anchored rules themselves."
   :custom
   (vc-handled-backends nil))
 
-(add-hook
- 'yaml-ts-mode-hook
- (lambda ()
-   (setq-local tab-width 2)))
-
 (use-package powershell
   :custom
   (powershell-indent 2))
@@ -1615,6 +1630,9 @@ Note that these rules can't contain anchored rules themselves."
 
 (use-package php-mode)
 
+(defun set-tab-name ()
+  (tab-bar-rename-tab (get-pwd)))
+
 (use-builtin tab-bar
   :custom
   (tab-bar-format '(tab-bar-format-history tab-bar-format-tabs tab-bar-separator))
@@ -1628,14 +1646,14 @@ Note that these rules can't contain anchored rules themselves."
     (cdr (assoc 'name (cdr (tab-bar--current-tab-find nil nil))))
     )
   :config
-  (run-with-idle-timer 1 nil (lambda () (tab-bar-rename-tab (number-to-string (random)))))
+  (run-with-idle-timer 1 nil 'set-tab-name)
 
   (advice-add
    'tab-bar-new-tab
    :around
    (lambda (fun &rest args)
      (apply fun args)
-     (tab-bar-rename-tab (number-to-string (random)))
+     (set-tab-name)
      (dired (project-root-current))))
 
   (defun tab-bar-tab-name-format-default (tab i)
@@ -1819,10 +1837,10 @@ Note that these rules can't contain anchored rules themselves."
     "i" 'obsidian-insert-tag
     "f" (lambda ()
           (interactive)
-          (affe-find "~/obsidian"))
+          (consult-fd "~/obsidian"))
     "g" (lambda ()
           (interactive)
-          (affe-grep "~/obsidian")))
+          (consult-ripgrep "~/obsidian")))
   :config
   (font-lock-add-keywords 'markdown-ts-mode
                           '(("\\(^\\|[[:space:]]+\\)\\(#[[:alnum:]-_/]+\\)" 2 'obsidian-tag prepend)) t))
@@ -1878,7 +1896,7 @@ Note that these rules can't contain anchored rules themselves."
 
 (add-hook 'server-after-make-frame-hook
           (lambda ()
-            (tab-bar-rename-tab (number-to-string (random)))
+            (set-tab-name)
             (cd (process-get (frame-parameter nil 'client) 'server-client-directory))
             (dired (project-root-current))))
 
@@ -1914,3 +1932,65 @@ Note that these rules can't contain anchored rules themselves."
 
 (nvmap
   "SPC y" 'yank-menu)
+
+(defun arc--call-process (program &rest args)
+  (with-temp-buffer
+    (let ((exit-code (apply 'call-process program nil (current-buffer) nil args))
+          (content (buffer-string)))
+      (when (> exit-code 0)
+        (error "Arc error: %s" content))
+      content)))
+
+(defun arc--branches-raw ()
+  (let* ((branches (arc--call-process "arc" "branch" "--json"))
+         (branches (json-parse-string branches)))
+    branches))
+
+(defun arc--branch-current ()
+  (let* ((branches (arc--branches-raw))
+         (branches (cl-remove-if-not (lambda (x) (gethash "current" x nil)) branches))
+         (branch (aref branches 0))
+         (branch (gethash "name" branch)))
+    branch))
+
+(defun arc--branches ()
+  (let* ((branches (arc--branches-raw))
+         (branches (cl-remove-if-not (lambda (x) (gethash "local" x)) branches))
+         (branches (mapcar (lambda (x) (gethash "name" x)) branches)))
+    branches))
+
+(defun arc--select-branch (&optional prompt)
+  (let* ((prompt (or prompt "Select branch: "))
+         (branches (arc--branches))
+         (branch (completing-read prompt branches nil t)))
+    branch))
+
+(defun arc--select-branch-list ()
+  (let* ((branches (arc--branches))
+         (branch (completing-read-multiple "Select branch: " branches nil t)))
+    branch))
+
+(defun arc-branch-checkout (&optional branch)
+  (interactive)
+  (let* ((prompt (format "Select branch (current: %s): " (arc--branch-current)))
+         (branch (or branch (arc--select-branch prompt))))
+    (arc--call-process "arc" "co" branch)))
+
+(defun arc-pull ()
+  (interactive)
+  (arc--call-process "arc" "pull"))
+
+(nvmap
+  :prefix "SPC a"
+  :keymaps 'override
+  "c" 'arc-branch-checkout
+  "P" 'arc-pull)
+
+(defun arc-branch-delete (&optional branches)
+  (interactive)
+  (let* ((branches (or branches (arc--select-branch-list))))
+    (apply 'arc--call-process "arc" "branch" "--delete" branches)))
+
+(advice-add 'arc--call-process :around #'execute-at-project-root)
+
+(modify-syntax-entry ?_ "w")
