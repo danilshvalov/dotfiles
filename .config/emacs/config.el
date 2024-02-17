@@ -187,6 +187,7 @@
   (setq buffer-file-coding-system 'utf-8-unix)
 
   (menu-bar-mode -1)
+  (scroll-bar-mode -1)
   (global-whitespace-mode +1)
   (window-divider-mode)
   (savehist-mode)
@@ -841,8 +842,8 @@ Quit if no candidate is selected."
   :init
   (evil-commentary-mode))
 
-(use-package git-modes
-  :defer t)
+;; (use-package git-modes
+;;   :defer t)
 
 (use-package apheleia
   ;; :hook ((prog-mode text-mode) . apheleia-mode)
@@ -910,7 +911,8 @@ Quit if no candidate is selected."
 (use-package vterm
   :after evil
   :custom
-  (vterm-tramp-shells '(("ssh" "/bin/zsh")))
+  (vterm-tramp-shells '(("ssh" "/bin/zsh")
+                        ("sshx" "/bin/zsh")))
   (vterm-copy-mode-remove-fake-newlines t)
   (vterm-max-scrollback 100000)
   :general
@@ -1536,13 +1538,14 @@ Note that these rules can't contain anchored rules themselves."
 (use-package lua-mode
   :mode "\\.lua\\'")
 
-;; (use-builtin tramp
-;;   :config
-;;   (setopt
-;;    explicit-shell-file-name "/bin/zsh"
-;;    tramp-default-remote-shell "/bin/zsh"
-;;    tramp-encoding-shell "/bin/zsh"
-;;    tramp-verbose 0))
+(use-builtin tramp
+  :config
+  (add-to-list 'tramp-remote-path "/home/linuxbrew/.linuxbrew/bin")
+
+  (setopt
+   explicit-shell-file-name "/bin/zsh"
+   tramp-encoding-shell "/bin/zsh"
+   tramp-verbose 0))
 
 (use-builtin calendar
   :defer t
@@ -1632,8 +1635,11 @@ Note that these rules can't contain anchored rules themselves."
 (use-package php-mode)
 
 (defun set-tab-name ()
-  (tab-bar-rename-tab (get-pwd)))
+  (interactive)
+  (tab-bar-rename-tab (or (get-pwd) (number-to-string (random)))))
 
+(set-tab-name)
+;; (add-hook 'tab-bar-mode-hook (lambda () (interactive) (set-tab-name)))
 (use-builtin tab-bar
   :custom
   (tab-bar-format '(tab-bar-format-history tab-bar-format-tabs tab-bar-separator))
@@ -1647,7 +1653,8 @@ Note that these rules can't contain anchored rules themselves."
     (cdr (assoc 'name (cdr (tab-bar--current-tab-find nil nil))))
     )
   :config
-  (run-with-idle-timer 1 nil 'set-tab-name)
+  ;; (set-tab-name)
+  ;; (run-with-idle-timer 2 nil 'set-tab-name)
 
   (advice-add
    'tab-bar-new-tab
@@ -1815,10 +1822,10 @@ Note that these rules can't contain anchored rules themselves."
   ;;       (sit-for 1))))
   (global-clipetty-mode))
 
-(use-package with-editor
-  :demand t
-  :config
-  (add-hook 'vterm-mode-hook 'with-editor-export-editor))
+;; (use-package with-editor
+;;   :demand t
+;;   :config
+;;   (add-hook 'vterm-mode-hook 'with-editor-export-editor))
 
 (define-advice server-eval-and-print (:filter-args (args) no-print)
   (list (car args) nil))
@@ -1875,6 +1882,11 @@ Note that these rules can't contain anchored rules themselves."
    :keymaps 'markdown-ts-mode-map
    "C-c C-c" 'markdown-toggle-gfm-checkbox)
   )
+
+(use-package magit)
+
+(use-package arcit
+  :elpaca nil)
 
 (use-package evil-anzu
   :demand t
@@ -1956,7 +1968,9 @@ Note that these rules can't contain anchored rules themselves."
 
 (defun arc--call-process (program &rest args)
   (with-temp-buffer
-    (let ((exit-code (apply 'call-process program nil (current-buffer) nil args))
+    (let ((exit-code (shell-command (string-join `(,program ,(string-join (mapcar 'shell-quote-argument args) " ")) " ") (current-buffer))
+                     ;; (apply 'tramp-call-process nil program nil (current-buffer) nil args)
+                     )
           (content (buffer-string)))
       (when (> exit-code 0)
         (error "Arc error: %s" content))
@@ -2001,11 +2015,16 @@ Note that these rules can't contain anchored rules themselves."
   (interactive)
   (arc--call-process "arc" "pull"))
 
+(defun arc-info ()
+  (interactive)
+  (message "Arc: %s" (arc--branch-current)))
+
 (nvmap
   :prefix "SPC a"
   :keymaps 'override
   "c" 'arc-branch-checkout
-  "P" 'arc-pull)
+  "P" 'arc-pull
+  "i" 'arc-info)
 
 (defun arc-branch-delete (&optional branches)
   (interactive)
