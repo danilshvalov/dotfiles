@@ -15,6 +15,19 @@
     (dolist (item hook)
       (add-hook item function depth local))))
 
+
+(defun project-root-current ()
+  ;; (let ((current (project-current)))
+  ;;   (if current
+  ;;       (project-root current)
+  ;;     default-directory))
+  (or project-current-directory-override
+      ; default-directory
+      (my-get-current-directory)
+      ;my-default-directory
+      )
+  )
+
 (use-package general
   :demand t
   :config
@@ -187,7 +200,9 @@
   (setq buffer-file-coding-system 'utf-8-unix)
 
   (menu-bar-mode -1)
-  (scroll-bar-mode -1)
+
+  (when (fboundp 'scroll-bar-mode)
+    (scroll-bar-mode -1))
   (global-whitespace-mode +1)
   (window-divider-mode)
   (savehist-mode)
@@ -237,13 +252,8 @@
 (defun concat-lines (&rest args)
   (string-join args "\n"))
 
-(use-package project
+(use-builtin project
   :requires consult
-  :preface
-  (defun dired-project-root ()
-    (interactive)
-    (let ((default-directory (project-root-current)))
-      (dired default-directory)))
   :custom
   (project-switch-commands '((consult-fd "Find file")
                              (dired-project-root "Dired")))
@@ -256,22 +266,18 @@
     "s" 'project-switch-project
     "a" 'my-project-add)
 
-  :preface
+  :init
+
+  )
+
+  (defun dired-project-root ()
+    (interactive)
+    (let ((default-directory (project-root-current)))
+      (dired default-directory)))
+
   (cl-defmethod project-root ((project (head local)))
     "Return root directory of current PROJECT."
     (cdr project))
-
-  (defun project-root-current ()
-    ;; (let ((current (project-current)))
-    ;;   (if current
-    ;;       (project-root current)
-    ;;     default-directory))
-    (or project-current-directory-override
-        ; default-directory
-        (my-get-current-directory)
-        ;my-default-directory
-        )
-    )
 
   (defun project-find-root (dir)
     "Determine if DIR is a non-VC project.
@@ -286,21 +292,8 @@ DIR must include a .project file to be considered a project."
                                         default-directory
                                         t))))
       (project-remember-project (cons 'local dir))))
-  :init
 
   (add-hook 'project-find-functions #'project-find-root)
-  )
-
-;; (use-package project-x
-;;   :demand t
-;;   :elpaca (:host github :repo "karthink/project-x")
-;;   :after project
-;;   :custom
-;;   (project-x-local-identifier '(".project" "a.yaml"))
-;;   :config
-;;   (add-hook 'project-find-functions 'project-x-try-local 90)
-;;   :bind (("C-x p w" . project-x-window-state-save)
-;;          ("C-x p j" . project-x-window-state-load)))
 
 (set-frame-font "JetBrains Mono 17" nil t)
 
@@ -426,7 +419,7 @@ DIR must include a .project file to be considered a project."
   ((prog-mode text-mode vterm-mode) . visual-line-mode)
   (visual-line-mode . +adaptive-wrap-prefix-mode)
   (calendar-mode . +disable-visual-line-mode)
-  :preface
+  :init
   (defun +adaptive-wrap-prefix-mode ()
     "Toggle `visual-line-mode' and `adaptive-wrap-prefix-mode' simultaneously."
     (unless
@@ -1048,8 +1041,8 @@ Quit if no candidate is selected."
           (lambda ()
             (face-remap-add-relative 'font-lock-type-face '(:inherit default))))
 
-(use-package cmake-mode
-  :commands cmake-mode)
+; (use-package cmake-mode
+;   :commands cmake-mode)
 
 (add-to-list! 'auto-mode-alist
               '("\\.latexmkrc\\'" . perl-mode)
@@ -1244,11 +1237,12 @@ Quit if no candidate is selected."
            "C-e" 'embark-act)
   (general-define-key
    :keymaps 'embark-file-map
-   "C-v" 'split-window-vertically)
-  (imap
+   "C-v" (lambda () (interactive)(split-window-horizontally) (other-window 1)))
+  (:states '(normal visual insert)
     :keymaps 'vertico-map
     "C-v" "C-e C-v"
-    "C-q" "C-e S")
+    "C-q" "C-e S"
+    "TAB" "C-e SPC")
   :init
   (setq prefix-help-command #'embark-prefix-help-command)
   :config
@@ -1884,9 +1878,6 @@ Note that these rules can't contain anchored rules themselves."
   )
 
 (use-package magit)
-
-(use-package arcit
-  :elpaca nil)
 
 (use-package evil-anzu
   :demand t
