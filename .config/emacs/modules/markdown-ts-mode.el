@@ -9880,7 +9880,8 @@ rows and columns and the column alignment."
    :feature 'link
    `((inline_link
       (link_text) @markdown-link-face
-      (link_destination) @markdown-url-face))
+      (link_destination) @markdown-url-face)
+     ((uri_autolink) @markdown-url-face))
 
    :language 'markdown
    :feature 'link ; TODO: change
@@ -9888,6 +9889,14 @@ rows and columns and the column alignment."
      (pipe_table_row "|" @font-lock-punctuation-face)
      (pipe_table_delimiter_row "|" @font-lock-punctuation-face)
      ((pipe_table_delimiter_cell) @font-lock-punctuation-face))
+
+   :language 'markdown
+   :feature 'link ; TODO: change
+   `(((list_marker_dot) @markdown-list-face))
+
+   :language 'markdown-inline
+   :feature 'link ; TODO: change
+   `(((latex_block) @markdown-math-face))
 
 ;; (setext_heading (paragraph) @text.title.1 (setext_h1_underline) @text.title.1.marker)
 ;; (setext_heading (paragraph) @text.title.2 (setext_h2_underline) @text.title.2.marker)

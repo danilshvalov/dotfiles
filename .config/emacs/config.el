@@ -471,12 +471,22 @@ DIR must include a .project file to be considered a project."
 
 (use-package yasnippet
   :hook
-  ((text-mode prog-mode) . yas-minor-mode)
   (org-mode . (lambda () (yas-activate-extra-mode 'latex-mode)))
   :config
   (yas-global-mode)
   (setq yas-indent-line 'fixed)
-  (setq yas-triggers-in-field t))
+  (setq yas-triggers-in-field t)
+
+  (defun yas--expand-or-prompt-for-template (templates &optional start end)
+    "Expand one of TEMPLATES from START to END.
+
+Prompt the user if TEMPLATES has more than one element, else
+expand immediately.  Common gateway for
+`yas-expand-from-trigger-key' and `yas-expand-from-keymap'."
+    (let ((yas--current-template
+           (cdar templates)))
+      (when yas--current-template
+        (yas-expand-snippet yas--current-template start end)))))
 
 (setq-default tab-width 4)
 (setq-default indent-tabs-mode nil)
@@ -561,8 +571,8 @@ DIR must include a .project file to be considered a project."
      "\\`\\*Async-native-compile-log\\*\\'"
      "\\`\\*tramp/.*\\*\\'"
      "\\`\\*Eglot .*\\*\\'"))
-  (consult-ripgrep-args
-   "rg --null --line-buffered --color=never --max-columns=1000 --path-separator / --smart-case --no-heading --with-filename --line-number --search-zip")
+  ;; (consult-ripgrep-args
+  ;;  "rg --null --line-buffered --color=never --max-columns=1000 --path-separator / --smart-case --no-heading --with-filename --line-number --search-zip")
   (consult-async-split-style 'semicolon)
   (consult-preview-key nil)
   :general
@@ -1237,12 +1247,18 @@ Quit if no candidate is selected."
            "C-e" 'embark-act)
   (general-define-key
    :keymaps 'embark-file-map
-   "C-v" (lambda () (interactive)(split-window-horizontally) (other-window 1)))
+   "C-v" (lambda ()
+           (interactive)
+           (split-window-horizontally)
+           (other-window 1)))
   (:states '(normal visual insert)
     :keymaps 'vertico-map
     "C-v" "C-e C-v"
-    "C-q" "C-e S"
-    "TAB" "C-e SPC")
+    "C-s" 'embark-collect
+    "C-c" (lambda ()
+            (interactive)
+            (embark-select)
+            (vertico-next)))
   :init
   (setq prefix-help-command #'embark-prefix-help-command)
   :config
