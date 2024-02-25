@@ -842,7 +842,18 @@ return {
 
       local function arc_branch()
         local result = vim.system({ "arc", "branch", "--json" }, { text = true }):wait()
+        if result.code ~= 0 then
+          vim.notify("Arc error: " .. result.stderr)
+          return
+        end
         local data = vim.json.decode(result.stdout)
+
+        local current_branch = vim.iter(data):filter(function(value)
+          return value["current"]
+        end):map(function(value)
+          return value["name"]
+        end):totable()[1]
+
         local branch_names = vim
             .iter(data)
             :map(function(value)
@@ -850,13 +861,15 @@ return {
             end)
             :totable()
 
-        vim.ui.select(branch_names, { prompt = "Select branch: " }, function(choice)
+        vim.ui.select(branch_names, { prompt = string.format("Select branch (current: %s): ", current_branch) }, function(choice)
           if not choice then
             return
           end
-          vim.system({ "arc", "checkout", choice }, { text = true }):wait()
+          local result = vim.system({ "arc", "checkout", choice }, { text = true }):wait()
         end)
       end
+
+      map:prefix("<leader>a"):set("c", arc_branch)
 
       local arc_commands = {
         branch = arc_branch,
