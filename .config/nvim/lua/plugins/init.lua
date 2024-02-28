@@ -52,9 +52,9 @@ return {
       map:set("<C-g>", "2<C-g>")
 
       map
-          :mode("nvo")
-          :set("H", "^", { desc = "Start of line" })
-          :set("L", "$", { desc = "End of line" })
+        :mode("nvo")
+        :set("H", "^", { desc = "Start of line" })
+        :set("L", "$", { desc = "End of line" })
 
       map:prefix("<leader>t", "+toggle"):set("w", function()
         if not vim.opt_local.formatoptions:get().a then
@@ -65,25 +65,25 @@ return {
       end, { desc = "Toggle wrap" })
 
       map
-          :new({ mode = "nv", expr = true })
-          :set("k", "(v:count? 'k' : 'gk')")
-          :set("j", "(v:count? 'j' : 'gj')")
+        :new({ mode = "nv", expr = true })
+        :set("k", "(v:count? 'k' : 'gk')")
+        :set("j", "(v:count? 'j' : 'gj')")
 
       map
-          :prefix("<leader>o", "+open")
-          :set("f", kit.wrap(vim.fn.system, "open ."), { desc = "Open in finder" })
+        :prefix("<leader>o", "+open")
+        :set("f", kit.wrap(vim.fn.system, "open ."), { desc = "Open in finder" })
 
       map
-          :prefix("<leader>d", "+dir")
-          :set("c", function()
-            local path, _ = vim.fn.expand("%:p:h"):gsub("oil://", "")
-            vim.cmd.cd(path)
-            vim.notify("Directory: " .. vim.fn.expand("%:p:~:h"):gsub("oil://", ""))
-          end, { desc = "Set cwd to current file directory" })
-          :set("y", function()
-            vim.fn.setreg("+", vim.fn.expand("%:p:h"))
-            vim.notify("Copied directory: " .. vim.fn.expand("%:p:~:h"))
-          end, { desc = "Yank cwd" })
+        :prefix("<leader>d", "+dir")
+        :set("c", function()
+          local path, _ = vim.fn.expand("%:p:h"):gsub("oil://", "")
+          vim.cmd.cd(path)
+          vim.notify("Directory: " .. vim.fn.expand("%:p:~:h"):gsub("oil://", ""))
+        end, { desc = "Set cwd to current file directory" })
+        :set("y", function()
+          vim.fn.setreg("+", vim.fn.expand("%:p:h"))
+          vim.notify("Copied directory: " .. vim.fn.expand("%:p:~:h"))
+        end, { desc = "Yank cwd" })
 
       map:set("<Esc>", vim.cmd.noh)
     end,
@@ -243,7 +243,7 @@ return {
         },
         indent = {
           enable = true,
-          disable = { "python", "java", "yaml", "sql", "latex" },
+          disable = { "python", "java", "yaml", "sql", "latex", "markdown" },
         },
         autopairs = {
           enable = true,
@@ -252,100 +252,126 @@ return {
     end,
   },
   {
-    "nvimtools/none-ls.nvim",
-    dependencies = {
-      "nvim-lua/plenary.nvim",
-    },
-    keymap = function(map)
-      map:set("<leader>cf", function()
-        vim.lsp.buf.format({ async = true, timeout_ms = 5000 })
-      end)
-    end,
+    "stevearc/conform.nvim",
     config = function()
-      local null_ls = require("null-ls")
-      local builtins = null_ls.builtins
-      local formatting = builtins.formatting
-      local helpers = require("null-ls.helpers")
+      local conform = require("conform")
 
-      local black
-      if vim.fn.executable("taxi-black") == 1 then
-        black = helpers.make_builtin({
-          name = "taxi-black",
-          method = { null_ls.methods.FORMATTING },
-          filetypes = { "python" },
-          generator_opts = {
-            command = "taxi-black",
-            to_temp_file = true,
-            args = function()
-              return {
-                "--quiet",
-                "--force",
-                "$FILENAME",
-                "-",
-              }
-            end,
-          },
-          factory = helpers.formatter_factory,
-        })
-      else
-        black = formatting.black.with({
-          extra_args = { "--line-length", "80" },
-        })
-      end
-
-      local clang_format
-      if vim.fn.executable("taxi-clang-format") == 1 then
-        clang_format = helpers.make_builtin({
-          name = "taxi-clang-format",
-          method = { null_ls.methods.FORMATTING },
-          filetypes = { "cpp" },
-          generator_opts = {
-            command = "taxi-clang-format",
-            to_temp_file = true,
-            args = function()
-              return {
-                "--quiet",
-                "--force",
-                "$FILENAME",
-                "-",
-              }
-            end,
-          },
-          factory = helpers.formatter_factory,
-        })
-      else
-        clang_format = formatting.clang_format
-      end
-
-      null_ls.setup({
-        default_timeout = 5000,
-        sources = {
-          builtins.code_actions.gitsigns,
-          formatting.stylua,
-          formatting.markdownlint,
-          formatting.prettier.with({ filetypes = { "java", "css", "html" } }),
-          formatting.prettierd.with({
-            filetypes = { "json", "javascript", "markdown", "scss" },
-          }),
-          formatting.phpcsfixer,
-          clang_format,
-          black,
-          formatting.latexindent.with({
-            extra_args = { "-g", "/dev/null", "--local" },
-          }),
-          formatting.taplo,
-          formatting.fnlfmt,
-          formatting.csharpier,
-          null_ls.builtins.diagnostics.sqlfluff.with({
-            extra_args = { "--dialect", "postgres" },
-          }),
-          formatting.sqlfluff.with({
-            extra_args = { "--dialect", "postgres" },
-          }),
+      conform.setup({
+        formatters_by_ft = {
+          lua = { "stylua" },
+          python = { "black" },
+          markdown = { "prettier" },
+          cpp = { "clang-format" },
         },
       })
+
+      local function format_buffer()
+        local bufnr = vim.api.nvim_get_current_buf()
+        conform.format({ async = true, bufnr = bufnr, timeout_ms = 5000 }, function(error)
+          if not error then
+            vim.api.nvim_buf_call(bufnr, function()
+              vim.cmd.write()
+            end)
+          end
+        end)
+      end
+
+      map:set("<leader>cf", format_buffer)
     end,
   },
+  -- {
+  --   "nvimtools/none-ls.nvim",
+  --   dependencies = {
+  --     "nvim-lua/plenary.nvim",
+  --   },
+  --   keymap = function(map)
+  --     map:set("<leader>cf", function()
+  --       vim.lsp.buf.format({ async = true, timeout_ms = 5000 })
+  --     end)
+  --   end,
+  --   config = function()
+  --     local null_ls = require("null-ls")
+  --     local builtins = null_ls.builtins
+  --     local formatting = builtins.formatting
+  --     local helpers = require("null-ls.helpers")
+
+  --     local black
+  --     if vim.fn.executable("taxi-black") == 1 then
+  --       black = helpers.make_builtin({
+  --         name = "taxi-black",
+  --         method = { null_ls.methods.FORMATTING },
+  --         filetypes = { "python" },
+  --         generator_opts = {
+  --           command = "taxi-black",
+  --           to_temp_file = true,
+  --           args = function()
+  --             return {
+  --               "--quiet",
+  --               "--force",
+  --               "$FILENAME",
+  --               "-",
+  --             }
+  --           end,
+  --         },
+  --         factory = helpers.formatter_factory,
+  --       })
+  --     else
+  --       black = formatting.black.with({
+  --         extra_args = { "--line-length", "80" },
+  --       })
+  --     end
+
+  --     local clang_format
+  --     if vim.fn.executable("taxi-clang-format") == 1 then
+  --       clang_format = helpers.make_builtin({
+  --         name = "taxi-clang-format",
+  --         method = { null_ls.methods.FORMATTING },
+  --         filetypes = { "cpp" },
+  --         generator_opts = {
+  --           command = "taxi-clang-format",
+  --           to_temp_file = true,
+  --           args = function()
+  --             return {
+  --               "--quiet",
+  --               "--force",
+  --               "$FILENAME",
+  --               "-",
+  --             }
+  --           end,
+  --         },
+  --         factory = helpers.formatter_factory,
+  --       })
+  --     else
+  --       clang_format = formatting.clang_format
+  --     end
+
+  --     null_ls.setup({
+  --       sources = {
+  --         formatting.stylua,
+  --         -- formatting.mdformat,
+  --         formatting.prettier.with({ filetypes = { "java", "css", "html", "markdown" } }),
+  --         formatting.prettierd.with({
+  --           filetypes = { "json", "javascript", "markdown", "scss" },
+  --         }),
+  --         formatting.phpcsfixer,
+  --         clang_format,
+  --         black,
+  --         -- TODO: replace with texlab
+  --         -- formatting.latexindent.with({
+  --         --   extra_args = { "-g", "/dev/null", "--local" },
+  --         -- }),
+  --         formatting.fnlfmt,
+  --         formatting.csharpier,
+  --         null_ls.builtins.diagnostics.sqlfluff.with({
+  --           extra_args = { "--dialect", "postgres" },
+  --         }),
+  --         formatting.sqlfluff.with({
+  --           extra_args = { "--dialect", "postgres" },
+  --         }),
+  --       },
+  --     })
+  --   end,
+  -- },
   {
     "nvim-lualine/lualine.nvim",
     config = function()
@@ -406,7 +432,7 @@ return {
             path = 3,
             fmt = function(str)
               if
-                  str == "[No Name]" or vim.tbl_contains({ "toggleterm", "fzf" }, vim.bo.filetype)
+                str == "[No Name]" or vim.tbl_contains({ "toggleterm", "fzf" }, vim.bo.filetype)
               then
                 return ""
               end
@@ -523,24 +549,24 @@ return {
       end
 
       map
-          :prefix("<leader>x")
-          :set("q", open("quickfix"))
-          :set("x", open("workspace_diagnostics"), { desc = "Show code errors" })
+        :prefix("<leader>x")
+        :set("q", open("quickfix"))
+        :set("x", open("workspace_diagnostics"), { desc = "Show code errors" })
 
       map
-          :new({ prefix = "<leader>c" })
-          :set("r", vim.lsp.buf.rename)
-          :set("h", vim.diagnostic.open_float)
-          :set("a", vim.lsp.buf.code_action)
+        :new({ prefix = "<leader>c" })
+        :set("r", vim.lsp.buf.rename)
+        :set("h", vim.diagnostic.open_float)
+        :set("a", vim.lsp.buf.code_action)
 
       map
-          :prefix("g", "+goto")
-          :set("d", open("lsp_definitions"), { desc = "Go definitions" })
-          :set("D", vim.lsp.buf.declaration, { desc = "Go declaration" })
-          :set("r", open("lsp_references"), { desc = "Go references" })
-          :set("i", open("lsp_implementations"), { desc = "Go implementations" })
-          :set("n", vim.diagnostic.goto_next, { desc = "Go next error" })
-          :set("p", vim.diagnostic.goto_prev, { desc = "Go prev error" })
+        :prefix("g", "+goto")
+        :set("d", open("lsp_definitions"), { desc = "Go definitions" })
+        :set("D", vim.lsp.buf.declaration, { desc = "Go declaration" })
+        :set("r", open("lsp_references"), { desc = "Go references" })
+        :set("i", open("lsp_implementations"), { desc = "Go implementations" })
+        :set("n", vim.diagnostic.goto_next, { desc = "Go next error" })
+        :set("p", vim.diagnostic.goto_prev, { desc = "Go prev error" })
 
       require("trouble").setup()
     end,
@@ -615,13 +641,13 @@ return {
       local toggleterm = kit.require_on_exported_call("toggleterm")
 
       map
-          :prefix("<leader>t", "+toggle")
-          :set("t", function()
-            toggleterm.toggle(vim.v.count, nil, nil, "horizontal")
-          end)
-          :set("T", function()
-            toggleterm.toggle(vim.v.count, nil, nil, "tab")
-          end)
+        :prefix("<leader>t", "+toggle")
+        :set("t", function()
+          toggleterm.toggle(vim.v.count, nil, nil, "horizontal")
+        end)
+        :set("T", function()
+          toggleterm.toggle(vim.v.count, nil, nil, "tab")
+        end)
 
       map:ft("toggleterm"):mode("t"):set("<Esc><Esc>", "<C-\\><C-n>")
     end,
@@ -652,7 +678,7 @@ return {
     config = function()
       local get_input = function(prompt, default)
         local ok, result =
-            pcall(vim.fn.input, { prompt = prompt, default = default, cancelreturn = vim.NIL })
+          pcall(vim.fn.input, { prompt = prompt, default = default, cancelreturn = vim.NIL })
         if ok and result ~= vim.NIL then
           return result
         end
@@ -774,23 +800,23 @@ return {
       local ls = kit.require_on_exported_call("luasnip")
 
       map
-          :mode("i")
-          :amend("<Tab>", function(fallback)
-            if vim.fn.pumvisible() == 1 then
-              return vim.api.nvim_feedkeys(vim.keycode("<Down>"), "n", false)
-            elseif ls.expand_or_jumpable() then
-              return ls.expand_or_jump()
-            end
-            return fallback()
-          end)
-          :amend("<S-Tab>", function()
-            if vim.fn.pumvisible() == 1 then
-              return vim.api.nvim_feedkeys(vim.keycode("<Up>"), "n", false)
-            elseif ls.jumpable(-1) then
-              ls.jump(-1)
-            end
-            return vim.api.nvim_feedkeys(vim.keycode("<C-d>"), "n", false)
-          end)
+        :mode("i")
+        :amend("<Tab>", function(fallback)
+          if vim.fn.pumvisible() == 1 then
+            return vim.api.nvim_feedkeys(vim.keycode("<Down>"), "n", false)
+          elseif ls.expand_or_jumpable() then
+            return ls.expand_or_jump()
+          end
+          return fallback()
+        end)
+        :amend("<S-Tab>", function()
+          if vim.fn.pumvisible() == 1 then
+            return vim.api.nvim_feedkeys(vim.keycode("<Up>"), "n", false)
+          elseif ls.jumpable(-1) then
+            ls.jump(-1)
+          end
+          return vim.api.nvim_feedkeys(vim.keycode("<C-d>"), "n", false)
+        end)
 
       map:mode("c"):amend("<CR>", function(fallback)
         if vim.fn.wildmenumode() == 1 then
@@ -825,12 +851,12 @@ return {
       map:mode("t"):ft("fzf"):set("<Esc>", vim.cmd.quit)
 
       map
-          :prefix("<leader>f", "+find")
-          :set("c", fzf.commands, { desc = "Commands" })
-          :set("f", fzf.files, { desc = "Find files" })
-          :set("g", fzf.live_grep, { desc = "Grep files" })
-          :set("r", fzf.oldfiles, { desc = "Recent files" })
-          :set("p", fzf.resume, { desc = "Resume last search" })
+        :prefix("<leader>f", "+find")
+        :set("c", fzf.commands, { desc = "Commands" })
+        :set("f", fzf.files, { desc = "Find files" })
+        :set("g", fzf.live_grep, { desc = "Grep files" })
+        :set("r", fzf.oldfiles, { desc = "Recent files" })
+        :set("p", fzf.resume, { desc = "Resume last search" })
 
       map:mode("t"):set("<C-r>", [['<C-\><C-N>"'.nr2char(getchar()).'pi']], { expr = true })
 
@@ -848,25 +874,33 @@ return {
         end
         local data = vim.json.decode(result.stdout)
 
-        local current_branch = vim.iter(data):filter(function(value)
-          return value["current"]
-        end):map(function(value)
-          return value["name"]
-        end):totable()[1]
+        local current_branch = vim
+          .iter(data)
+          :filter(function(value)
+            return value["current"]
+          end)
+          :map(function(value)
+            return value["name"]
+          end)
+          :totable()[1]
 
         local branch_names = vim
-            .iter(data)
-            :map(function(value)
-              return value["name"]
-            end)
-            :totable()
+          .iter(data)
+          :map(function(value)
+            return value["name"]
+          end)
+          :totable()
 
-        vim.ui.select(branch_names, { prompt = string.format("Select branch (current: %s): ", current_branch) }, function(choice)
-          if not choice then
-            return
+        vim.ui.select(
+          branch_names,
+          { prompt = string.format("Select branch (current: %s): ", current_branch) },
+          function(choice)
+            if not choice then
+              return
+            end
+            local result = vim.system({ "arc", "checkout", choice }, { text = true }):wait()
           end
-          local result = vim.system({ "arc", "checkout", choice }, { text = true }):wait()
-        end)
+        )
       end
 
       map:prefix("<leader>a"):set("c", arc_branch)
@@ -910,8 +944,7 @@ return {
           },
         },
         files = {
-          fd_opts =
-          "--color=never --type f --hidden --follow --exclude .git --exclude .obsidian --exclude build --exclude .DS_Store --exclude Вложения",
+          fd_opts = "--color=never --type f --hidden --follow --exclude .git --exclude .obsidian --exclude build --exclude .DS_Store --exclude Вложения",
           fzf_opts = {
             ["--history"] = vim.fn.stdpath("data") .. "/fzf-lua-files-history",
           },
@@ -986,6 +1019,7 @@ return {
           MkdnTableNextCell = false,
           MkdnTablePrevCell = false,
           MkdnTablePrevRow = false,
+          MkdnDestroyLink = false,
         },
       })
     end,
@@ -1659,6 +1693,15 @@ return {
     config = function()
       vim.g.editorconfig = false
       require("indent-o-matic").setup({})
+    end,
+  },
+  {
+    "otavioschwanck/arrow.nvim",
+    config = function()
+      require("arrow").setup({
+        show_icons = true,
+        leader_key = "<C-e>",
+      })
     end,
   },
 }

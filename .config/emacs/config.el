@@ -512,7 +512,7 @@ expand immediately.  Common gateway for
   ((LaTeX-mode
     c++-ts-mode
     csharp-mode
-    python-ts-mode
+    ;; python-ts-mode
     conf-toml-mode
     tsx-ts-mode)
    .
@@ -622,7 +622,7 @@ expand immediately.  Common gateway for
            (cl-remove-if
             (lambda (x) (string-prefix-p "/var/tmp/tmp" x))
             (remove
-             (consult--fast-abbreviate-file-name (or (buffer-file-name) ""))
+             (abbreviate-file-name (or (buffer-file-name) ""))
              (bound-and-true-p recentf-list)))))
          (user-error "No recent files, `recentf-mode' is %s"
                      (if recentf-mode
@@ -870,10 +870,10 @@ Quit if no candidate is selected."
                 '(taxi-black . ("taxi-black" "--quiet" "--force" filepath "-"))
                 '(taxi-clang-format . ("taxi-clang-format" "--quiet" "--force" filepath "-")))
 
-  (add-hook 'apheleia-formatter-exited-hook (cl-function
-                                             (lambda (&key formatter error log)
-                                               (interactive)
-                                               (revert-buffer nil t))))
+  ;; (add-hook 'apheleia-formatter-exited-hook (cl-function
+  ;;                                            (lambda (&key formatter error log)
+  ;;                                              (interactive)
+  ;;                                              (revert-buffer nil t))))
 
   (add-to-list! 'apheleia-mode-alist
                 '(sql-mode . sqlfluff)
@@ -1555,7 +1555,8 @@ Note that these rules can't contain anchored rules themselves."
   (setopt
    explicit-shell-file-name "/bin/zsh"
    tramp-encoding-shell "/bin/zsh"
-   tramp-verbose 0))
+   tramp-verbose 0
+   tramp-histfile-override nil))
 
 (use-builtin calendar
   :defer t

@@ -198,7 +198,7 @@ function _G.make_comment(str)
   return vim.bo.commentstring:gsub("%%s", str)
 end
 
--- map:ft({ "tex", "markdown" }):mode("i"):set("<A-CR>", insert_item)
+map:ft({ "tex", "markdown" }):mode("i"):set("<A-CR>", insert_item)
 
 kit.call_at_ft({ "markdown", "org", "tex" }, function()
   vim.bo.textwidth = 80
@@ -241,26 +241,26 @@ block_on = function(async_fn_with_callback, timeout)
   return result
 end
 
-input = function(opts)
+local input = function(opts)
   return block_on(function(cb)
     vim.ui.input(opts, cb)
   end)
 end
 
-echo = function(prompt)
-  vim.api.nvim_echo({{prompt}}, false, {})
+local echo = function(prompt)
+  vim.api.nvim_echo({ { prompt } }, false, {})
 end
 
-confirm = function(opts)
+local confirm = function(opts)
   echo(opts.prompt)
   local answer = vim.fn.nr2char(vim.fn.getchar()):lower()
-  if answer ~= 'y' and answer ~= 'n' then
-    answer = opts.default and 'y' or 'n'
+  if answer ~= "y" and answer ~= "n" then
+    answer = opts.default and "y" or "n"
   end
 
-  if answer == 'y' then
+  if answer == "y" then
     return true
-  elseif answer == 'n' then
+  elseif answer == "n" then
     return false
   end
 end
@@ -270,7 +270,7 @@ local Arc = {}
 function Arc.root(opts)
   opts = opts or {}
 
-  local result = vim.system({'arc', 'root'}, {text = true, cwd = opts.cwd}):wait()
+  local result = vim.system({ "arc", "root" }, { text = true, cwd = opts.cwd }):wait()
   if result.code ~= 0 then
     return
   end
@@ -282,16 +282,16 @@ function Arc.make_link(opts)
   local path = vim.fs.normalize(vim.api.nvim_buf_get_name(0))
   local cwd = vim.fs.dirname(path)
 
-  local root = Arc.root({cwd = cwd})
+  local root = Arc.root({ cwd = cwd })
   if not root then
     vim.notify("Not a mounted arc repository")
     return
   end
 
   path = path:sub(#root + 1)
-  local link = vim.fs.joinpath('https://a.yandex-team.ru/arcadia', path)
+  local link = vim.fs.joinpath("https://a.yandex-team.ru/arcadia", path)
 
-    local line_number = confirm({prompt = "Add line number [Y/n] ", default = true})
+  local line_number = confirm({ prompt = "Add line number [Y/n] ", default = true })
 
   if line_number then
     local line = vim.api.nvim_win_get_cursor(0)[1]
@@ -312,3 +312,18 @@ function Arc.copy_link()
 end
 
 map:prefix("<leader>a"):set("l", Arc.copy_link)
+
+local function url_shortener()
+  local url = input({ prompt = "Enter URL: " })
+  local result = vim.system({ "clck", url }, { text = true }):wait()
+  if result.code ~= 0 then
+    vim.notify("Error: " .. result.stderr)
+    return
+  end
+
+  local short_url = vim.trim(result.stdout)
+  vim.fn.setreg("*", short_url)
+  vim.notify("Short url: " .. short_url)
+end
+
+map:set("<leader>u", url_shortener)
