@@ -70,8 +70,8 @@ return {
         :set("j", "(v:count? 'j' : 'gj')")
 
       map
-        :prefix("<leader>o", "+open")
-        :set("f", kit.wrap(vim.fn.system, "open ."), { desc = "Open in finder" })
+        :prefix("<leader>f")
+        :set(".", kit.wrap(vim.fn.system, "open ."), { desc = "Open in finder" })
 
       map
         :prefix("<leader>d", "+dir")
@@ -850,6 +850,10 @@ return {
 
       map:mode("t"):ft("fzf"):set("<Esc>", vim.cmd.quit)
 
+      map:prefix("<leader>ot", "Tasks"):set("i", function()
+        fzf.live_grep({ cwd = "~/obsidian/итмо", query = "- [ ]" })
+      end, { desc = "ИТМО" })
+
       map
         :prefix("<leader>f", "+find")
         :set("c", fzf.commands, { desc = "Commands" })
@@ -1142,7 +1146,16 @@ return {
       --   return utf8.sub(s, i, j)
       -- end
 
-      string.gsub = utf8.gsub
+      _G.string_gsub = string.gsub
+
+      string.gsub = function(s, pattern, repl, n)
+        if is_ascii(s) or not utf8.isvalid(s) then
+          return string_gsub(s, pattern, repl, n)
+        else
+          return utf8.gsub(s, pattern, repl, n)
+        end
+      end
+
       string.lower = utf8.lower
       string.upper = utf8.upper
     end,
@@ -1190,7 +1203,7 @@ return {
     },
     enabled = is_local_session,
     keymap = function(map)
-      map:ft("markdown"):prefix("<leader>o"):set("o", vim.cmd.ObsidianOpen)
+      map:ft("markdown"):prefix("<leader>o", "Obsidian"):set("o", vim.cmd.ObsidianOpen)
     end,
     config = function()
       require("obsidian.search").Patterns = {
@@ -1702,6 +1715,25 @@ return {
         show_icons = true,
         leader_key = "<C-e>",
       })
+    end,
+  },
+  {
+    "folke/which-key.nvim",
+    dependencies = { "Wansmer/langmapper.nvim" },
+    config = function()
+      vim.o.timeout = true
+      vim.o.timeoutlen = 300
+
+      local lmu = require("langmapper.utils")
+      local view = require("which-key.view")
+      local execute = view.execute
+
+      view.execute = function(prefix_i, mode, buf)
+        prefix_i = lmu.translate_keycode(prefix_i, "default", "ru")
+        execute(prefix_i, mode, buf)
+      end
+
+      require("which-key").setup()
     end,
   },
 }

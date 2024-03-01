@@ -1,11 +1,11 @@
 {
   "LuaSnip": { "branch": "master", "commit": "f3b3d3446bcbfa62d638b1903ff00a78b2b730a1" },
+  "arrow.nvim": { "branch": "master", "commit": "9d98760d9a195174a24b6ccc20217bc98f3596e0" },
   "ccc.nvim": { "branch": "main", "commit": "0ca30a4fd8429bffb6394f4ee27166fb4ff29fbf" },
   "cmdbuf.nvim": { "branch": "main", "commit": "aa3a26fa7f9b77f5d9de89fa662eebd09d8885de" },
   "conform.nvim": { "branch": "master", "commit": "192a6d2ddace343f1840a8f72efe2315bd392243" },
   "fzf-lua": { "branch": "main", "commit": "3b3cc17c7bb91f6bbef7166c0756f89a189c4db4" },
   "git-conflict.nvim": { "branch": "main", "commit": "4c8e252b87d54d944c1e56bfb477f78b6fdaf661" },
-  "harpoon": { "branch": "harpoon2", "commit": "a38be6e0dd4c6db66997deab71fc4453ace97f9c" },
   "indent-blankline.nvim": { "branch": "master", "commit": "821a7acd88587d966f7e464b0b3031dfe7f5680c" },
   "indent-o-matic": { "branch": "master", "commit": "4d11e98f523d3c4500b1dc33f0d1a248a4f69719" },
   "keymap-amend.nvim": { "branch": "master", "commit": "b8bf9d820878d5497fdd11d6de55dea82872d98e" },
@@ -44,5 +44,6 @@
   "vim-fswitch": { "branch": "master", "commit": "94acdd8bc92458d3bf7e6557df8d93b533564491" },
   "vim-gnupg": { "branch": "main", "commit": "f9b608f29003dfde6450931dc0f495a912973a88" },
   "vim-repeat": { "branch": "master", "commit": "24afe922e6a05891756ecf331f39a1f6743d3d5a" },
-  "vimtex": { "branch": "master", "commit": "01c4c167338b74dc0c30621841bc548b52e96330" }
+  "vimtex": { "branch": "master", "commit": "01c4c167338b74dc0c30621841bc548b52e96330" },
+  "which-key.nvim": { "branch": "main", "commit": "4433e5ec9a507e5097571ed55c02ea9658fb268a" }
 }
