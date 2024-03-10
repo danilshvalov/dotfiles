@@ -52,9 +52,9 @@ return {
       map:set("<C-g>", "2<C-g>")
 
       map
-        :mode("nvo")
-        :set("H", "^", { desc = "Start of line" })
-        :set("L", "$", { desc = "End of line" })
+          :mode("nvo")
+          :set("H", "^", { desc = "Start of line" })
+          :set("L", "$", { desc = "End of line" })
 
       map:prefix("<leader>t", "+toggle"):set("w", function()
         if not vim.opt_local.formatoptions:get().a then
@@ -65,25 +65,25 @@ return {
       end, { desc = "Toggle wrap" })
 
       map
-        :new({ mode = "nv", expr = true })
-        :set("k", "(v:count? 'k' : 'gk')")
-        :set("j", "(v:count? 'j' : 'gj')")
+          :new({ mode = "nv", expr = true })
+          :set("k", "(v:count? 'k' : 'gk')")
+          :set("j", "(v:count? 'j' : 'gj')")
 
       map
         :prefix("<leader>f")
         :set(".", kit.wrap(vim.fn.system, "open ."), { desc = "Open in finder" })
 
       map
-        :prefix("<leader>d", "+dir")
-        :set("c", function()
-          local path, _ = vim.fn.expand("%:p:h"):gsub("oil://", "")
-          vim.cmd.cd(path)
-          vim.notify("Directory: " .. vim.fn.expand("%:p:~:h"):gsub("oil://", ""))
-        end, { desc = "Set cwd to current file directory" })
-        :set("y", function()
-          vim.fn.setreg("+", vim.fn.expand("%:p:h"))
-          vim.notify("Copied directory: " .. vim.fn.expand("%:p:~:h"))
-        end, { desc = "Yank cwd" })
+          :prefix("<leader>d", "+dir")
+          :set("c", function()
+            local path, _ = vim.fn.expand("%:p:h"):gsub("oil://", "")
+            vim.cmd.cd(path)
+            vim.notify("Directory: " .. vim.fn.expand("%:p:~:h"):gsub("oil://", ""))
+          end, { desc = "Set cwd to current file directory" })
+          :set("y", function()
+            vim.fn.setreg("+", vim.fn.expand("%:p:h"))
+            vim.notify("Copied directory: " .. vim.fn.expand("%:p:~:h"))
+          end, { desc = "Yank cwd" })
 
       map:set("<Esc>", vim.cmd.noh)
     end,
@@ -256,18 +256,49 @@ return {
     config = function()
       local conform = require("conform")
 
+      local black
+      if vim.fn.executable("taxi-black") == 1 then
+        black = "taxi_format"
+      else
+        black = "black"
+      end
+
+      local clang_format
+      if vim.fn.executable("taxi-format") == 1 then
+        clang_format = "taxi_format"
+      else
+        clang_format = "clang-format"
+      end
+
       conform.setup({
+        formatters = {
+          taxi_format = {
+            command = "taxi-format",
+            args = {
+              "--quiet",
+              "--force",
+              "$FILENAME",
+              "-",
+            },
+            stdin = false,
+          }
+        },
         formatters_by_ft = {
           lua = { "stylua" },
-          python = { "black" },
+          python = { black },
           markdown = { "prettier" },
-          cpp = { "clang-format" },
+          cpp = { clang_format },
         },
       })
 
       local function format_buffer()
         local bufnr = vim.api.nvim_get_current_buf()
-        conform.format({ async = true, bufnr = bufnr, timeout_ms = 5000 }, function(error)
+        conform.format({
+          async = true,
+          bufnr = bufnr,
+          timeout_ms = 5000,
+          lsp_fallback = true,
+        }, function(error)
           if not error then
             vim.api.nvim_buf_call(bufnr, function()
               vim.cmd.write()
@@ -432,7 +463,7 @@ return {
             path = 3,
             fmt = function(str)
               if
-                str == "[No Name]" or vim.tbl_contains({ "toggleterm", "fzf" }, vim.bo.filetype)
+                  str == "[No Name]" or vim.tbl_contains({ "toggleterm", "fzf" }, vim.bo.filetype)
               then
                 return ""
               end
@@ -549,24 +580,24 @@ return {
       end
 
       map
-        :prefix("<leader>x")
-        :set("q", open("quickfix"))
-        :set("x", open("workspace_diagnostics"), { desc = "Show code errors" })
+          :prefix("<leader>x")
+          :set("q", open("quickfix"))
+          :set("x", open("workspace_diagnostics"), { desc = "Show code errors" })
 
       map
-        :new({ prefix = "<leader>c" })
-        :set("r", vim.lsp.buf.rename)
-        :set("h", vim.diagnostic.open_float)
-        :set("a", vim.lsp.buf.code_action)
+          :new({ prefix = "<leader>c" })
+          :set("r", vim.lsp.buf.rename)
+          :set("h", vim.diagnostic.open_float)
+          :set("a", vim.lsp.buf.code_action)
 
       map
-        :prefix("g", "+goto")
-        :set("d", open("lsp_definitions"), { desc = "Go definitions" })
-        :set("D", vim.lsp.buf.declaration, { desc = "Go declaration" })
-        :set("r", open("lsp_references"), { desc = "Go references" })
-        :set("i", open("lsp_implementations"), { desc = "Go implementations" })
-        :set("n", vim.diagnostic.goto_next, { desc = "Go next error" })
-        :set("p", vim.diagnostic.goto_prev, { desc = "Go prev error" })
+          :prefix("g", "+goto")
+          :set("d", open("lsp_definitions"), { desc = "Go definitions" })
+          :set("D", vim.lsp.buf.declaration, { desc = "Go declaration" })
+          :set("r", open("lsp_references"), { desc = "Go references" })
+          :set("i", open("lsp_implementations"), { desc = "Go implementations" })
+          :set("n", vim.diagnostic.goto_next, { desc = "Go next error" })
+          :set("p", vim.diagnostic.goto_prev, { desc = "Go prev error" })
 
       require("trouble").setup()
     end,
@@ -641,13 +672,13 @@ return {
       local toggleterm = kit.require_on_exported_call("toggleterm")
 
       map
-        :prefix("<leader>t", "+toggle")
-        :set("t", function()
-          toggleterm.toggle(vim.v.count, nil, nil, "horizontal")
-        end)
-        :set("T", function()
-          toggleterm.toggle(vim.v.count, nil, nil, "tab")
-        end)
+          :prefix("<leader>t", "+toggle")
+          :set("t", function()
+            toggleterm.toggle(vim.v.count, nil, nil, "horizontal")
+          end)
+          :set("T", function()
+            toggleterm.toggle(vim.v.count, nil, nil, "tab")
+          end)
 
       map:ft("toggleterm"):mode("t"):set("<Esc><Esc>", "<C-\\><C-n>")
     end,
@@ -678,7 +709,7 @@ return {
     config = function()
       local get_input = function(prompt, default)
         local ok, result =
-          pcall(vim.fn.input, { prompt = prompt, default = default, cancelreturn = vim.NIL })
+            pcall(vim.fn.input, { prompt = prompt, default = default, cancelreturn = vim.NIL })
         if ok and result ~= vim.NIL then
           return result
         end
@@ -800,23 +831,23 @@ return {
       local ls = kit.require_on_exported_call("luasnip")
 
       map
-        :mode("i")
-        :amend("<Tab>", function(fallback)
-          if vim.fn.pumvisible() == 1 then
-            return vim.api.nvim_feedkeys(vim.keycode("<Down>"), "n", false)
-          elseif ls.expand_or_jumpable() then
-            return ls.expand_or_jump()
-          end
-          return fallback()
-        end)
-        :amend("<S-Tab>", function()
-          if vim.fn.pumvisible() == 1 then
-            return vim.api.nvim_feedkeys(vim.keycode("<Up>"), "n", false)
-          elseif ls.jumpable(-1) then
-            ls.jump(-1)
-          end
-          return vim.api.nvim_feedkeys(vim.keycode("<C-d>"), "n", false)
-        end)
+          :mode("i")
+          :amend("<Tab>", function(fallback)
+            if vim.fn.pumvisible() == 1 then
+              return vim.api.nvim_feedkeys(vim.keycode("<Down>"), "n", false)
+            elseif ls.expand_or_jumpable() then
+              return ls.expand_or_jump()
+            end
+            return fallback()
+          end)
+          :amend("<S-Tab>", function()
+            if vim.fn.pumvisible() == 1 then
+              return vim.api.nvim_feedkeys(vim.keycode("<Up>"), "n", false)
+            elseif ls.jumpable(-1) then
+              ls.jump(-1)
+            end
+            return vim.api.nvim_feedkeys(vim.keycode("<C-d>"), "n", false)
+          end)
 
       map:mode("c"):amend("<CR>", function(fallback)
         if vim.fn.wildmenumode() == 1 then
@@ -855,12 +886,12 @@ return {
       end, { desc = "ИТМО" })
 
       map
-        :prefix("<leader>f", "+find")
-        :set("c", fzf.commands, { desc = "Commands" })
-        :set("f", fzf.files, { desc = "Find files" })
-        :set("g", fzf.live_grep, { desc = "Grep files" })
-        :set("r", fzf.oldfiles, { desc = "Recent files" })
-        :set("p", fzf.resume, { desc = "Resume last search" })
+          :prefix("<leader>f", "+find")
+          :set("c", fzf.commands, { desc = "Commands" })
+          :set("f", fzf.files, { desc = "Find files" })
+          :set("g", fzf.live_grep, { desc = "Grep files" })
+          :set("r", fzf.oldfiles, { desc = "Recent files" })
+          :set("p", fzf.resume, { desc = "Resume last search" })
 
       map:mode("t"):set("<C-r>", [['<C-\><C-N>"'.nr2char(getchar()).'pi']], { expr = true })
 
@@ -879,21 +910,21 @@ return {
         local data = vim.json.decode(result.stdout)
 
         local current_branch = vim
-          .iter(data)
-          :filter(function(value)
-            return value["current"]
-          end)
-          :map(function(value)
-            return value["name"]
-          end)
-          :totable()[1]
+            .iter(data)
+            :filter(function(value)
+              return value["current"]
+            end)
+            :map(function(value)
+              return value["name"]
+            end)
+            :totable()[1]
 
         local branch_names = vim
-          .iter(data)
-          :map(function(value)
-            return value["name"]
-          end)
-          :totable()
+            .iter(data)
+            :map(function(value)
+              return value["name"]
+            end)
+            :totable()
 
         vim.ui.select(
           branch_names,
@@ -948,7 +979,8 @@ return {
           },
         },
         files = {
-          fd_opts = "--color=never --type f --hidden --follow --exclude .git --exclude .obsidian --exclude build --exclude .DS_Store --exclude Вложения",
+          fd_opts =
+          "--color=never --type f --hidden --follow --exclude .git --exclude .obsidian --exclude build --exclude .DS_Store --exclude Вложения",
           fzf_opts = {
             ["--history"] = vim.fn.stdpath("data") .. "/fzf-lua-files-history",
           },

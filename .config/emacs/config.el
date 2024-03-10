@@ -83,7 +83,7 @@
 
   (defun my-set-current-directory (directory)
     ;; (setq my-directory directory)
-    (add-to-list 'my-directories (cons (my-tab-name-current) directory))
+    (setq my-directories (push (cons (my-tab-name-current) directory) my-directories))
     )
 
   ;; remove image resize delay
@@ -220,7 +220,7 @@
   (doom-themes-set-faces 'user
     `(highlight
       :foreground 'unspecified
-      :background 'unspecified
+      :background "#3C435E"
       :inherit 'region)
     `(font-lock-comment-face :foreground ,(doom-lighten 'comments 0.2))
     `(corfu-current :background ,(doom-color 'region))
@@ -504,7 +504,10 @@ expand immediately.  Common gateway for
     :keymaps 'override
     "s" 'avy-goto-char-2))
 
-(use-builtin eglot
+(use-package jsonrpc)
+(use-package eldoc)
+
+(use-package eglot
   :custom
   (eglot-sync-connect nil)
   (eglot-events-buffer-size 0)
@@ -512,7 +515,7 @@ expand immediately.  Common gateway for
   ((LaTeX-mode
     c++-ts-mode
     csharp-mode
-    ;; python-ts-mode
+    python-ts-mode
     conf-toml-mode
     tsx-ts-mode)
    .
@@ -533,7 +536,7 @@ expand immediately.  Common gateway for
 
   (add-to-list 'eglot-server-programs '(c++-ts-mode . ("clangd" "--compile-commands-dir=build_debug")))
   (add-to-list 'eglot-server-programs '(latex-mode . ("texlab")))
-  ;; (add-to-list 'eglot-server-programs '(python-ts-mode . ("pylsp")))
+  (add-to-list 'eglot-server-programs '(python-ts-mode . ("pylsp")))
   (add-to-list
    'eglot-server-programs
    '(conf-toml-mode . ("taplo" "lsp" "stdio"))))
@@ -575,6 +578,10 @@ expand immediately.  Common gateway for
   ;;  "rg --null --line-buffered --color=never --max-columns=1000 --path-separator / --smart-case --no-heading --with-filename --line-number --search-zip")
   (consult-async-split-style 'semicolon)
   (consult-preview-key nil)
+  (consult-async-min-input 0)
+  (consult-async-refresh-delay 0)
+  (consult-async-input-debounce 0)
+  (consult-async-input-throttle 0)
   :general
   (nvmap
     :keymaps 'override
@@ -1118,7 +1125,7 @@ Quit if no candidate is selected."
   (nvmap
     "ga" 'ialign))
 
-(use-builtin flymake
+(use-package flymake
   :hook ((sql-mode) . flymake-mode)
   :commands flymake-mode
   :custom
@@ -1128,7 +1135,7 @@ Quit if no candidate is selected."
   (flymake-no-changes-timeout 1.0)
   (flymake-start-on-save-buffer t)
   (flymake-proc-compilation-prevents-syntax-check t)
-  (flymake-show-diagnostics-at-end-of-line nil)
+  (flymake-show-diagnostics-at-end-of-line t)
   (flymake-wrap-around nil)
   :general
   (nvmap
@@ -2038,6 +2045,13 @@ Note that these rules can't contain anchored rules themselves."
   (interactive)
   (let* ((branches (or branches (arc--select-branch-list))))
     (apply 'arc--call-process "arc" "branch" "--delete" branches)))
+
+(use-package indent-bars
+  :elpaca (indent-bars :host github :repo "jdtsmith/indent-bars")
+  :custom
+  (indent-bars-color-by-depth nil)
+  (indent-bars-color '(shadow :face-bg nil :blend 0.5))
+  :hook ((prog-mode text-mode) . indent-bars-mode))
 
 (advice-add 'arc--call-process :around #'execute-at-project-root)
 

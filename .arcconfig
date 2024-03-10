@@ -1,7 +1,7 @@
 [core]
-  # editor = "nvim"
-  # pager = "nvim -R"
-  pager = "(f=$(mktemp --suffix .diff); cat > $f; my-emacs $f; rm -v $f)"
+  editor = "nvim"
+  pager = "nvim -R"
+  # pager = "(f=$(mktemp --suffix .diff); cat > $f; my-emacs $f; rm -v $f)"
 
 [alias]
   st = status
