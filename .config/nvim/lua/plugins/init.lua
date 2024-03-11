@@ -1793,4 +1793,16 @@ return {
       require("which-key").setup()
     end,
   },
+  {
+    "rest-nvim/rest.nvim",
+    dependencies = { "nvim-lua/plenary.nvim" },
+    ft = "http",
+    keymap = function(map)
+      local rest = kit.require_on_exported_call("rest-nvim")
+      map:prefix("<leader>r", "Rest"):set("r", rest.run, { desc = "Run" })
+    end,
+    config = function()
+      require("rest-nvim").setup({})
+    end,
+  },
 }
