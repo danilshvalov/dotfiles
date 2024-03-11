@@ -52,9 +52,9 @@ return {
       map:set("<C-g>", "2<C-g>")
 
       map
-          :mode("nvo")
-          :set("H", "^", { desc = "Start of line" })
-          :set("L", "$", { desc = "End of line" })
+        :mode("nvo")
+        :set("H", "^", { desc = "Start of line" })
+        :set("L", "$", { desc = "End of line" })
 
       map:prefix("<leader>t", "+toggle"):set("w", function()
         if not vim.opt_local.formatoptions:get().a then
@@ -65,25 +65,25 @@ return {
       end, { desc = "Toggle wrap" })
 
       map
-          :new({ mode = "nv", expr = true })
-          :set("k", "(v:count? 'k' : 'gk')")
-          :set("j", "(v:count? 'j' : 'gj')")
+        :new({ mode = "nv", expr = true })
+        :set("k", "(v:count? 'k' : 'gk')")
+        :set("j", "(v:count? 'j' : 'gj')")
 
       map
         :prefix("<leader>f")
         :set(".", kit.wrap(vim.fn.system, "open ."), { desc = "Open in finder" })
 
       map
-          :prefix("<leader>d", "+dir")
-          :set("c", function()
-            local path, _ = vim.fn.expand("%:p:h"):gsub("oil://", "")
-            vim.cmd.cd(path)
-            vim.notify("Directory: " .. vim.fn.expand("%:p:~:h"):gsub("oil://", ""))
-          end, { desc = "Set cwd to current file directory" })
-          :set("y", function()
-            vim.fn.setreg("+", vim.fn.expand("%:p:h"))
-            vim.notify("Copied directory: " .. vim.fn.expand("%:p:~:h"))
-          end, { desc = "Yank cwd" })
+        :prefix("<leader>d", "+dir")
+        :set("c", function()
+          local path, _ = vim.fn.expand("%:p:h"):gsub("oil://", "")
+          vim.cmd.cd(path)
+          vim.notify("Directory: " .. vim.fn.expand("%:p:~:h"):gsub("oil://", ""))
+        end, { desc = "Set cwd to current file directory" })
+        :set("y", function()
+          vim.fn.setreg("+", vim.fn.expand("%:p:h"))
+          vim.notify("Copied directory: " .. vim.fn.expand("%:p:~:h"))
+        end, { desc = "Yank cwd" })
 
       map:set("<Esc>", vim.cmd.noh)
     end,
@@ -281,13 +281,14 @@ return {
               "-",
             },
             stdin = false,
-          }
+          },
         },
         formatters_by_ft = {
           lua = { "stylua" },
           python = { black },
           markdown = { "prettier" },
           cpp = { clang_format },
+          tex = { "latexindent" },
         },
       })
 
@@ -463,7 +464,7 @@ return {
             path = 3,
             fmt = function(str)
               if
-                  str == "[No Name]" or vim.tbl_contains({ "toggleterm", "fzf" }, vim.bo.filetype)
+                str == "[No Name]" or vim.tbl_contains({ "toggleterm", "fzf" }, vim.bo.filetype)
               then
                 return ""
               end
@@ -580,24 +581,24 @@ return {
       end
 
       map
-          :prefix("<leader>x")
-          :set("q", open("quickfix"))
-          :set("x", open("workspace_diagnostics"), { desc = "Show code errors" })
+        :prefix("<leader>x")
+        :set("q", open("quickfix"))
+        :set("x", open("workspace_diagnostics"), { desc = "Show code errors" })
 
       map
-          :new({ prefix = "<leader>c" })
-          :set("r", vim.lsp.buf.rename)
-          :set("h", vim.diagnostic.open_float)
-          :set("a", vim.lsp.buf.code_action)
+        :new({ prefix = "<leader>c" })
+        :set("r", vim.lsp.buf.rename)
+        :set("h", vim.diagnostic.open_float)
+        :set("a", vim.lsp.buf.code_action)
 
       map
-          :prefix("g", "+goto")
-          :set("d", open("lsp_definitions"), { desc = "Go definitions" })
-          :set("D", vim.lsp.buf.declaration, { desc = "Go declaration" })
-          :set("r", open("lsp_references"), { desc = "Go references" })
-          :set("i", open("lsp_implementations"), { desc = "Go implementations" })
-          :set("n", vim.diagnostic.goto_next, { desc = "Go next error" })
-          :set("p", vim.diagnostic.goto_prev, { desc = "Go prev error" })
+        :prefix("g", "+goto")
+        :set("d", open("lsp_definitions"), { desc = "Go definitions" })
+        :set("D", vim.lsp.buf.declaration, { desc = "Go declaration" })
+        :set("r", open("lsp_references"), { desc = "Go references" })
+        :set("i", open("lsp_implementations"), { desc = "Go implementations" })
+        :set("n", vim.diagnostic.goto_next, { desc = "Go next error" })
+        :set("p", vim.diagnostic.goto_prev, { desc = "Go prev error" })
 
       require("trouble").setup()
     end,
@@ -672,13 +673,13 @@ return {
       local toggleterm = kit.require_on_exported_call("toggleterm")
 
       map
-          :prefix("<leader>t", "+toggle")
-          :set("t", function()
-            toggleterm.toggle(vim.v.count, nil, nil, "horizontal")
-          end)
-          :set("T", function()
-            toggleterm.toggle(vim.v.count, nil, nil, "tab")
-          end)
+        :prefix("<leader>t", "+toggle")
+        :set("t", function()
+          toggleterm.toggle(vim.v.count, nil, nil, "horizontal")
+        end)
+        :set("T", function()
+          toggleterm.toggle(vim.v.count, nil, nil, "tab")
+        end)
 
       map:ft("toggleterm"):mode("t"):set("<Esc><Esc>", "<C-\\><C-n>")
     end,
@@ -709,7 +710,7 @@ return {
     config = function()
       local get_input = function(prompt, default)
         local ok, result =
-            pcall(vim.fn.input, { prompt = prompt, default = default, cancelreturn = vim.NIL })
+          pcall(vim.fn.input, { prompt = prompt, default = default, cancelreturn = vim.NIL })
         if ok and result ~= vim.NIL then
           return result
         end
@@ -830,24 +831,24 @@ return {
     keymap = function(map)
       local ls = kit.require_on_exported_call("luasnip")
 
-      map
-          :mode("i")
-          :amend("<Tab>", function(fallback)
-            if vim.fn.pumvisible() == 1 then
-              return vim.api.nvim_feedkeys(vim.keycode("<Down>"), "n", false)
-            elseif ls.expand_or_jumpable() then
-              return ls.expand_or_jump()
-            end
-            return fallback()
-          end)
-          :amend("<S-Tab>", function()
-            if vim.fn.pumvisible() == 1 then
-              return vim.api.nvim_feedkeys(vim.keycode("<Up>"), "n", false)
-            elseif ls.jumpable(-1) then
-              ls.jump(-1)
-            end
-            return vim.api.nvim_feedkeys(vim.keycode("<C-d>"), "n", false)
-          end)
+      -- map
+      --     :mode("i")
+      --     :amend("<Tab>", function(fallback)
+      --       if vim.fn.pumvisible() == 1 then
+      --         return vim.api.nvim_feedkeys(vim.keycode("<Down>"), "n", false)
+      --       elseif ls.expand_or_jumpable() then
+      --         return ls.expand_or_jump()
+      --       end
+      --       return fallback()
+      --     end)
+      --     :amend("<S-Tab>", function()
+      --       if vim.fn.pumvisible() == 1 then
+      --         return vim.api.nvim_feedkeys(vim.keycode("<Up>"), "n", false)
+      --       elseif ls.jumpable(-1) then
+      --         ls.jump(-1)
+      --       end
+      --       return vim.api.nvim_feedkeys(vim.keycode("<C-d>"), "n", false)
+      --     end)
 
       map:mode("c"):amend("<CR>", function(fallback)
         if vim.fn.wildmenumode() == 1 then
@@ -864,7 +865,13 @@ return {
         update_events = { "TextChanged", "TextChangedI", "CursorMoved", "CursorMovedI" },
         region_check_events = { "CursorMoved", "CursorMovedI" },
         delete_check_events = { "TextChanged", "TextChangedI" },
-        ft_func = require("luasnip.extras.filetype_functions").from_cursor_pos,
+        ft_func = function()
+          local ok, _ = pcall(vim.treesitter.get_parser)
+          if ok and vim.bo.filetype ~= "tex" then
+            return require("luasnip.extras.filetype_functions").from_cursor_pos()
+          end
+          return { vim.bo.filetype }
+        end,
       })
 
       ls.filetype_extend("org", { "tex" })
@@ -883,15 +890,19 @@ return {
 
       map:prefix("<leader>ot", "Tasks"):set("i", function()
         fzf.live_grep({ cwd = "~/obsidian/итмо", query = "- [ ]" })
-      end, { desc = "ИТМО" })
+      end, { desc = "ITMO" })
+
+      map:prefix("<leader>o", "Obsidian"):set("f", function()
+        fzf.files({ cwd = "~/obsidian" })
+      end, { desc = "Files" })
 
       map
-          :prefix("<leader>f", "+find")
-          :set("c", fzf.commands, { desc = "Commands" })
-          :set("f", fzf.files, { desc = "Find files" })
-          :set("g", fzf.live_grep, { desc = "Grep files" })
-          :set("r", fzf.oldfiles, { desc = "Recent files" })
-          :set("p", fzf.resume, { desc = "Resume last search" })
+        :prefix("<leader>f", "+find")
+        :set("c", fzf.commands, { desc = "Commands" })
+        :set("f", fzf.files, { desc = "Find files" })
+        :set("g", fzf.live_grep, { desc = "Grep files" })
+        :set("r", fzf.oldfiles, { desc = "Recent files" })
+        :set("p", fzf.resume, { desc = "Resume last search" })
 
       map:mode("t"):set("<C-r>", [['<C-\><C-N>"'.nr2char(getchar()).'pi']], { expr = true })
 
@@ -910,21 +921,21 @@ return {
         local data = vim.json.decode(result.stdout)
 
         local current_branch = vim
-            .iter(data)
-            :filter(function(value)
-              return value["current"]
-            end)
-            :map(function(value)
-              return value["name"]
-            end)
-            :totable()[1]
+          .iter(data)
+          :filter(function(value)
+            return value["current"]
+          end)
+          :map(function(value)
+            return value["name"]
+          end)
+          :totable()[1]
 
         local branch_names = vim
-            .iter(data)
-            :map(function(value)
-              return value["name"]
-            end)
-            :totable()
+          .iter(data)
+          :map(function(value)
+            return value["name"]
+          end)
+          :totable()
 
         vim.ui.select(
           branch_names,
@@ -979,8 +990,7 @@ return {
           },
         },
         files = {
-          fd_opts =
-          "--color=never --type f --hidden --follow --exclude .git --exclude .obsidian --exclude build --exclude .DS_Store --exclude Вложения",
+          fd_opts = "--color=never --type f --hidden --follow --exclude .git --exclude .obsidian --exclude build --exclude .DS_Store --exclude Вложения",
           fzf_opts = {
             ["--history"] = vim.fn.stdpath("data") .. "/fzf-lua-files-history",
           },
@@ -1179,7 +1189,6 @@ return {
       -- end
 
       _G.string_gsub = string.gsub
-
       string.gsub = function(s, pattern, repl, n)
         if is_ascii(s) or not utf8.isvalid(s) then
           return string_gsub(s, pattern, repl, n)
@@ -1188,8 +1197,23 @@ return {
         end
       end
 
-      string.lower = utf8.lower
-      string.upper = utf8.upper
+      _G.string_lower = string.lower
+      string.lower = function(s)
+        if is_ascii(s) or not utf8.isvalid(s) then
+          return string_lower(s)
+        else
+          return utf8.lower(s)
+        end
+      end
+
+      _G.string_upper = string.upper
+      string.upper = function(s)
+        if is_ascii(s) or not utf8.isvalid(s) then
+          return string_upper(s)
+        else
+          return utf8.upper(s)
+        end
+      end
     end,
   },
   {
@@ -1245,6 +1269,7 @@ return {
         Wiki = "%[%[[^][%|]+%]%]",
         Markdown = "%[[^][]+%]%([^%)]+%)",
         NakedUrl = "https?://[%w._#/=&?%%-]+[%w]",
+        FileUrl = "file:/[/{2}]?.*",
         Tag = "#[%w_/-]+",
       }
 
@@ -1571,168 +1596,168 @@ return {
   --     })
   --   end,
   -- },
-  -- {
-  --   "hrsh7th/nvim-cmp",
-  --   dependencies = {
-  --     "hrsh7th/cmp-nvim-lsp",
-  --     "hrsh7th/cmp-buffer",
-  --     "danilshvalov/cmp-path",
-  --     "hrsh7th/cmp-cmdline",
-  --     "saadparwaiz1/cmp_luasnip",
-  --   },
-  --   keymap = function(map)
-  --     --- see https://vi.stackexchange.com/questions/5605/how-to-fix-cmap-breaking-cabbrev
-  --     map:mode("c"):set("<CR>", "<C-]><CR>")
-  --   end,
-  --   config = function()
-  --     local cmp = require("cmp")
-  --     local ls = kit.require_on_exported_call("luasnip")
+  {
+    "hrsh7th/nvim-cmp",
+    dependencies = {
+      "hrsh7th/cmp-nvim-lsp",
+      "hrsh7th/cmp-buffer",
+      "danilshvalov/cmp-path",
+      "hrsh7th/cmp-cmdline",
+      "saadparwaiz1/cmp_luasnip",
+    },
+    keymap = function(map)
+      --- see https://vi.stackexchange.com/questions/5605/how-to-fix-cmap-breaking-cabbrev
+      map:mode("c"):set("<CR>", "<C-]><CR>")
+    end,
+    config = function()
+      local cmp = require("cmp")
+      local ls = kit.require_on_exported_call("luasnip")
 
-  --     local icons = {
-  --       Text = "",
-  --       Method = "󰆧",
-  --       Function = "󰊕",
-  --       Constructor = "",
-  --       Field = "󰜢",
-  --       Variable = "󰀫",
-  --       Class = "󰠱",
-  --       Interface = "",
-  --       Module = "",
-  --       Property = "󰜢",
-  --       Unit = "󰑭",
-  --       Value = "󰎠",
-  --       Enum = "",
-  --       Keyword = "󰌋",
-  --       Snippet = "",
-  --       Color = "󰏘",
-  --       File = "󰈙",
-  --       Reference = "",
-  --       Folder = "󰉋",
-  --       EnumMember = "",
-  --       Constant = "󰏿",
-  --       Struct = "󰙅",
-  --       Event = "",
-  --       Operator = "󰆕",
-  --       TypeParameter = "󰅲",
-  --     }
+      local icons = {
+        Text = "",
+        Method = "󰆧",
+        Function = "󰊕",
+        Constructor = "",
+        Field = "󰜢",
+        Variable = "󰀫",
+        Class = "󰠱",
+        Interface = "",
+        Module = "",
+        Property = "󰜢",
+        Unit = "󰑭",
+        Value = "󰎠",
+        Enum = "",
+        Keyword = "󰌋",
+        Snippet = "",
+        Color = "󰏘",
+        File = "󰈙",
+        Reference = "",
+        Folder = "󰉋",
+        EnumMember = "",
+        Constant = "󰏿",
+        Struct = "󰙅",
+        Event = "",
+        Operator = "󰆕",
+        TypeParameter = "󰅲",
+      }
 
-  --     local mappings = {
-  --       ["<C-n>"] = cmp.mapping(cmp.mapping.complete(), { "i", "c" }),
-  --       ["<C-k>"] = cmp.mapping(cmp.mapping.select_prev_item(), { "i", "c", "s" }),
-  --       ["<C-j>"] = cmp.mapping(cmp.mapping.select_next_item(), { "i", "c", "s" }),
-  --       ["<C-e>"] = cmp.mapping({
-  --         i = cmp.mapping.abort(),
-  --         c = cmp.mapping.close(),
-  --       }),
-  --       ["<CR>"] = cmp.mapping(cmp.mapping.confirm(), { "i", "c", "s" }),
-  --       ["<Tab>"] = cmp.mapping({
-  --         i = function(fallback)
-  --           if cmp.get_selected_entry() then
-  --             cmp.confirm()
-  --           elseif ls.expand_or_jumpable() then
-  --             ls.expand_or_jump()
-  --           else
-  --             fallback()
-  --           end
-  --         end,
-  --         s = function(fallback)
-  --           if ls.jumpable(1) then
-  --             ls.jump(1)
-  --           else
-  --             fallback()
-  --           end
-  --         end,
-  --       }),
-  --       ["<S-Tab>"] = cmp.mapping({
-  --         i = function(fallback)
-  --           if ls.jumpable(-1) then
-  --             ls.jump(-1)
-  --           else
-  --             fallback()
-  --           end
-  --         end,
-  --         s = function(fallback)
-  --           if ls.jumpable(-1) then
-  --             ls.jump(-1)
-  --           else
-  --             fallback()
-  --           end
-  --         end,
-  --       }),
-  --     }
+      local mappings = {
+        ["<C-n>"] = cmp.mapping(cmp.mapping.complete(), { "i", "c" }),
+        ["<C-k>"] = cmp.mapping(cmp.mapping.select_prev_item(), { "i", "c", "s" }),
+        ["<C-j>"] = cmp.mapping(cmp.mapping.select_next_item(), { "i", "c", "s" }),
+        ["<C-e>"] = cmp.mapping({
+          i = cmp.mapping.abort(),
+          c = cmp.mapping.close(),
+        }),
+        ["<CR>"] = cmp.mapping(cmp.mapping.confirm(), { "i", "c", "s" }),
+        ["<Tab>"] = cmp.mapping({
+          i = function(fallback)
+            if cmp.get_selected_entry() then
+              cmp.confirm()
+            elseif ls.expand_or_jumpable() then
+              ls.expand_or_jump()
+            else
+              fallback()
+            end
+          end,
+          s = function(fallback)
+            if ls.jumpable(1) then
+              ls.jump(1)
+            else
+              fallback()
+            end
+          end,
+        }),
+        ["<S-Tab>"] = cmp.mapping({
+          i = function(fallback)
+            if ls.jumpable(-1) then
+              ls.jump(-1)
+            else
+              fallback()
+            end
+          end,
+          s = function(fallback)
+            if ls.jumpable(-1) then
+              ls.jump(-1)
+            else
+              fallback()
+            end
+          end,
+        }),
+      }
 
-  --     local sources = {
-  --       {
-  --         name = "buffer",
-  --         option = {
-  --           keyword_pattern = [[\k\+]],
-  --         },
-  --       },
-  --       {
-  --         name = "path",
-  --         option = {
-  --           get_cwd = function()
-  --             return vim.fn.getcwd()
-  --           end,
-  --         },
-  --       },
-  --       "nvim_lsp",
-  --       "luasnip",
-  --       "orgmode",
-  --     }
+      local sources = {
+        {
+          name = "buffer",
+          option = {
+            keyword_pattern = [[\k\+]],
+          },
+        },
+        {
+          name = "path",
+          option = {
+            get_cwd = function()
+              return vim.fn.getcwd()
+            end,
+          },
+        },
+        "nvim_lsp",
+        "luasnip",
+        "orgmode",
+      }
 
-  --     local priorities = {}
+      local priorities = {}
 
-  --     for index, value in ipairs(sources) do
-  --       if type(value) == "table" then
-  --         value.priority = index
-  --         priorities[index] = value
-  --       else
-  --         priorities[index] = { name = value, priority = index }
-  --       end
-  --     end
+      for index, value in ipairs(sources) do
+        if type(value) == "table" then
+          value.priority = index
+          priorities[index] = value
+        else
+          priorities[index] = { name = value, priority = index }
+        end
+      end
 
-  --     cmp.setup({
-  --       snippet = {
-  --         expand = function(args)
-  --           return ls.lsp_expand(args.body)
-  --         end,
-  --       },
-  --       mapping = mappings,
-  --       sources = priorities,
-  --       formatting = {
-  --         fields = { "kind", "abbr", "menu" },
-  --         format = function(_, vim_item)
-  --           vim_item.menu = vim_item.kind
-  --           vim_item.kind = icons[vim_item.kind]
-  --           return vim_item
-  --         end,
-  --       },
-  --       completion = {
-  --         autocomplete = false,
-  --         keyword_pattern = [[\k\+]],
-  --         completeopt = "menu,menuone",
-  --       },
-  --     })
+      cmp.setup({
+        snippet = {
+          expand = function(args)
+            return ls.lsp_expand(args.body)
+          end,
+        },
+        mapping = mappings,
+        sources = priorities,
+        formatting = {
+          fields = { "kind", "abbr", "menu" },
+          format = function(_, vim_item)
+            vim_item.menu = vim_item.kind
+            vim_item.kind = icons[vim_item.kind]
+            return vim_item
+          end,
+        },
+        completion = {
+          autocomplete = false,
+          keyword_pattern = [[\k\+]],
+          completeopt = "menu,menuone",
+        },
+      })
 
-  --     cmp.setup.cmdline({ "/", "?" }, {
-  --       mapping = cmp.mapping.preset.cmdline(),
-  --       sources = {
-  --         { name = "buffer" },
-  --       },
-  --       completion = {
-  --         keyword_pattern = [[\k\+]],
-  --       },
-  --     })
+      cmp.setup.cmdline({ "/", "?" }, {
+        mapping = cmp.mapping.preset.cmdline(),
+        sources = {
+          { name = "buffer" },
+        },
+        completion = {
+          keyword_pattern = [[\k\+]],
+        },
+      })
 
-  --     cmp.setup.cmdline(":", {
-  --       mapping = cmp.mapping.preset.cmdline(),
-  --       sources = cmp.config.sources({
-  --         { name = "cmdline" },
-  --       }),
-  --     })
-  --   end,
-  -- },
+      cmp.setup.cmdline(":", {
+        mapping = cmp.mapping.preset.cmdline(),
+        sources = cmp.config.sources({
+          { name = "cmdline" },
+        }),
+      })
+    end,
+  },
   {
     "Darazaki/indent-o-matic",
     config = function()
