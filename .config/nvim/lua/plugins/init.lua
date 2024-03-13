@@ -888,13 +888,13 @@ return {
 
       map:mode("t"):ft("fzf"):set("<Esc>", vim.cmd.quit)
 
-      map:prefix("<leader>ot", "Tasks"):set("i", function()
-        fzf.live_grep({ cwd = "~/obsidian/итмо", query = "- [ ]" })
-      end, { desc = "ITMO" })
+      -- map:prefix("<leader>ot", "Tasks"):set("i", function()
+      --   fzf.live_grep({ cwd = "~/obsidian/итмо", query = "- [ ]" })
+      -- end, { desc = "ITMO" })
 
-      map:prefix("<leader>o", "Obsidian"):set("f", function()
-        fzf.files({ cwd = "~/obsidian" })
-      end, { desc = "Files" })
+      -- map:prefix("<leader>o", "Obsidian"):set("f", function()
+      --   fzf.files({ cwd = "~/obsidian" })
+      -- end, { desc = "Files" })
 
       map
         :prefix("<leader>f", "+find")
@@ -1252,102 +1252,102 @@ return {
       })
     end,
   },
-  {
-    "epwalsh/obsidian.nvim",
-    dependencies = {
-      "nvim-lua/plenary.nvim",
-    },
-    enabled = is_local_session,
-    keymap = function(map)
-      map:ft("markdown"):prefix("<leader>o", "Obsidian"):set("o", vim.cmd.ObsidianOpen)
-    end,
-    config = function()
-      require("obsidian.search").Patterns = {
-        TagChars = "[%w_/-]*",
-        Highlight = "==[^=]+==",
-        WikiWithAlias = "%[%[[^][%|]+%|[^%]]+%]%]",
-        Wiki = "%[%[[^][%|]+%]%]",
-        Markdown = "%[[^][]+%]%([^%)]+%)",
-        NakedUrl = "https?://[%w._#/=&?%%-]+[%w]",
-        FileUrl = "file:/[/{2}]?.*",
-        Tag = "#[%w_/-]+",
-      }
+  -- {
+  --   "epwalsh/obsidian.nvim",
+  --   dependencies = {
+  --     "nvim-lua/plenary.nvim",
+  --   },
+  --   enabled = is_local_session,
+  --   keymap = function(map)
+  --     map:ft("markdown"):prefix("<leader>o", "Obsidian"):set("o", vim.cmd.ObsidianOpen)
+  --   end,
+  --   config = function()
+  --     require("obsidian.search").Patterns = {
+  --       TagChars = "[%w_/-]*",
+  --       Highlight = "==[^=]+==",
+  --       WikiWithAlias = "%[%[[^][%|]+%|[^%]]+%]%]",
+  --       Wiki = "%[%[[^][%|]+%]%]",
+  --       Markdown = "%[[^][]+%]%([^%)]+%)",
+  --       NakedUrl = "https?://[%w._#/=&?%%-]+[%w]",
+  --       FileUrl = "file:/[/{2}]?.*",
+  --       Tag = "#[%w_/-]+",
+  --     }
 
-      local obsidian = require("obsidian")
+  --     local obsidian = require("obsidian")
 
-      obsidian.setup({
-        disable_frontmatter = true,
-        open_app_foreground = true,
-        workspaces = {
-          {
-            name = "personal",
-            path = "/Users/danilshvalov/Library/Mobile Documents/iCloud~md~obsidian/Documents/notes",
-          },
-        },
-        notes_subdir = "Заметки/неотсортированное",
-        attachments = {
-          img_folder = "вложения",
-        },
-        daily_notes = {
-          folder = "Ежедневник",
-          date_format = "%Y/%m/%d",
-          alias_format = "%Y-%m-%d",
-          template = "Ежедневник.md",
-        },
-        templates = {
-          subdir = "Шаблоны",
-          date_format = "%Y-%m-%d",
-          time_format = "%H:%M",
-          substitutions = {},
-        },
-        note_id_func = function(title)
-          local suffix = ""
-          if title ~= nil then
-            suffix = utf8.lower(utf8.gsub(title:gsub(" ", "-"), "[^%w%d-]", ""))
-          else
-            for _ = 1, 4 do
-              suffix = suffix .. string.char(math.random(65, 90))
-            end
-          end
-          return suffix
-        end,
-      })
+  --     obsidian.setup({
+  --       disable_frontmatter = true,
+  --       open_app_foreground = true,
+  --       workspaces = {
+  --         {
+  --           name = "personal",
+  --           path = "/Users/danilshvalov/Library/Mobile Documents/iCloud~md~obsidian/Documents/notes",
+  --         },
+  --       },
+  --       notes_subdir = "Заметки/неотсортированное",
+  --       attachments = {
+  --         img_folder = "вложения",
+  --       },
+  --       daily_notes = {
+  --         folder = "Ежедневник",
+  --         date_format = "%Y/%m/%d",
+  --         alias_format = "%Y-%m-%d",
+  --         template = "Ежедневник.md",
+  --       },
+  --       templates = {
+  --         subdir = "Шаблоны",
+  --         date_format = "%Y-%m-%d",
+  --         time_format = "%H:%M",
+  --         substitutions = {},
+  --       },
+  --       note_id_func = function(title)
+  --         local suffix = ""
+  --         if title ~= nil then
+  --           suffix = utf8.lower(utf8.gsub(title:gsub(" ", "-"), "[^%w%d-]", ""))
+  --         else
+  --           for _ = 1, 4 do
+  --             suffix = suffix .. string.char(math.random(65, 90))
+  --           end
+  --         end
+  --         return suffix
+  --       end,
+  --     })
 
-      _G.ObsidianTagCompletion = function(findstart, base)
-        local line = vim.api.nvim_get_current_line()
-        if findstart == 1 then
-          local startcol = utf8.len(line)
-          while startcol > 1 and utf8.sub(line, startcol - 1, startcol - 1):match("[#%w_/-]") do
-            startcol = startcol - 1
-          end
-          return utf8.offset(line, startcol)
-        end
+  --     _G.ObsidianTagCompletion = function(findstart, base)
+  --       local line = vim.api.nvim_get_current_line()
+  --       if findstart == 1 then
+  --         local startcol = utf8.len(line)
+  --         while startcol > 1 and utf8.sub(line, startcol - 1, startcol - 1):match("[#%w_/-]") do
+  --           startcol = startcol - 1
+  --         end
+  --         return utf8.offset(line, startcol)
+  --       end
 
-        if #base == 0 then
-          return {}
-        end
+  --       if #base == 0 then
+  --         return {}
+  --       end
 
-        local client = assert(obsidian.get_client())
-        local seen = {}
-        local matches = {}
-        local entries = client:find_tags(base)
+  --       local client = assert(obsidian.get_client())
+  --       local seen = {}
+  --       local matches = {}
+  --       local entries = client:find_tags(base)
 
-        for _, entry in ipairs(entries) do
-          local tag = entry.tag
-          if not seen[tag] then
-            seen[tag] = true
-            table.insert(matches, tag)
-          end
-        end
+  --       for _, entry in ipairs(entries) do
+  --         local tag = entry.tag
+  --         if not seen[tag] then
+  --           seen[tag] = true
+  --           table.insert(matches, tag)
+  --         end
+  --       end
 
-        return matches
-      end
+  --       return matches
+  --     end
 
-      kit.call_at_ft({ "markdown" }, function()
-        vim.bo.completefunc = "v:lua.ObsidianTagCompletion"
-      end)
-    end,
-  },
+  --     kit.call_at_ft({ "markdown" }, function()
+  --       vim.bo.completefunc = "v:lua.ObsidianTagCompletion"
+  --     end)
+  --   end,
+  -- },
   {
     "lervag/vimtex",
     ft = "tex",
@@ -1816,6 +1816,29 @@ return {
             end,
           },
         },
+      })
+    end,
+  },
+  {
+    "nvim-orgmode/orgmode",
+    dependencies = {
+      "nvim-treesitter/nvim-treesitter",
+    },
+    event = "VeryLazy",
+    config = function()
+      require("orgmode").setup_ts_grammar()
+
+      require("nvim-treesitter.configs").setup({
+        highlight = {
+          enable = true,
+        },
+        ensure_installed = { "org" },
+      })
+
+      require("orgmode").setup({
+        org_agenda_files = "~/org/**/*",
+        org_default_notes_file = "~/org/refile.org",
+        org_adapt_indentation = false
       })
     end,
   },
