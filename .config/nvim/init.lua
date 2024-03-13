@@ -289,7 +289,7 @@ function Arc.make_link(opts)
   end
 
   path = path:sub(#root + 1)
-  local link = vim.fs.joinpath("https://a.yandex-team.ru/arcadia", path)
+  local link = "https://a.yandex-team.ru/arcadia" .. "/" .. path
 
   local line_number = confirm({ prompt = "Add line number [Y/n] ", default = true })
 
@@ -313,9 +313,23 @@ end
 
 map:prefix("<leader>a"):set("l", Arc.copy_link)
 
+local function url_encode(str)
+  str = string.gsub(str, "([^%w%.%- ])", function(c)
+    return string.format("%%%02X", string.byte(c))
+  end)
+  str = string.gsub(str, " ", "+")
+  return str
+end
+
 local function url_shortener()
   local url = input({ prompt = "Enter URL: " })
-  local result = vim.system({ "clck", url }, { text = true }):wait()
+  url = url_encode(url)
+  local result = vim
+    .system({
+      "curl",
+      string.format("https://clck.ru/--?url=%s", url),
+    }, { text = true })
+    :wait()
   if result.code ~= 0 then
     vim.notify("Error: " .. result.stderr)
     return

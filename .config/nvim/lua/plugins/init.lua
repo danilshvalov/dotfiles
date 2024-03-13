@@ -1398,9 +1398,14 @@ return {
     dependencies = { "nvim-tree/nvim-web-devicons" },
     keymap = function(map)
       map:ft("oil"):set("q", vim.cmd.bdelete, { nowait = true })
-      map:prefix("<leader>t"):set("e", function()
-        require("oil").open(".")
-      end)
+      map
+        :prefix("<leader>")
+        :set("e", function()
+          require("oil").open()
+        end)
+        :set("E", function()
+          require("oil").open(".")
+        end)
     end,
     config = function()
       require("oil").setup({
@@ -1802,7 +1807,16 @@ return {
       map:prefix("<leader>r", "Rest"):set("r", rest.run, { desc = "Run" })
     end,
     config = function()
-      require("rest-nvim").setup({})
+      require("rest-nvim").setup({
+        skip_ssl_verification = true,
+        result = {
+          formatters = {
+            json = function(body)
+              return vim.fn.system({ "jq", "-n", body })
+            end,
+          },
+        },
+      })
     end,
   },
 }
