@@ -88,6 +88,8 @@ alias e=my-emacs
 
 alias cls='printf "\ec\e[3J"'
 
+alias rmb='arc branch --delete $(arc branch --merged | xargs)'
+
 # export EDITOR=nvim
 export EDITOR=my-emacs
 
