@@ -505,7 +505,6 @@ expand immediately.  Common gateway for
     "s" 'avy-goto-char-2))
 
 (use-package jsonrpc)
-(use-package eldoc)
 
 (use-package eglot
   :custom
@@ -982,7 +981,7 @@ Quit if no candidate is selected."
      (display-buffer-reuse-window display-buffer-in-direction)
      (direction . bottom)
      (reusable-frames . visible)
-     (window-height . 0.4))))
+     (window-height . 0.3))))
 
 (use-package editorconfig
   :demand t
@@ -1056,6 +1055,7 @@ Quit if no candidate is selected."
 
 (add-hook 'LaTeX-mode-hook
           (lambda ()
+            (setq-local comment-add 0)
             (face-remap-add-relative 'font-lock-type-face '(:inherit default))))
 
 ; (use-package cmake-mode
@@ -1606,7 +1606,7 @@ Note that these rules can't contain anchored rules themselves."
     :prefix "SPC t"
     "r" 'rainbow-mode))
 
-(use-builtin eldoc
+(use-package eldoc
   :custom
   (eldoc-echo-area-use-multiline-p nil))
 
@@ -1648,7 +1648,7 @@ Note that these rules can't contain anchored rules themselves."
 
 (use-package plantuml-mode
   :custom
-  (plantuml-indent-level 2))
+  (plantuml-indent-level 4))
 
 (use-package php-mode)
 

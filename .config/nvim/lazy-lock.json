@@ -36,9 +36,17 @@
   "nvim-ts-autotag": { "branch": "main", "commit": "531f48334c422222aebc888fd36e7d109cb354cd" },
   "nvim-web-devicons": { "branch": "master", "commit": "7f30f2da3c3641841ceb0e2c150281f624445e8f" },
   "nvim_rocks": { "branch": "master", "commit": "fd1f1dff8cc8ed5688fc4b890352a2a340940e34" },
+<<<<<<< Updated upstream
   "oil.nvim": { "branch": "master", "commit": "bf753c3e3f8736939ad5597f92329dfe7b1df4f5" },
   "peek.nvim": { "branch": "master", "commit": "4163a48f190d2b2d94840be3eb38b4af83961ebe" },
   "plantuml-syntax": { "branch": "master", "commit": "845abb56dcd3f12afa6eb47684ef5ba3055802b8" },
+=======
+  "obsidian.nvim": { "branch": "main", "commit": "9ede6c86b1f47afe00442a6e84fa1f5b00153742" },
+  "oil.nvim": { "branch": "master", "commit": "132b4ea0740c417b9d717411cab4cf187e1fd095" },
+  "orgmode": { "branch": "master", "commit": "261c987345131a736066c25ea409f4d10904b0af" },
+  "peek.nvim": { "branch": "master", "commit": "c6ab252ff874e1597e27f865dcfc68b15cae0cff" },
+  "plantuml-syntax": { "branch": "master", "commit": "309c15c77794433f276fb09eb4e3b8f381003cfd" },
+>>>>>>> Stashed changes
   "plenary.nvim": { "branch": "master", "commit": "4f71c0c4a196ceb656c824a70792f3df3ce6bb6d" },
   "rest.nvim": { "branch": "main", "commit": "b1c84475a8f053037cecf5249e6b69af5a7548d6" },
   "suda.vim": { "branch": "master", "commit": "8b0fc3711760195aba104e2d190cff9af8267052" },
