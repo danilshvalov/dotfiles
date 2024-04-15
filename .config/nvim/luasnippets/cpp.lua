@@ -45,4 +45,36 @@ return {
       return string.format("%s.begin(), %s.end()", match, match)
     end, {}),
   }),
+  s(
+    "ser",
+    fmta(
+      [[
+      userver::formats::json::Value Serialize(
+        const <>& data,
+        userver::formats::serialize::To<<userver::formats::json::Value>> /* tag */
+      ) {
+        userver::formats::json::ValueBuilder builder;
+        builder["<>"] = data.<>;<>
+        return builder.ExtractValue();
+      }
+      ]],
+      { i(1), i(2), i(3), i(0) }
+    )
+  ),
+  s(
+    "parse",
+    fmta(
+      [[
+      <> Parse(
+        const userver::formats::json::Value& json,
+        userver::formats::parse::To<<<>>> /* tag */
+      ) {
+        return <>{
+          json["<>"].As<<<>>>(),<>
+        };
+      }
+      ]],
+      { i(1), rep(1), rep(1), i(2), i(3), i(0) }
+    )
+  ),
 }

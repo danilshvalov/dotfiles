@@ -175,7 +175,7 @@ kit.autocmd("BufWinEnter", {
 })
 
 kit.open_file = function(path)
-  vim.fn.system("open " .. vim.fn.expand(path))
+  vim.fn.system("open " .. '"' .. vim.fn.expand(path) .. '"')
 end
 
 vim.o.diffopt = "internal,filler,closeoff,linematch:60,horizontal,foldcolumn:0"

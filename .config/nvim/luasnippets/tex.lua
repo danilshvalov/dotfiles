@@ -158,4 +158,5 @@ return {
   text("=>", "\\implies"),
   pf_wrap(".bf", "textbf"),
   pf_wrap(".it", "textit"),
+  s("fl", fmta("\\foreignlanguage{english}{<>}", { i(1) })),
 }
