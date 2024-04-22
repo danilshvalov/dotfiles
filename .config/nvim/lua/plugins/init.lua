@@ -1276,7 +1276,7 @@ return {
         NakedUrl = "https?://[%a._-]+[%a._#/=&?:+%%-]+[%a/]",
         Tag = "#[%a_/-]+",
         TagCharsOptional = "[%a_/-]*",
-        TagCharsRequired = "[%a]+[%a_/-]*[%a]+",
+        TagCharsRequired = "[%a_/-]",
         Wiki = "%[%[[^][%|]+%]%]",
         WikiWithAlias = "%[%[[^][%|]+%|[^%]]+%]%]",
       }
