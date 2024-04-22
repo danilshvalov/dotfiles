@@ -17,15 +17,8 @@
 
 
 (defun project-root-current ()
-  ;; (let ((current (project-current)))
-  ;;   (if current
-  ;;       (project-root current)
-  ;;     default-directory))
   (or project-current-directory-override
-      ; default-directory
-      (my-get-current-directory)
-      ;my-default-directory
-      )
+      (my-get-current-directory))
   )
 
 (use-package general
@@ -76,13 +69,11 @@
   (defvar my-directory nil)
 
   (defun my-get-current-directory ()
-    ;; (or my-directory (or (getenv "PWD") "~"))
     (or (assoc-default (my-tab-name-current) my-directories)
         (or (get-pwd) "~"))
     )
 
   (defun my-set-current-directory (directory)
-    ;; (setq my-directory directory)
     (setq my-directories (push (cons (my-tab-name-current) directory) my-directories))
     )
 
@@ -242,7 +233,8 @@
     `(markdown-header-face-5 :foreground ,(doom-color 'magenta))
     `(markdown-header-face-6 :foreground ,(doom-color 'violet))
     `(anzu-mode-line :foreground ,(doom-color 'fg))
-    `(flymake-end-of-line-diagnostics-face :height 'unspecified :box 'unspecified))
+    `(flymake-end-of-line-diagnostics-face :height 'unspecified :box 'unspecified)
+    `(eglot-diagnostic-tag-unnecessary-face :underline t))
 
   (add-hook 'image-mode-hook
             (lambda ()
@@ -512,6 +504,7 @@ expand immediately.  Common gateway for
   (eglot-events-buffer-size 0)
   :hook
   ((LaTeX-mode
+    latex-mode
     c++-ts-mode
     csharp-mode
     python-ts-mode
@@ -529,6 +522,7 @@ expand immediately.  Common gateway for
     "a"
     'eglot-code-actions)
   :config
+  (add-hook 'eglot-managed-mode-hook (lambda () (eglot-inlay-hints-mode -1)))
   (fset #'jsonrpc--log-event #'ignore)
 
   (fset #'eglot--snippet-expansion-fn #'ignore)
@@ -578,9 +572,13 @@ expand immediately.  Common gateway for
   (consult-async-split-style 'semicolon)
   (consult-preview-key nil)
   (consult-async-min-input 0)
-  (consult-async-refresh-delay 0)
-  (consult-async-input-debounce 0)
-  (consult-async-input-throttle 0)
+  ;; (consult-async-refresh-delay 0.1)
+  ;; (consult-async-input-debounce 0.1)
+  ;; (consult-async-input-throttle 0.1)
+  (consult-fd-args '((if
+                         (executable-find "fdfind" 'remote)
+                         "fdfind" "fd")
+                     "--full-path --color=never --type=file"))
   :general
   (nvmap
     :keymaps 'override
@@ -892,7 +890,7 @@ Quit if no candidate is selected."
 (use-package jinx
   :custom
   (jinx-languages "ru_RU en_US")
-  (jinx-camel-modes '(prog-mode org-mode))
+  (jinx-camel-modes '(prog-mode text-mode))
   :hook (text-mode . jinx-mode)
   :general
   (nvmap
@@ -1021,37 +1019,46 @@ Quit if no candidate is selected."
   :general
   (nmap
     :keymaps 'override
-    :prefix "SPC o"
-    "d" 'dired
-    "D" '+dired-open-here))
+    "SPC e" '+dired-open-here))
 
-
-                                        ; (use-package auctex
-                                        ;   :commands (LaTeX-mode latex-mode)
-                                        ;   :custom
-                                        ;   (LaTeX-item-indent 0)
-                                        ;   (LaTeX-indent-level 2)
-                                        ;   (tex-fontify-script nil)
-                                        ;   (TeX-close-quote ">>")
-                                        ;   (TeX-open-quote "<<")
-                                        ;   (TeX-engine 'luatex)
-                                        ;   (font-latex-fontify-script nil)
-                                        ;   :custom-face
-                                        ;   (font-latex-warning-face ((t :inherit 'bold)))
-                                        ;   (font-latex-math-face ((t :inherit 'bold)))
-                                        ;   (font-latex-string-face ((t :inherit 'font-lock-string-face)))
-                                        ;   (font-latex-verbatim-face ((t :inherit 'bold)))
-                                        ;   (font-latex-bold-face ((t :inherit 'bold)))
-                                        ;   (font-latex-italic-face ((t :inherit 'italic)))
-                                        ;   (font-latex-sectioning-0-face ((t :inherit 'bold)))
-                                        ;   (font-latex-sectioning-1-face ((t :inherit 'bold)))
-                                        ;   (font-latex-sectioning-2-face ((t :inherit 'bold)))
-                                        ;   (font-latex-sectioning-3-face ((t :inherit 'bold)))
-                                        ;   (font-latex-sectioning-4-face ((t :inherit 'bold)))
-                                        ;   (font-latex-sectioning-5-face ((t :inherit 'bold)))
-                                        ;   :hook (LaTeX-mode . auto-fill-mode)
-                                        ;   :config
-                                        ;   (add-to-list 'LaTeX-indent-environment-list '("align*")))
+(use-package auctex
+  :elpaca (auctex :pre-build (("./autogen.sh")
+                              ("./configure"
+                               "--without-texmf-dir"
+                               "--with-packagelispdir=./"
+                               "--with-packagedatadir=./")
+                              ("make"))
+                  :build (:not elpaca--compile-info) ;; Make will take care of this step
+                  :files ("*.el" "doc/*.info*" "etc" "images" "latex" "style"))
+  ;; :commands (LaTeX-mode latex-mode)
+  :custom
+  (LaTeX-item-indent 0)
+  (LaTeX-indent-level 2)
+  (tex-fontify-script nil)
+  (TeX-close-quote ">>")
+  (TeX-open-quote "<<")
+  (tex-close-quote ">>")
+  (tex-open-quote "<<")
+  (TeX-engine 'luatex)
+  (font-latex-fontify-script nil)
+  :custom-face
+  (font-latex-warning-face ((t :inherit 'bold)))
+  (font-latex-math-face ((t :inherit 'bold)))
+  (font-latex-string-face ((t :inherit 'font-lock-string-face)))
+  (font-latex-verbatim-face ((t :inherit 'bold)))
+  (font-latex-bold-face ((t :inherit 'bold)))
+  (font-latex-italic-face ((t :inherit 'italic)))
+  (font-latex-sectioning-0-face ((t :inherit 'bold)))
+  (font-latex-sectioning-1-face ((t :inherit 'bold)))
+  (font-latex-sectioning-2-face ((t :inherit 'bold)))
+  (font-latex-sectioning-3-face ((t :inherit 'bold)))
+  (font-latex-sectioning-4-face ((t :inherit 'bold)))
+  (font-latex-sectioning-5-face ((t :inherit 'bold)))
+  :hook
+  (latex-mode . auto-fill-mode)
+  (LaTeX-mode . auto-fill-mode)
+  :config
+  (add-to-list 'LaTeX-indent-environment-list '("align*")))
 
 (add-hook 'LaTeX-mode-hook
           (lambda ()
@@ -1135,7 +1142,7 @@ Quit if no candidate is selected."
   (flymake-no-changes-timeout 1.0)
   (flymake-start-on-save-buffer t)
   (flymake-proc-compilation-prevents-syntax-check t)
-  (flymake-show-diagnostics-at-end-of-line t)
+  (flymake-show-diagnostics-at-end-of-line nil)
   (flymake-wrap-around nil)
   :general
   (nvmap
@@ -1297,6 +1304,7 @@ Quit if no candidate is selected."
   :init (turn-on-pbcopy))
 
 (setq cc-search-directories '("."
+                              "./src/**/*"
                               "../include" "../include/*" "../../include/*"
                               "../../../include/*" "../../include/*/*"
                               "../../../include/*/*/*" "../src" "../src/*"
@@ -2056,3 +2064,16 @@ Note that these rules can't contain anchored rules themselves."
 (advice-add 'arc--call-process :around #'execute-at-project-root)
 
 (modify-syntax-entry ?_ "w")
+
+(global-auto-revert-mode)
+
+(defun my-switch-project (dir)
+  "\"Switch\" to another project by running an Emacs command.
+The available commands are presented as a dispatch menu
+made from `project-switch-commands'.
+
+When called in a program, it will use the project corresponding
+to directory DIR."
+  (interactive (list (project-prompt-project-dir)))
+  (cd dir)
+  (dired dir))

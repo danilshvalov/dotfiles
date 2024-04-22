@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: fl
+# key: fl
+# --
+\foreignlanguage{english}{$1}

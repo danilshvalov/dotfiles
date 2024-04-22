@@ -1,7 +1,7 @@
 # -*- mode: snippet -*-
 # name: it
 # uuid: it
-# key: \it
+# key: it
 # condition: t
 # --
 \textit{$1}

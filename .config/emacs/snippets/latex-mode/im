@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: im
+# key: im
+# --
+\inputminted{java}{$1}
