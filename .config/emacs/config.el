@@ -17,8 +17,8 @@
 
 
 (defun project-root-current ()
-  (or project-current-directory-override
-      (my-get-current-directory))
+  ; (or project-current-directory-override
+      (my-get-current-directory)
   )
 
 (use-package general
@@ -496,9 +496,11 @@ expand immediately.  Common gateway for
     :keymaps 'override
     "s" 'avy-goto-char-2))
 
-(use-package jsonrpc)
+(use-package jsonrpc
+  :defer t)
 
 (use-package eglot
+  :defer t
   :custom
   (eglot-sync-connect nil)
   (eglot-events-buffer-size 0)
@@ -853,7 +855,7 @@ Quit if no candidate is selected."
 ;;   :defer t)
 
 (use-package apheleia
-  ;; :hook ((prog-mode text-mode) . apheleia-mode)
+  :defer t
   :general
   (nvmap
     :prefix "SPC c"
@@ -1019,7 +1021,11 @@ Quit if no candidate is selected."
   :general
   (nmap
     :keymaps 'override
-    "SPC e" '+dired-open-here))
+    :prefix "SPC"
+    "e" (lambda ()
+          (interactive)
+          (dired default-directory))
+    "E" '+dired-open-here))
 
 (use-package auctex
   :elpaca (auctex :pre-build (("./autogen.sh")
@@ -1071,6 +1077,7 @@ Quit if no candidate is selected."
 (add-to-list! 'auto-mode-alist
               '("\\.latexmkrc\\'" . perl-mode)
               '("\\.h\\'" . c++-ts-mode)
+              '("\\.yql\\'" . sql-mode)
               '("\\.sqlfluff\\'" . conf-mode)
               '("\\.clang-format\\'" . yaml-mode)
               '("\\.tsx\\'" . tsx-ts-mode)
@@ -1123,6 +1130,7 @@ Quit if no candidate is selected."
 ;;   (setq markdown-regex-gfm-checkbox " \\(\\[[xX-]\\]\\) "))
 
 (use-package sql-indent
+  :defer t
   :custom (sqlind-basic-offset 4))
 
 (use-package ialign
@@ -1281,6 +1289,8 @@ Quit if no candidate is selected."
                  nil
                  (window-parameters (mode-line-format . none))))
 
+  ;; (setq embark-default-action-overrides '((file . consult-fd)))
+
   (setq embark-indicators
         '(embark--vertico-indicator
           embark-minimal-indicator
@@ -1289,7 +1299,11 @@ Quit if no candidate is selected."
 
 (use-package embark-consult
   :hook
-  (embark-collect-mode . consult-preview-at-point-mode))
+  (embark-collect-mode . consult-preview-at-point-mode)
+  :config
+  (setf (alist-get 'file embark-default-action-overrides
+                   nil nil #'equal)
+        #'consult-fd))
 
 (use-package image-mode
   :elpaca nil
@@ -1563,15 +1577,16 @@ Note that these rules can't contain anchored rules themselves."
 (use-package lua-mode
   :mode "\\.lua\\'")
 
-(use-builtin tramp
-  :config
-  (add-to-list 'tramp-remote-path "/home/linuxbrew/.linuxbrew/bin")
+;; (use-builtin tramp
+;;   :defer t
+;;   :config
+;;   (add-to-list 'tramp-remote-path "/home/linuxbrew/.linuxbrew/bin")
 
-  (setopt
-   explicit-shell-file-name "/bin/zsh"
-   tramp-encoding-shell "/bin/zsh"
-   tramp-verbose 0
-   tramp-histfile-override nil))
+;;   (setopt
+;;    explicit-shell-file-name "/bin/zsh"
+;;    tramp-encoding-shell "/bin/zsh"
+;;    tramp-verbose 0
+;;    tramp-histfile-override nil))
 
 (use-builtin calendar
   :defer t
@@ -1615,6 +1630,7 @@ Note that these rules can't contain anchored rules themselves."
     "r" 'rainbow-mode))
 
 (use-package eldoc
+  :defer t
   :custom
   (eldoc-echo-area-use-multiline-p nil))
 
@@ -1624,20 +1640,9 @@ Note that these rules can't contain anchored rules themselves."
   (vc-handled-backends nil))
 
 (use-package powershell
+  :defer t
   :custom
   (powershell-indent 2))
-
-(use-builtin mu4e
-  :commands (mu4e mu4e-search)
-  :custom
-  (mu4e-completing-read-function 'completing-read)
-  (shr-use-colors nil)
-  :general
-  (nmap
-    :prefix "SPC m"
-    "m" 'mu4e)
-  :config
-  (mu4e--init-handlers))
 
 (defun my-minibuffer-save-history ()
   (interactive)
@@ -1655,10 +1660,12 @@ Note that these rules can't contain anchored rules themselves."
 (add-hook 'minibuffer-exit-hook 'my-minibuffer-save-history)
 
 (use-package plantuml-mode
+  :defer t
   :custom
   (plantuml-indent-level 4))
 
-(use-package php-mode)
+(use-package php-mode
+  :defer t)
 
 (defun set-tab-name ()
   (interactive)
@@ -1701,9 +1708,11 @@ Note that these rules can't contain anchored rules themselves."
                    ""))
        'face (funcall tab-bar-tab-face-function tab)))))
 
-(use-package dockerfile-mode)
+(use-package dockerfile-mode
+  :defer t)
 
-(use-package nginx-mode)
+(use-package nginx-mode
+  :defer t)
 
 (defun markdown-ts-query-blocks ()
   (let* ((parser (treesit-parser-create 'markdown))
@@ -1791,6 +1800,7 @@ Note that these rules can't contain anchored rules themselves."
           (treesit-parser-create ,parser-language) (nreverse set-ranges))))))
 
 (use-builtin files
+  :defer t
   :general
   (nmap
     :keymaps 'override
@@ -1812,13 +1822,15 @@ Note that these rules can't contain anchored rules themselves."
   )
 
 (use-package web-mode
+  :defer t
   :custom
   (web-mode-enable-auto-expanding t)
   (web-mode-enable-auto-closing t)
   :config
   (add-hook 'mhtml-mode-hook 'web-mode))
 
-(use-package git-commit)
+(use-package git-commit
+  :defer t)
 
 ;; (imap "<backtab>" "C-d")
 (advice-add 'indent-for-tab-command
@@ -1857,7 +1869,7 @@ Note that these rules can't contain anchored rules themselves."
   (list (car args) nil))
 
 (use-package obsidian
-  :demand t
+  :defer t
   :elpaca nil
   :custom
   (obsidian-workspaces '((notes . "~/obsidian")))
@@ -1882,6 +1894,7 @@ Note that these rules can't contain anchored rules themselves."
 
 (use-package markdown-ts-mode
   :elpaca nil
+  :defer t
   :custom
   (markdown-fontify-code-blocks-natively t)
   (markdown-list-item-bullets '("—"))
@@ -1909,7 +1922,8 @@ Note that these rules can't contain anchored rules themselves."
    "C-c C-c" 'markdown-toggle-gfm-checkbox)
   )
 
-(use-package magit)
+(use-package magit
+  :defer t)
 
 (use-package evil-anzu
   :demand t
@@ -2077,3 +2091,7 @@ to directory DIR."
   (interactive (list (project-prompt-project-dir)))
   (cd dir)
   (dired dir))
+
+(use-package git-commit-ts-mode
+  :elpaca (git-commit-ts-mode :repo "~/projects/git-commit-ts-mode")
+  :mode "\\COMMIT_EDITMSG\\'")

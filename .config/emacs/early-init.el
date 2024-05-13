@@ -5,12 +5,10 @@
       ;; package-native-compile    t
       ) ; native compile packages
 
-; (scroll-bar-mode -1)
 (tooltip-mode -1)
 (blink-cursor-mode -1)
 
 (setq use-dialog-box nil
-      ;; redisplay-dont-pause t
       inhibit-startup-screen t)
 
 (setq load-prefer-newer noninteractive)
