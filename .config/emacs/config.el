@@ -38,7 +38,8 @@
 (use-package emacs
   :elpaca nil
   :custom
-  (confirm-kill-emacs 'y-or-n-p)
+  ;; (confirm-kill-emacs 'y-or-n-p)
+  (confirm-kill-processes nil)
   (scroll-margin 10)
   (hscroll-margin 20)
   (scroll-conservatively 101)
@@ -506,7 +507,7 @@ expand immediately.  Common gateway for
   (eglot-events-buffer-size 0)
   :hook
   ((LaTeX-mode
-    latex-mode
+    ;; latex-mode
     c++-ts-mode
     csharp-mode
     python-ts-mode
@@ -609,8 +610,8 @@ expand immediately.  Common gateway for
     (let ((directory (read-directory-name "Directory: ")))
       (consult-ripgrep directory)))
   (defun +consult-recent-file ()
-    (require 'consult)
     "Find recent file using `completing-read'."
+    (require 'consult)
     (interactive)
     (let ((default-directory (project-root-current)))
       (find-file
@@ -652,13 +653,6 @@ expand immediately.  Common gateway for
 
 (use-package marginalia
   :init (marginalia-mode))
-
-;; (use-package affe
-;;   :config
-;;   (defun affe-orderless-regexp-compiler (input _type _ignorecase)
-;;     (setq input (orderless-pattern-compiler input))
-;;     (cons input (apply-partially #'orderless--highlight input t)))
-;;   (setq affe-regexp-compiler #'affe-orderless-regexp-compiler))
 
 (use-package orderless
   :init
@@ -767,8 +761,10 @@ Quit if no candidate is selected."
 
     (add-hook 'sh-mode-hook 'add-cape-capf)
 
-    (add-to-list 'completion-at-point-functions #'cape-file)
-    (add-to-list 'completion-at-point-functions dabbrev)))
+    (add-to-list 'completion-at-point-functions
+                 (cape-capf-super
+                    dabbrev
+                    #'cape-file))))
 
 (use-package evil
   :demand t
@@ -851,9 +847,6 @@ Quit if no candidate is selected."
   :init
   (evil-commentary-mode))
 
-;; (use-package git-modes
-;;   :defer t)
-
 (use-package apheleia
   :defer t
   :general
@@ -873,13 +866,8 @@ Quit if no candidate is selected."
                 '(prettier . ("prettier" "--stdin-filepath" filepath))
                 '(markdownlint . ("markdownlint" "--quiet" "--fix" filepath))
                 '(phpcs . ("my-phpcs" "fix" "-n" "-q" filepath))
-                '(taxi-black . ("taxi-black" "--quiet" "--force" filepath "-"))
-                '(taxi-clang-format . ("taxi-clang-format" "--quiet" "--force" filepath "-")))
-
-  ;; (add-hook 'apheleia-formatter-exited-hook (cl-function
-  ;;                                            (lambda (&key formatter error log)
-  ;;                                              (interactive)
-  ;;                                              (revert-buffer nil t))))
+                '(taxi-black . ("taxi-format-quiet" "--quiet" filepath))
+                '(taxi-clang-format . ("taxi-format-quiet" "--quiet" filepath)))
 
   (add-to-list! 'apheleia-mode-alist
                 '(sql-mode . sqlfluff)
@@ -887,7 +875,9 @@ Quit if no candidate is selected."
                 '(c++-mode . taxi-clang-format)
                 '(conf-toml-mode . taplo)
                 '(csharp-mode . csharpier)
-                '(markdown-ts-mode . markdownlint)))
+                '(xml-mode . xmllint)
+                '(nxml-mode . xmllint)
+                '(markdown-ts-mode . prettier)))
 
 (use-package jinx
   :custom
@@ -1082,7 +1072,8 @@ Quit if no candidate is selected."
               '("\\.clang-format\\'" . yaml-mode)
               '("\\.tsx\\'" . tsx-ts-mode)
               '("\\.puml\\'" . plantuml-mode)
-              '("skhdrc\\'" . conf-mode))
+              '("skhdrc\\'" . conf-mode)
+              '(".arcconfig\\'" . conf-mode))
 
 (setq-default css-indent-offset 2)
 
@@ -1256,7 +1247,11 @@ Quit if no candidate is selected."
 
   ;; (setq treesit-language-source-alist (treesit-auto--build-treesit-source-alist))
   (setq treesit-language-source-alist '((markdown-inline markdown-inline "https://github.com/MDeiml/tree-sitter-markdown" nil "tree-sitter-markdown-inline/src" nil nil)
- (markdown markdown "https://github.com/MDeiml/tree-sitter-markdown" nil "tree-sitter-markdown/src" nil nil)))
+                                        (markdown markdown "https://github.com/MDeiml/tree-sitter-markdown" nil "tree-sitter-markdown/src" nil nil)))
+  (add-to-list! 'treesit-language-source-alist
+                '(gitcommit . ("https://github.com/gbprod/tree-sitter-gitcommit"))
+                '(diff . ("https://github.com/the-mikedavis/tree-sitter-diff")))
+
   (add-to-list 'treesit-auto-recipe-list my-sql-tsauto-config)
 
   (global-treesit-auto-mode))
@@ -1621,7 +1616,8 @@ Note that these rules can't contain anchored rules themselves."
   (treesit-font-lock-level 4)
   (major-mode-remap-alist
    '((c++-mode . c++-ts-mode)
-     (c-mode . c-ts-mode))))
+     (c-mode . c-ts-mode)
+     (diff-mode . diff-ts-mode))))
 
 (use-package rainbow-mode
   :general
@@ -1669,7 +1665,9 @@ Note that these rules can't contain anchored rules themselves."
 
 (defun set-tab-name ()
   (interactive)
-  (tab-bar-rename-tab (or (get-pwd) (number-to-string (random)))))
+  ;; (tab-bar-rename-tab (or (get-pwd) (number-to-string (random))))
+(tab-bar-rename-tab (number-to-string (random)))
+  )
 
 (set-tab-name)
 ;; (add-hook 'tab-bar-mode-hook (lambda () (interactive) (set-tab-name)))
@@ -1894,7 +1892,7 @@ Note that these rules can't contain anchored rules themselves."
 
 (use-package markdown-ts-mode
   :elpaca nil
-  :defer t
+  :mode "\\.md\\'"
   :custom
   (markdown-fontify-code-blocks-natively t)
   (markdown-list-item-bullets '("—"))
@@ -2094,4 +2092,53 @@ to directory DIR."
 
 (use-package git-commit-ts-mode
   :elpaca (git-commit-ts-mode :repo "~/projects/git-commit-ts-mode")
+  ;; :elpaca (git-commit-ts-mode :host github
+  ;;                             :repo "danilshvalov/git-commit-ts-mode")
   :mode "\\COMMIT_EDITMSG\\'")
+
+(use-package diff-ts-mode
+  ;; :elpaca (diff-ts-mode :repo "~/projects/diff-ts-mode")
+  :elpaca nil
+  :load-path "~/projects/diff-ts-mode"
+  ;; :elpaca (git-commit-ts-mode :host github
+  ;;                             :repo "danilshvalov/git-commit-ts-mode")
+)
+
+
+(defun arc-extract-ticket ()
+  (let ((content (buffer-string)))
+    (when (string-match "\\(DIAGNOSTICS-[[:digit:]]+\\)" content)
+      (match-string 1 content))))
+
+(defun arc-insert-ticket ()
+  (interactive)
+  (when-let* ((parser (treesit-parser-create 'gitcommit))
+              (root (treesit-parser-root-node parser))
+              (query (treesit-query-compile 'gitcommit
+                                            '((comment) @capture)))
+              (ticket (arc-extract-ticket))
+              (captures (treesit-query-capture root query))
+              (capture (alist-get 'capture captures)))
+    (save-excursion
+      (goto-char (treesit-node-start capture))
+      (insert (format "\nRelates: %s\n" ticket)))))
+
+(nvmap
+  :prefix "SPC a"
+  "t" 'arc-insert-ticket)
+
+(defun find-file-wrapper (fun &rest args)
+  (let ((args (push (substitute-in-file-name (string-trim (car args)))
+                    (cdr args))))
+    (apply fun args)))
+
+(advice-add 'find-file :around #'find-file-wrapper)
+
+(defun markdown-gx-wrapper ()
+  (interactive)
+  (let ((url (markdown-link-url)))
+    (if url
+        (browse-url url)
+      (browse-url-at-point))))
+
+(nvmap "gx" 'markdown-gx-wrapper)
