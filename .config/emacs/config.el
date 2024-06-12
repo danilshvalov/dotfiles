@@ -198,6 +198,7 @@
   (global-whitespace-mode +1)
   (window-divider-mode)
   (savehist-mode)
+  (global-hl-line-mode)
   (advice-add 'yes-or-no-p :override #'y-or-n-p))
 
 (use-package doom-themes
@@ -221,6 +222,7 @@
       :background ,(doom-color 'region)
       :underline nil)
     `(highlight-doxygen-comment :background 'unspecified)
+    `(hl-line :background ,(doom-lighten 'bg 0.05))
     `(highlight-doxygen-code-block :background 'unspecified)
     `(markdown-code-face :background 'unspecified)
     `(markdown-list-face :foreground ,(doom-color 'yellow))
@@ -234,6 +236,7 @@
     `(markdown-header-face-5 :foreground ,(doom-color 'magenta))
     `(markdown-header-face-6 :foreground ,(doom-color 'violet))
     `(anzu-mode-line :foreground ,(doom-color 'fg))
+    `(evil-goggles-default-face :foreground ,(doom-color 'bg) :background ,(doom-color 'yellow))
     `(flymake-end-of-line-diagnostics-face :height 'unspecified :box 'unspecified)
     `(eglot-diagnostic-tag-unnecessary-face :underline t))
 
@@ -506,8 +509,8 @@ expand immediately.  Common gateway for
   (eglot-sync-connect nil)
   (eglot-events-buffer-size 0)
   :hook
-  ((LaTeX-mode
-    ;; latex-mode
+  ((;;LaTeX-mode
+    latex-mode
     c++-ts-mode
     csharp-mode
     python-ts-mode
@@ -575,9 +578,9 @@ expand immediately.  Common gateway for
   (consult-async-split-style 'semicolon)
   (consult-preview-key nil)
   (consult-async-min-input 0)
-  ;; (consult-async-refresh-delay 0.1)
-  ;; (consult-async-input-debounce 0.1)
-  ;; (consult-async-input-throttle 0.1)
+  (consult-async-refresh-delay 0.01)
+  (consult-async-input-debounce 0.01)
+  (consult-async-input-throttle 0.01)
   (consult-fd-args '((if
                          (executable-find "fdfind" 'remote)
                          "fdfind" "fd")
@@ -627,7 +630,10 @@ expand immediately.  Common gateway for
                    (file-relative-name file root)
                  file)))
            (cl-remove-if
-            (lambda (x) (string-prefix-p "/var/tmp/tmp" x))
+            (lambda (x)
+              (or
+               (string-prefix-p "/var/tmp/tmp" x)
+               (not (file-exists-p x))))
             (remove
              (abbreviate-file-name (or (buffer-file-name) ""))
              (bound-and-true-p recentf-list)))))
@@ -640,13 +646,36 @@ expand immediately.  Common gateway for
         :require-match t
         :category 'file
         :state (consult--file-preview)
-        :history 'file-name-history)))))
+        :history 'file-name-history))))
+  :config
+  (defun consult--find (prompt builder initial)
+    "Run find command in current directory.
+
+The function returns the selected file.
+The filename at point is added to the future history.
+
+BUILDER is the command line builder function.
+PROMPT is the prompt.
+INITIAL is initial input."
+    (consult--read
+     (consult--async-command builder
+       (consult--async-map (lambda (x) (string-remove-prefix "./" x)))
+       (consult--async-highlight builder)
+       :file-handler t) ;; allow tramp
+     :prompt prompt
+     :sort t
+     :require-match t
+     :initial (consult--async-split-initial initial)
+     :add-history (consult--async-split-thingatpt 'filename)
+     :category 'file
+     :history '(:input consult--find-history))))
 
 (use-builtin recentf
   :custom
   (recentf-max-saved-items 100000)
   (recentf-arrange-rules nil)
   (recentf-keep '(file-remote-p file-readable-p))
+  (recentf-auto-cleanup 'never)
   :hook (buffer-list-update . recentf-track-opened-file)
   :config
   (recentf-mode t))
@@ -761,10 +790,9 @@ Quit if no candidate is selected."
 
     (add-hook 'sh-mode-hook 'add-cape-capf)
 
-    (add-to-list 'completion-at-point-functions
-                 (cape-capf-super
-                    dabbrev
-                    #'cape-file))))
+    (add-to-list! 'completion-at-point-functions
+                  dabbrev
+                  #'cape-file)))
 
 (use-package evil
   :demand t
@@ -866,17 +894,18 @@ Quit if no candidate is selected."
                 '(prettier . ("prettier" "--stdin-filepath" filepath))
                 '(markdownlint . ("markdownlint" "--quiet" "--fix" filepath))
                 '(phpcs . ("my-phpcs" "fix" "-n" "-q" filepath))
-                '(taxi-black . ("taxi-format-quiet" "--quiet" filepath))
-                '(taxi-clang-format . ("taxi-format-quiet" "--quiet" filepath)))
+                '(taxi-format . ("taxi-format-quiet" "--quiet" filepath)))
 
   (add-to-list! 'apheleia-mode-alist
                 '(sql-mode . sqlfluff)
-                '(python-ts-mode . taxi-black)
-                '(c++-mode . taxi-clang-format)
+                '(python-ts-mode . taxi-format)
+                '(c++-mode . taxi-format)
                 '(conf-toml-mode . taplo)
                 '(csharp-mode . csharpier)
                 '(xml-mode . xmllint)
                 '(nxml-mode . xmllint)
+                '(json-ts-mode . taxi-format)
+                '(yaml-ts-mode . taxi-format)
                 '(markdown-ts-mode . prettier)))
 
 (use-package jinx
@@ -960,6 +989,7 @@ Quit if no candidate is selected."
   (setq vterm-timer-delay 0.01)
 
   (add-hook 'vterm-mode-hook (lambda () (setq-local evil-insert-state-cursor '(box))))
+  (add-hook 'vterm-mode-hook (lambda () (setq-local global-hl-line-mode nil)))
 
   (add-to-list
    'display-buffer-alist
@@ -1246,9 +1276,11 @@ Quit if no candidate is selected."
          :source-dir "src"))
 
   ;; (setq treesit-language-source-alist (treesit-auto--build-treesit-source-alist))
-  (setq treesit-language-source-alist '((markdown-inline markdown-inline "https://github.com/MDeiml/tree-sitter-markdown" nil "tree-sitter-markdown-inline/src" nil nil)
-                                        (markdown markdown "https://github.com/MDeiml/tree-sitter-markdown" nil "tree-sitter-markdown/src" nil nil)))
   (add-to-list! 'treesit-language-source-alist
+                '(markdown-inline . ("https://github.com/MDeiml/tree-sitter-markdown"
+                                     nil
+                                     "tree-sitter-markdown-inline/src"))
+                '(markdown . ("https://github.com/MDeiml/tree-sitter-markdown" nil "tree-sitter-markdown/src"))
                 '(gitcommit . ("https://github.com/gbprod/tree-sitter-gitcommit"))
                 '(diff . ("https://github.com/the-mikedavis/tree-sitter-diff")))
 
@@ -1867,8 +1899,8 @@ Note that these rules can't contain anchored rules themselves."
   (list (car args) nil))
 
 (use-package obsidian
-  :defer t
   :elpaca nil
+  :mode "\\.md\\'"
   :custom
   (obsidian-workspaces '((notes . "~/obsidian")))
   (obsidian-daily-note-directory "ежедневник")
@@ -1885,10 +1917,7 @@ Note that these rules can't contain anchored rules themselves."
           (consult-fd "~/obsidian"))
     "g" (lambda ()
           (interactive)
-          (consult-ripgrep "~/obsidian")))
-  :config
-  (font-lock-add-keywords 'markdown-ts-mode
-                          '(("\\(^\\|[[:space:]]+\\)\\(#[[:alnum:]-_/]+\\)" 2 'obsidian-tag prepend)) t))
+          (consult-ripgrep "~/obsidian"))))
 
 (use-package markdown-ts-mode
   :elpaca nil
@@ -1913,6 +1942,8 @@ Note that these rules can't contain anchored rules themselves."
      ("shell" . sh-mode)
      ("bash" . sh-mode)))
   :config
+  (font-lock-add-keywords 'markdown-ts-mode
+                          '(("\\(^\\|[[:space:]]+\\)\\(#[[:alnum:]-_/]+\\)" 2 'obsidian-tag prepend)) t)
   (add-hook 'markdown-ts-mode-hook 'markdown-toggle-markup-hiding)
   (add-hook 'markdown-ts-mode-hook 'auto-fill-mode)
   (general-define-key
@@ -2138,7 +2169,12 @@ to directory DIR."
   (interactive)
   (let ((url (markdown-link-url)))
     (if url
-        (browse-url url)
+        (markdown-follow-link-at-point)
       (browse-url-at-point))))
 
 (nvmap "gx" 'markdown-gx-wrapper)
+
+(use-package evil-lion
+  :after evil
+  :custom (evil-lion-squeeze-spaces nil)
+  :config (evil-lion-mode t))

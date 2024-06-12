@@ -207,7 +207,8 @@ made DEFAULT."
 
   (let ((format (or format " %l:%c ")))
     (propertize (format-mode-line format)
-                'face (dash-modeline-face (if (buffer-modified-p)
+                'face (dash-modeline-face (if (and (not (eq major-mode 'vterm-mode))
+                                                   (buffer-modified-p))
                                               'status-**
                                             'status-RW)))))
 
@@ -271,7 +272,9 @@ TYPE is usually keyword `:error', `:warning' or `:note'."
       (let ((notes (dash-modeline--flymake-counter :note " " 'success))
             (warnings (dash-modeline--flymake-counter :warning " " 'warning))
             (errors (dash-modeline--flymake-counter :error " " 'error)))
-        (string-join (delq nil (list notes warnings errors)) " "))))
+        (concat
+         (string-join (delq nil (list notes warnings errors)) " ")
+         " "))))
 
 (defun dash-modeline--flycheck-count-errors ()
   "Count the number of ERRORS, grouped by level.
@@ -377,7 +380,7 @@ block selection."
             '((dash-modeline-buffer-status) " "
               (dash-modeline-buffer-name) " "
               ;; (dash-modeline-git-info) " "
-              (dash-modeline-flymake) " "
+              (dash-modeline-flymake)
               ;; (dash-modeline-flycheck) " "
               (dash-modeline-selection-info))
             '((dash-modeline-window-dedicated)
@@ -400,9 +403,11 @@ block selection."
 
   (funcall dash-modeline-position
            '((dash-modeline-buffer-status ">_") " "
-             (dash-modeline-term-shell-name))
+             (dash-modeline-term-shell-name) " "
+             (dash-modeline-selection-info))
            '((dash-modeline-window-dedicated)
-             (dash-modeline-default-directory) " ")))
+             (anzu--update-mode-line) " "
+             (dash-modeline-cursor-position))))
 
 (defun dash-modeline-message-mode ()
   "Dash line for messages mode"
