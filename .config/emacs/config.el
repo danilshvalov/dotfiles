@@ -17,8 +17,8 @@
 
 
 (defun project-root-current ()
-  ; (or project-current-directory-override
-      (my-get-current-directory)
+                                        ; (or project-current-directory-override
+  (my-get-current-directory)
   )
 
 (use-package general
@@ -266,30 +266,30 @@
 
   )
 
-  (defun dired-project-root ()
-    (interactive)
-    (let ((default-directory (project-root-current)))
-      (dired default-directory)))
+(defun dired-project-root ()
+  (interactive)
+  (let ((default-directory (project-root-current)))
+    (dired default-directory)))
 
-  (cl-defmethod project-root ((project (head local)))
-    "Return root directory of current PROJECT."
-    (cdr project))
+(cl-defmethod project-root ((project (head local)))
+  "Return root directory of current PROJECT."
+  (cdr project))
 
-  (defun project-find-root (dir)
-    "Determine if DIR is a non-VC project.
+(defun project-find-root (dir)
+  "Determine if DIR is a non-VC project.
 DIR must include a .project file to be considered a project."
-    (cons 'local (project-root-current)))
+  (cons 'local (project-root-current)))
 
-  (defun my-project-add (&optional dir)
-    (interactive)
-    (let ((dir (or dir
-                   (read-directory-name "Remember project at: "
-                                        default-directory
-                                        default-directory
-                                        t))))
-      (project-remember-project (cons 'local dir))))
+(defun my-project-add (&optional dir)
+  (interactive)
+  (let ((dir (or dir
+                 (read-directory-name "Remember project at: "
+                                      default-directory
+                                      default-directory
+                                      t))))
+    (project-remember-project (cons 'local dir))))
 
-  (add-hook 'project-find-functions #'project-find-root)
+(add-hook 'project-find-functions #'project-find-root)
 
 (set-frame-font "JetBrains Mono 17" nil t)
 
@@ -674,7 +674,6 @@ INITIAL is initial input."
   :custom
   (recentf-max-saved-items 100000)
   (recentf-arrange-rules nil)
-  (recentf-keep '(file-remote-p file-readable-p))
   (recentf-auto-cleanup 'never)
   :hook (buffer-list-update . recentf-track-opened-file)
   :config
@@ -815,11 +814,11 @@ Quit if no candidate is selected."
   :config
   (evil-mode)
 
-  ;; (add-hook 'evil-insert-state-entry-hook
-  ;;           (lambda () (unless (eq major-mode 'vterm-mode)
-  ;;                        (send-string-to-terminal "\033[5 q"))))
-  ;; (add-hook 'evil-insert-state-exit-hook
-  ;;           (lambda () (send-string-to-terminal "\033[2 q")))
+  (add-hook 'evil-insert-state-entry-hook
+            (lambda () (unless (eq major-mode 'vterm-mode)
+                         (send-string-to-terminal "\033[5 q"))))
+  (add-hook 'evil-insert-state-exit-hook
+            (lambda () (send-string-to-terminal "\033[2 q")))
 
   (evil-define-operator evil-fill (beg end)
     "Fill text."
@@ -1091,8 +1090,8 @@ Quit if no candidate is selected."
             (setq-local comment-add 0)
             (face-remap-add-relative 'font-lock-type-face '(:inherit default))))
 
-; (use-package cmake-mode
-;   :commands cmake-mode)
+                                        ; (use-package cmake-mode
+                                        ;   :commands cmake-mode)
 
 (add-to-list! 'auto-mode-alist
               '("\\.latexmkrc\\'" . perl-mode)
@@ -1151,8 +1150,8 @@ Quit if no candidate is selected."
 ;;   (setq markdown-regex-gfm-checkbox " \\(\\[[xX-]\\]\\) "))
 
 (use-package sql-indent
-  :defer t
-  :custom (sqlind-basic-offset 4))
+  :hook (sql-mode . (lambda () (require 'sql-indent)))
+  :custom (sqlind-basic-offset 2))
 
 (use-package ialign
   :commands ialign
@@ -1301,13 +1300,13 @@ Quit if no candidate is selected."
            (split-window-horizontally)
            (other-window 1)))
   (:states '(normal visual insert)
-    :keymaps 'vertico-map
-    "C-v" "C-e C-v"
-    "C-s" 'embark-collect
-    "C-c" (lambda ()
-            (interactive)
-            (embark-select)
-            (vertico-next)))
+           :keymaps 'vertico-map
+           "C-v" "C-e C-v"
+           "C-s" 'embark-collect
+           "C-c" (lambda ()
+                   (interactive)
+                   (embark-select)
+                   (vertico-next)))
   :init
   (setq prefix-help-command #'embark-prefix-help-command)
   :config
@@ -1698,7 +1697,7 @@ Note that these rules can't contain anchored rules themselves."
 (defun set-tab-name ()
   (interactive)
   ;; (tab-bar-rename-tab (or (get-pwd) (number-to-string (random))))
-(tab-bar-rename-tab (number-to-string (random)))
+  (tab-bar-rename-tab (number-to-string (random)))
   )
 
 (set-tab-name)
@@ -2133,7 +2132,7 @@ to directory DIR."
   :load-path "~/projects/diff-ts-mode"
   ;; :elpaca (git-commit-ts-mode :host github
   ;;                             :repo "danilshvalov/git-commit-ts-mode")
-)
+  )
 
 
 (defun arc-extract-ticket ()
@@ -2154,9 +2153,16 @@ to directory DIR."
       (goto-char (treesit-node-start capture))
       (insert (format "\nRelates: %s\n" ticket)))))
 
+(defun arc-find-file ()
+  (interactive)
+  (let ((path (read-file-name "Path: " "~/arcadia/")))
+    (find-file path)))
+
 (nvmap
+  :keymaps 'override
   :prefix "SPC a"
-  "t" 'arc-insert-ticket)
+  "t" 'arc-insert-ticket
+  "f" 'arc-find-file)
 
 (defun find-file-wrapper (fun &rest args)
   (let ((args (push (substitute-in-file-name (string-trim (car args)))
@@ -2178,3 +2184,9 @@ to directory DIR."
   :after evil
   :custom (evil-lion-squeeze-spaces nil)
   :config (evil-lion-mode t))
+
+(use-package protobuf-mode)
+
+(add-hook 'after-change-major-mode-hook
+          (lambda ()
+            (modify-syntax-entry ?_ "w")))
