@@ -235,6 +235,7 @@
     `(markdown-header-face-4 :foreground ,(doom-color 'teal))
     `(markdown-header-face-5 :foreground ,(doom-color 'magenta))
     `(markdown-header-face-6 :foreground ,(doom-color 'violet))
+    `(markdown-inline-code-face :background "#414868" :foreground ,(doom-color 'blue))
     `(anzu-mode-line :foreground ,(doom-color 'fg))
     `(evil-goggles-default-face :foreground ,(doom-color 'bg) :background ,(doom-color 'yellow))
     `(flymake-end-of-line-diagnostics-face :height 'unspecified :box 'unspecified)
@@ -1648,6 +1649,7 @@ Note that these rules can't contain anchored rules themselves."
   (major-mode-remap-alist
    '((c++-mode . c++-ts-mode)
      (c-mode . c-ts-mode)
+     (python-mode . python-ts-mode)
      (diff-mode . diff-ts-mode))))
 
 (use-package rainbow-mode
@@ -1918,12 +1920,15 @@ Note that these rules can't contain anchored rules themselves."
           (interactive)
           (consult-ripgrep "~/obsidian"))))
 
+(use-package edit-indirect)
+
 (use-package markdown-ts-mode
   :elpaca nil
   :mode "\\.md\\'"
   :custom
   (markdown-fontify-code-blocks-natively t)
   (markdown-list-item-bullets '("—"))
+  (markdown-hide-markup nil)
   (markdown-code-lang-modes
    '(("ocaml" . tuareg-mode)
      ("elisp" . emacs-lisp-mode)
@@ -1936,7 +1941,6 @@ Note that these rules can't contain anchored rules themselves."
      ("cpp" . c++-ts-mode)
      ("C++" . c++-ts-mode)
      ("html" . mhtml-mode)
-     ("python" . python-ts-mode)
      ("screen" . shell-script-mode)
      ("shell" . sh-mode)
      ("bash" . sh-mode)))
@@ -1944,7 +1948,7 @@ Note that these rules can't contain anchored rules themselves."
   (font-lock-add-keywords 'markdown-ts-mode
                           '(("\\(^\\|[[:space:]]+\\)\\(#[[:alnum:]-_/]+\\)" 2 'obsidian-tag prepend)) t)
   (add-hook 'markdown-ts-mode-hook 'markdown-toggle-markup-hiding)
-  (add-hook 'markdown-ts-mode-hook 'auto-fill-mode)
+  ;; (add-hook 'markdown-ts-mode-hook 'auto-fill-mode)
   (general-define-key
    :keymaps 'markdown-ts-mode-map
    "C-c C-c" 'markdown-toggle-gfm-checkbox)
@@ -1972,26 +1976,6 @@ Note that these rules can't contain anchored rules themselves."
   (custom-set-variables
    '(anzu-mode-line-update-function #'my/anzu-update-func)))
 
-(defun arc-root ()
-  (let ((exit-code (with-temp-message "" (shell-command "arc root")))
-        (content (with-current-buffer shell-command-buffer-name (buffer-string))))
-    (if (eq exit-code 0)
-        (string-trim content)
-      (error "Not in arcadia"))))
-
-(defun arc-make-link ()
-  (when-let ((root (arc-root))
-             (path (file-relative-name (buffer-file-name) root))
-             (line-number (1+ (count-lines 1 (point))))
-             (link (format "https://a.yandex-team.ru/arcadia/%s#L%s" path line-number)))
-    link))
-
-(defun arc-copy-link ()
-  (interactive)
-  (when-let ((link (arc-make-link)))
-    (kill-new (arc-make-link))
-    (message "Arc link copied: %s" link)))
-
 (add-hook 'server-after-make-frame-hook
           (lambda ()
             (set-tab-name)
@@ -2003,11 +1987,17 @@ Note that these rules can't contain anchored rules themselves."
 (defun yank--file-name (format-fn &rest args)
   (let ((filename (apply format-fn (buffer-file-name) args)))
     (kill-new filename)
-    (message "Copied filename: %s" filename)))
+    (message "Copied: %s" filename)))
 
 (transient-define-suffix yank-arcadia-path ()
   (interactive)
-  (yank--file-name (lambda (f) (arc-make-link))))
+  (require 'arc)
+  (yank--file-name (lambda (f) (arc-make-link nil))))
+
+(transient-define-suffix yank-arcadia-path-with-line-number ()
+  (interactive)
+  (require 'arc)
+  (yank--file-name (lambda (f) (arc-make-link t))))
 
 (transient-define-suffix yank-file-name ()
   (interactive)
@@ -2023,20 +2013,27 @@ Note that these rules can't contain anchored rules themselves."
 
 (transient-define-prefix yank-menu ()
   ["File"
-   [("a" "Arcadia"       yank-arcadia-path)
-    ("f" "Filename"      yank-file-name)
-    ("b" "Filename base" yank-file-name-base)
-    ("p" "Path"          yank-path)]])
+   [("a" "Arcadia"                   yank-arcadia-path)
+    ("A" "Arcadia with line number"  yank-arcadia-path-with-line-number)
+    ("f" "Filename"                  yank-file-name)
+    ("b" "Filename base"             yank-file-name-base)
+    ("p" "Path"                      yank-path)]])
 
 (nvmap
   "SPC y" 'yank-menu)
 
 (defun arc--call-process (program &rest args)
+  (require 'arc)
   (with-temp-buffer
-    (let ((exit-code (shell-command (string-join `(,program ,(string-join (mapcar 'shell-quote-argument args) " ")) " ") (current-buffer))
-                     ;; (apply 'tramp-call-process nil program nil (current-buffer) nil args)
-                     )
-          (content (buffer-string)))
+    (let* ((default-directory (expand-file-name arc-root))
+           (exit-code
+            (apply 'call-process
+                   program
+                   nil
+                   (current-buffer)
+                   nil
+                   args))
+           (content (buffer-string)))
       (when (> exit-code 0)
         (error "Arc error: %s" content))
       content)))
@@ -2122,8 +2119,6 @@ to directory DIR."
 
 (use-package git-commit-ts-mode
   :elpaca (git-commit-ts-mode :repo "~/projects/git-commit-ts-mode")
-  ;; :elpaca (git-commit-ts-mode :host github
-  ;;                             :repo "danilshvalov/git-commit-ts-mode")
   :mode "\\COMMIT_EDITMSG\\'")
 
 (use-package diff-ts-mode
@@ -2135,34 +2130,14 @@ to directory DIR."
   )
 
 
-(defun arc-extract-ticket ()
-  (let ((content (buffer-string)))
-    (when (string-match "\\(DIAGNOSTICS-[[:digit:]]+\\)" content)
-      (match-string 1 content))))
-
-(defun arc-insert-ticket ()
-  (interactive)
-  (when-let* ((parser (treesit-parser-create 'gitcommit))
-              (root (treesit-parser-root-node parser))
-              (query (treesit-query-compile 'gitcommit
-                                            '((comment) @capture)))
-              (ticket (arc-extract-ticket))
-              (captures (treesit-query-capture root query))
-              (capture (alist-get 'capture captures)))
-    (save-excursion
-      (goto-char (treesit-node-start capture))
-      (insert (format "\nRelates: %s\n" ticket)))))
-
-(defun arc-find-file ()
-  (interactive)
-  (let ((path (read-file-name "Path: " "~/arcadia/")))
-    (find-file path)))
-
-(nvmap
-  :keymaps 'override
-  :prefix "SPC a"
-  "t" 'arc-insert-ticket
-  "f" 'arc-find-file)
+(use-package arc
+  :elpaca nil
+  :general
+  (nvmap
+    :keymaps 'override
+    :prefix "SPC a"
+    "t" 'arc-insert-ticket
+    "f" 'arc-find-file))
 
 (defun find-file-wrapper (fun &rest args)
   (let ((args (push (substitute-in-file-name (string-trim (car args)))

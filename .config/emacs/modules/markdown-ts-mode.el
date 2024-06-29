@@ -8882,8 +8882,8 @@ Use matching function MATCHER."
               (markdown-fontify-code-block-natively lang start end)
             (add-text-properties start end '(face markdown-pre-face)))
           ;; Set background for block as well as opening and closing lines.
-          (font-lock-append-text-property
-           bol-prev eol-next 'face 'markdown-code-face)
+          ;; (font-lock-append-text-property
+          ;;  bol-prev eol-next 'face 'markdown-code-face)
           ;; Set invisible property for lines before and after, including newline.
           ;; (add-text-properties bol-prev start '(invisible markdown-markup))
           ;; (add-text-properties end eol-next '(invisible markdown-markup))
@@ -9857,9 +9857,10 @@ rows and columns and the column alignment."
    ;; `((fenced_code_block
    ;;    (info_string (text) @markdown-language-keyword-face)))
 
-   ;; :language 'markdown
-   ;; :feature 'markup
-   ;; `((fenced_code_block) @markdown-markup-face)
+   :language 'markdown
+   :feature 'markup
+   :override t
+   `((fenced_code_block) @markdown-markup-face)
 
    :language 'markdown-inline
    :feature 'inline-code
@@ -9892,11 +9893,21 @@ rows and columns and the column alignment."
 
    :language 'markdown
    :feature 'link ; TODO: change
-   `(((list_marker_dot) @markdown-list-face))
+   `((list_marker_dot) @markdown-list-face)
+
+   :language 'markdown
+   :feature 'link ; TODO: change
+   :override t
+   `((info_string) @markdown-language-info-face)
+
+   :language 'markdown
+   :feature 'link ; TODO: change
+   :override t
+   `((fenced_code_block_delimiter) @font-lock-punctuation-face)
 
    :language 'markdown-inline
    :feature 'link ; TODO: change
-   `(((latex_block) @markdown-math-face))
+   `((latex_block) @markdown-math-face)
 
 ;; (setext_heading (paragraph) @text.title.1 (setext_h1_underline) @text.title.1.marker)
 ;; (setext_heading (paragraph) @text.title.2 (setext_h2_underline) @text.title.2.marker)
@@ -9905,13 +9916,8 @@ rows and columns and the column alignment."
 ;; (indented_code_block) @text.literal.block
 ;; ((fenced_code_block) @text.literal.block (#set! "priority" 90))
 
-;; (info_string) @label
 
 ;; (pipe_table_header (pipe_table_cell) @text.title)
-
-;; [
-;;   (fenced_code_block_delimiter)
-;; ] @punctuation.delimiter
 
 ;; ;; Conceal backticks
 ;; (fenced_code_block
