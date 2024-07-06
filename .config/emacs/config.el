@@ -59,6 +59,8 @@
   (history-length t)
   (visible-cursor nil)
   (warning-minimum-level :emergency)
+  (initial-major-mode 'text-mode)
+  (initial-scratch-message "")
   :hook
   (before-save . delete-trailing-whitespace)
   ((prog-mode text-mode) . display-fill-column-indicator-mode)
@@ -198,7 +200,7 @@
   (global-whitespace-mode +1)
   (window-divider-mode)
   (savehist-mode)
-  (global-hl-line-mode)
+  ;; (global-hl-line-mode)
   (advice-add 'yes-or-no-p :override #'y-or-n-p))
 
 (use-package doom-themes
@@ -229,6 +231,7 @@
     `(font-lock-operator-face :foreground ,(doom-color 'operators))
     `(font-lock-punctuation-face :foreground ,(doom-color 'punctuations))
     `(tab-bar-tab :background ,(doom-color 'region))
+    `(show-paren-mismatch :foreground ,(doom-color 'red) :background 'unspecified)
     `(markdown-header-face-1 :foreground ,(doom-color 'blue))
     `(markdown-header-face-2 :foreground ,(doom-color 'yellow))
     `(markdown-header-face-3 :foreground ,(doom-color 'green))
@@ -1161,11 +1164,19 @@ Quit if no candidate is selected."
   (nvmap
     "ga" 'ialign))
 
+(add-hook 'window-configuration-change-hook
+          (lambda ()
+            (unless (memq major-mode '(minibuffer-mode vterm-mode))
+              (set-window-margins nil 2))))
+
 (use-package flymake
-  :hook ((sql-mode) . flymake-mode)
+  :hook
+  ((sql-mode) . flymake-mode)
   :commands flymake-mode
   :custom
-  (flymake-fringe-indicator-position 'left-fringe)
+  (flymake-margin-indicators-string '((error " " compilation-error)
+                                      (warning " " compilation-warning)
+                                      (note " " compilation-info)))
   (flymake-suppress-zero-counters t)
   (flymake-start-on-flymake-mode t)
   (flymake-no-changes-timeout 1.0)
@@ -1177,8 +1188,7 @@ Quit if no candidate is selected."
   (nvmap
     :prefix "g"
     "n" 'flymake-goto-next-error
-    "p" 'flymake-goto-prev-error)
-  :config)
+    "p" 'flymake-goto-prev-error))
 
 (use-package flymake-sqlfluff
   :elpaca (:host github :repo "danilshvalov/flymake-sqlfluff")
@@ -1928,7 +1938,6 @@ Note that these rules can't contain anchored rules themselves."
   :custom
   (markdown-fontify-code-blocks-natively t)
   (markdown-list-item-bullets '("—"))
-  (markdown-hide-markup nil)
   (markdown-code-lang-modes
    '(("ocaml" . tuareg-mode)
      ("elisp" . emacs-lisp-mode)
@@ -1947,7 +1956,7 @@ Note that these rules can't contain anchored rules themselves."
   :config
   (font-lock-add-keywords 'markdown-ts-mode
                           '(("\\(^\\|[[:space:]]+\\)\\(#[[:alnum:]-_/]+\\)" 2 'obsidian-tag prepend)) t)
-  (add-hook 'markdown-ts-mode-hook 'markdown-toggle-markup-hiding)
+  ;; (add-hook 'markdown-ts-mode-hook 'markdown-toggle-markup-hiding)
   ;; (add-hook 'markdown-ts-mode-hook 'auto-fill-mode)
   (general-define-key
    :keymaps 'markdown-ts-mode-map
@@ -1989,38 +1998,14 @@ Note that these rules can't contain anchored rules themselves."
     (kill-new filename)
     (message "Copied: %s" filename)))
 
-(transient-define-suffix yank-arcadia-path ()
-  (interactive)
-  (require 'arc)
-  (yank--file-name (lambda (f) (arc-make-link nil))))
-
-(transient-define-suffix yank-arcadia-path-with-line-number ()
-  (interactive)
-  (require 'arc)
-  (yank--file-name (lambda (f) (arc-make-link t))))
-
-(transient-define-suffix yank-file-name ()
-  (interactive)
-  (yank--file-name 'file-relative-name))
-
-(transient-define-suffix yank-file-name-base ()
-  (interactive)
-  (yank--file-name 'file-name-base))
-
-(transient-define-suffix yank-path ()
-  (interactive)
-  (yank--file-name (lambda (f) f)))
-
-(transient-define-prefix yank-menu ()
-  ["File"
-   [("a" "Arcadia"                   yank-arcadia-path)
-    ("A" "Arcadia with line number"  yank-arcadia-path-with-line-number)
-    ("f" "Filename"                  yank-file-name)
-    ("b" "Filename base"             yank-file-name-base)
-    ("p" "Path"                      yank-path)]])
-
 (nvmap
-  "SPC y" 'yank-menu)
+  :prefix "SPC y"
+  "" '(nil :wk "yank")
+  "a" '((yank--file-name (lambda (f) (arc-make-link nil))) :wk "Arcadia URL")
+  "A" '((yank--file-name (lambda (f) (arc-make-link t))) :wk "Arcadia URL with line number")
+  "f" '((yank--file-name 'file-relative-name) :wk "Filename")
+  "b" '((yank--file-name 'file-name-base) :wk "Filename base")
+  "p" '((yank--file-name (lambda (f) f)) :wk "Path"))
 
 (defun arc--call-process (program &rest args)
   (require 'arc)
@@ -2165,3 +2150,120 @@ to directory DIR."
 (add-hook 'after-change-major-mode-hook
           (lambda ()
             (modify-syntax-entry ?_ "w")))
+
+(add-hook 'python-ts-mode-hook (lambda () (setq-local fill-column 120)))
+
+
+(defcustom treesit-injections-code-lang-modes
+  '(("ocaml" . tuareg-mode) ("elisp" . emacs-lisp-mode) ("ditaa" . artist-mode)
+    ("asymptote" . asy-mode) ("dot" . fundamental-mode) ("sqlite" . sql-mode)
+    ("calc" . fundamental-mode) ("C" . c-mode) ("cpp" . c++-mode)
+    ("C++" . c++-mode) ("screen" . shell-script-mode) ("shell" . sh-mode)
+    ("bash" . sh-mode))
+  "Alist mapping languages to their major mode.
+The key is the language name, the value is the major mode.  For
+many languages this is simple, but for language where this is not
+the case, this variable provides a way to simplify things on the
+user side.  For example, there is no ocaml-mode in Emacs, but the
+mode to use is `tuareg-mode'."
+  ;; :group 'markdown
+  :type '(repeat
+          (cons
+           (string "Language name")
+           (symbol "Major mode"))))
+
+(defun treesit-injections--lang-mode-predicate (mode)
+  (and mode
+       (fboundp mode)
+       (or
+        ;; https://github.com/jrblevin/markdown-ts-mode/issues/787
+        ;; major-mode-remap-alist was introduced at Emacs 29.1
+        (cl-loop for pair in (bound-and-true-p major-mode-remap-alist)
+                 for func = (cdr pair)
+                 thereis (and (atom func) (eq mode func)))
+        ;; https://github.com/jrblevin/markdown-ts-mode/issues/761
+        (cl-loop for pair in auto-mode-alist
+                 for func = (cdr pair)
+                 thereis (and (atom func) (eq mode func))))))
+
+
+(defun treesit-injections-get-lang-mode (lang)
+  "Return major mode that should be used for LANG.
+LANG is a string, and the returned major mode is a symbol."
+  (cl-find-if
+   #'treesit-injections--lang-mode-predicate
+   (nconc (list (cdr (assoc lang treesit-injections-code-lang-modes))
+                (cdr (assoc (downcase lang) treesit-injections-code-lang-modes)))
+          (and (fboundp 'treesit-language-available-p)
+               (list (and (treesit-language-available-p (intern lang))
+                          (intern (concat lang "-ts-mode")))
+                     (and (treesit-language-available-p (intern (downcase lang)))
+                          (intern (concat (downcase lang) "-ts-mode")))))
+          (list
+           (intern (concat lang "-mode"))
+           (intern (concat (downcase lang) "-mode"))))))
+
+(defun treesit-injections--fontify-code-block-natively (lang start end)
+  (interactive)
+  (let ((lang-mode (if lang (treesit-injections-get-lang-mode lang)
+                     fundamental-mode)))
+    (when (fboundp lang-mode)
+      (let ((string (buffer-substring-no-properties start end))
+            (modified (buffer-modified-p))
+            (has-font-lock-mode font-lock-mode)
+            (buffer (current-buffer)) pos next)
+        (remove-text-properties start end '(face nil))
+        (with-current-buffer
+            (get-buffer-create
+             (concat " treesit-injections-fontification:" (symbol-name lang-mode)))
+          ;; Make sure that modification hooks are not inhibited in
+          ;; the org-src-fontification buffer in case we're called
+          ;; from `jit-lock-function' (Bug#25132).
+          (let ((inhibit-modification-hooks nil))
+            (delete-region (point-min) (point-max))
+            (insert string " ")) ;; so there's a final property change
+          (unless (eq major-mode lang-mode) (funcall lang-mode))
+          (font-lock-ensure)
+          (setq pos (point-min))
+          (while (setq next (next-single-property-change pos 'face))
+            (let ((val (get-text-property pos 'face)))
+              (message "Value: %s" (current-buffer))
+              (when val
+                (put-text-property
+                 (+ start (1- pos))
+                 (1- (+ start next))
+                 (if has-font-lock-mode 'font-lock-face
+                   'face)
+                 val buffer)))
+            (setq pos next)))
+        (add-text-properties
+         start end
+         '(font-lock-fontified t fontified t font-lock-multiline t))
+        (set-buffer-modified-p modified)))))
+
+
+;; (add-hook 'markdown-ts-mode-hook
+;;           (lambda ()
+;;             (setq treesit-range-settings
+;;                   (treesit-range-rules
+;;                    (lambda (start end)
+;;                      (interactive)
+;;                      (let* ((parser (treesit-parser-create 'markdown))
+;;                             (root (treesit-parser-root-node parser))
+;;                             (query '((fenced_code_block) @capture))
+;;                             (captures (treesit-query-range root query start end)))
+;;                        (cl-loop for capture in captures do
+;;                                 (treesit-injections--fontify-code-block-natively "python" (car capture) (cdr capture))
+;;                                 )
+;;                        ;;
+;;                        ;; (message "Start: %s, end: %s, range: %s" start end range)
+;;                        ))))))
+
+(use-package which-key
+  :custom
+  (which-key-separator " → " )
+  (which-key-min-display-lines 10)
+  (which-key-max-description-length 50)
+  (which-key-add-column-padding 2)
+  :init
+  (which-key-mode))
