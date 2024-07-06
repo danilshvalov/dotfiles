@@ -2142,6 +2142,39 @@ Depending on your font, some reasonable choices are:
          ,@(when markdown-hide-markup
              `(display ,markdown-footnote-display))))
 
+
+(defun markdown-fontify-injection (last language query)
+  (let* ((parser (treesit-parser-create 'markdown))
+         (root (treesit-parser-root-node parser))
+         (captures (treesit-query-range root query (point) last)))
+    (cl-loop for capture in captures do
+             (markdown-fontify-code-block-natively language (car capture) (cdr capture)))))
+
+(defun markdown-fontify-html (last)
+  (let ((query '((html_block) @capture)))
+    (markdown-fontify-injection last "html" query)))
+
+(defun markdown--fontify-code-block (node)
+  (let* ((query '((fenced_code_block
+            (info_string
+             (language) @language)
+            (code_fence_content) @content)))
+         (captures (treesit-query-capture node query))
+         (language-node (cdr (assoc 'language captures)))
+         (language (treesit-node-text language-node))
+         (content-node (cdr (assoc 'content captures)))
+         (content-start (treesit-node-start content-node))
+         (content-end (treesit-node-end content-node)))
+    (markdown-fontify-code-block-natively language content-start content-end)))
+
+(defun markdown-fontify-code (last)
+  (let* ((parser (treesit-parser-create 'markdown))
+         (root (treesit-parser-root-node parser))
+         (query '((fenced_code_block) @capture))
+         (captures (treesit-query-capture root query (point) last)))
+    (cl-loop for capture in captures do
+             (markdown--fontify-code-block (cdr capture)))))
+
 (defvar markdown-ts-mode-font-lock-keywords
   `((markdown-match-yaml-metadata-begin . ((1 'markdown-markup-face)))
     (markdown-match-yaml-metadata-end . ((1 'markdown-markup-face)))
@@ -2154,7 +2187,9 @@ Depending on your font, some reasonable choices are:
     ;;                                         (4 markdown-language-info-properties nil t)
     ;;                                         (5 markdown-markup-properties nil t)))
     ;; (markdown-match-gfm-close-code-blocks . ((0 markdown-markup-properties)))
-    (markdown-fontify-gfm-code-blocks)
+    ;; (markdown-fontify-gfm-code-blocks)
+    (markdown-fontify-code)
+    (markdown-fontify-html)
     ;; (markdown-fontify-tables)
     ;; (markdown-match-fenced-start-code-block . ((1 markdown-markup-properties)
     ;;                                            (2 markdown-markup-properties nil t)
@@ -10046,8 +10081,8 @@ rows and columns and the column alignment."
       (setq-local imenu-create-index-function
                   #'treesit-simple-imenu))
 
-    (setq-local syntax-propertize-function #'markdown-syntax-propertize)
-    (syntax-propertize (point-max)) ;; Propertize before hooks run, etc.
+    ;; (setq-local syntax-propertize-function #'markdown-syntax-propertize)
+    ;; (syntax-propertize (point-max)) ;; Propertize before hooks run, etc.
     ;; Font lock.
     ;; (setq font-lock-defaults
     ;;       '(markdown-ts-mode-font-lock-keywords

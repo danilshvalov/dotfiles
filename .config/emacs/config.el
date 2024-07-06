@@ -1166,7 +1166,8 @@ Quit if no candidate is selected."
 
 (add-hook 'window-configuration-change-hook
           (lambda ()
-            (unless (memq major-mode '(minibuffer-mode vterm-mode))
+            (unless (or (memq major-mode '(minibuffer-mode vterm-mode))
+                        (bound-and-true-p visual-fill-column-mode))
               (set-window-margins nil 2))))
 
 (use-package flymake
@@ -2267,3 +2268,8 @@ LANG is a string, and the returned major mode is a symbol."
   (which-key-add-column-padding 2)
   :init
   (which-key-mode))
+
+(use-package visual-fill-column
+  :custom
+  (visual-fill-column-center-text t)
+  :hook (markdown-ts-mode . visual-fill-column-mode))
