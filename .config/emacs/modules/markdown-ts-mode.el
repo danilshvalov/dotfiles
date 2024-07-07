@@ -2188,7 +2188,7 @@ Depending on your font, some reasonable choices are:
     ;;                                         (5 markdown-markup-properties nil t)))
     ;; (markdown-match-gfm-close-code-blocks . ((0 markdown-markup-properties)))
     ;; (markdown-fontify-gfm-code-blocks)
-    (markdown-fontify-code)
+    ;; (markdown-fontify-code)
     (markdown-fontify-html)
     ;; (markdown-fontify-tables)
     ;; (markdown-match-fenced-start-code-block . ((1 markdown-markup-properties)
