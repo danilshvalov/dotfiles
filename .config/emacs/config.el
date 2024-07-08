@@ -933,7 +933,19 @@ Quit if no candidate is selected."
   :custom
   (undo-fu-session-incompatible-files
    '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'"))
-  :config (undo-fu-session-global-mode))
+  (undo-fu-session-make-file-name-function 'my-undo-fu-session-make-file-name)
+  :config (undo-fu-session-global-mode)
+  :preface
+  (defun my-undo-fu-session-make-file-name (filename ext)
+    "Take the path FILENAME, EXT and return a name base on this."
+    (declare (important-return-value t) (side-effect-free error-free))
+    (concat
+     (file-name-concat undo-fu-session-directory
+                       (string-replace
+                        "/"
+                        "-"
+                        (convert-standard-filename (expand-file-name filename))))
+     ext)))
 
 (use-package vterm
   :after evil
@@ -2251,95 +2263,42 @@ LANG is a string, and the returned major mode is a symbol."
          (content-node (cdr (assoc 'content captures)))
          (range (cons (treesit-node-start content-node)
                       (treesit-node-end content-node))))
-    (cons parser range)
-    ;; (treesit-parser-set-included-ranges parser set-ranges)
-    ))
+    (cons parser range)))
 
-(defun treesit-tmp-fontify-code (start end)
+(defun markdown--code-blocks-parsers-ranges (start end)
   (let* ((parser (treesit-parser-create 'markdown))
          (root (treesit-parser-root-node parser))
          (query '((fenced_code_block) @capture))
          (captures (treesit-query-capture root query start end))
-         (set-ranges))
-    (cl-loop for capture in captures do
-             (let* ((parser-range (treesit-tmp-fontify-code-block (cdr capture)))
-                    (parser (car parser-range))
-                    (range (cdr parser-range))
-                    (previous-ranges (cdr (assoc parser set-ranges)))
-                    (new-ranges (if previous-ranges
-                                    (push range previous-ranges)
-                                  (list range))))
-               (setq set-ranges (push (cons parser new-ranges) set-ranges))
-               ;; (message "Ranges: %s" set-ranges)
-               ;; (if previous-ranges
-               ;;     (setq (push (push ) set-ranges)))
-               ))
-    ;; (cl-loop )
-    (setq set-ranges (cl-remove-duplicates set-ranges
-                                           :key #'car
-                                           :from-end t))
-    (cl-loop for (parser . ranges) in set-ranges do
-             (treesit-parser-set-included-ranges parser
-                                                 (treesit--clip-ranges
-                                                  (treesit--merge-ranges
-                                                   (treesit-parser-included-ranges parser)
-                                                   (reverse ranges) start end)
-                                                  (point-min) (point-max)))
-             ;; (message "Values: %s %s" key value)
-             )
+         (parser-ranges))
+    (dolist (capture captures)
+      (let* ((parser-range (treesit-tmp-fontify-code-block (cdr capture)))
+             (parser (car parser-range))
+             (range (cdr parser-range))
+             (previous-ranges (cdr (assoc parser parser-ranges)))
+             (new-ranges (push range previous-ranges)))
+        (setf (alist-get parser parser-ranges) new-ranges)))
+    (cl-loop for (parser . ranges) in parser-ranges
+             collect (cons parser (reverse ranges)))))
 
-    )
-  )
+(defun markdown-fontify-code-blocks (start end)
+  (cl-loop for (parser . ranges) in (markdown--code-blocks-parsers-ranges start end) do
+           (treesit-parser-set-included-ranges
+            parser
+            (treesit--clip-ranges
+             (treesit--merge-ranges
+              (treesit-parser-included-ranges parser)
+              ranges start end)
+             (point-min) (point-max)))))
 
 
 (add-hook 'markdown-ts-mode-hook
           (lambda ()
             (setq treesit-range-settings
                   (treesit-range-rules
-                   (lambda (start end)
-                     (interactive)
-                     (treesit-tmp-fontify-code start end))))))
+                   'markdown-fontify-code-blocks))))
 
 (require 'treesit)
-
-;; (defun treesit-update-ranges (&optional beg end)
-;;   "Update the ranges for each language in the current buffer.
-;; If BEG and END are non-nil, only update parser ranges in that
-;; region."
-;;   ;; When updating ranges, we want to avoid querying the whole buffer
-;;   ;; which could be slow in very large buffers.  Instead, we only
-;;   ;; query for nodes that intersect with the region between BEG and
-;;   ;; END.  Also, we only update the ranges intersecting BEG and END;
-;;   ;; outside of that region we inherit old ranges.
-;;   (dolist (setting treesit-range-settings)
-;;     (let ((query (nth 0 setting))
-;;           (language (nth 1 setting))
-;;           (beg (or beg (point-min)))
-;;           (end (or end (point-max))))
-;;       (if (functionp query) (funcall query beg end)
-;;         (let* ((host-lang (treesit-query-language query))
-;;                (parser (treesit-parser-create language))
-;;                (old-ranges (treesit-parser-included-ranges parser))
-;;                (new-ranges (treesit-query-range
-;;                             host-lang query beg end))
-;;                (set-ranges (treesit--clip-ranges
-;;                             (treesit--merge-ranges
-;;                              old-ranges new-ranges beg end)
-;;                             (point-min) (point-max))))
-;;           (dolist (parser (treesit-parser-list))
-;;             (when (eq (treesit-parser-language parser)
-;;                       language)
-;;               (treesit-parser-set-included-ranges
-;;                parser (or set-ranges
-;;                           ;; When there's no range for the embedded
-;;                           ;; language, set it's range to a dummy (1
-;;                           ;; . 1), otherwise it would be set to the
-;;                           ;; whole buffer, which is not what we want.
-;;                           `((,(point-min) . ,(point-min)))))
-;;               (message "Data: %s %s" language set-ranges)
-;;               ;; (treesit-injections--fontify-code-block-natively language (car set-ranges) (cdr set-ranges))
-;;               )))))))
-
 
 (advice-add
    'treesit-font-lock-fontify-region
@@ -2349,15 +2308,7 @@ LANG is a string, and the returned major mode is a symbol."
        (let ((language (symbol-name
                         (treesit-parser-language parser))))
          (dolist (range (treesit-parser-included-ranges parser))
-           (treesit-injections--fontify-code-block-natively language (car range) (cdr range)))))
-     ;; (let* ((parser (treesit-parser-create 'markdown))
-     ;;        (root (treesit-parser-root-node parser))
-     ;;        (query '((code_fence_content) @capture))
-     ;;        (captures (treesit-query-range root query start end)))
-     ;;   (cl-loop for capture in captures do
-     ;;            (treesit-injections--fontify-code-block-natively "python" (car capture) (cdr capture))))
-
-     ))
+           (treesit-injections--fontify-code-block-natively language (car range) (cdr range)))))))
 
 
 (use-package which-key
