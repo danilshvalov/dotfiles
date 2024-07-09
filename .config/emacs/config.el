@@ -588,7 +588,7 @@ expand immediately.  Common gateway for
   (consult-fd-args '((if
                          (executable-find "fdfind" 'remote)
                          "fdfind" "fd")
-                     "--full-path --color=never --type=file"))
+                     "--color=never --type=file"))
   :general
   (nvmap
     :keymaps 'override
@@ -687,11 +687,13 @@ INITIAL is initial input."
   :init (marginalia-mode))
 
 (use-package orderless
+  :custom
+  (orderless-matching-styles '(orderless-literal orderless-regexp))
   :init
   (setq
    completion-styles '(orderless basic)
    completion-category-defaults nil
-   completion-category-overrides '((file (styles partial-completion)))))
+   completion-category-overrides '((file (styles orderless partial-completion)))))
 
 (use-package corfu
   :demand t
@@ -2010,11 +2012,29 @@ Note that these rules can't contain anchored rules themselves."
 (nvmap
   :prefix "SPC y"
   "" '(nil :wk "yank")
-  "a" '((yank--file-name (lambda (f) (arc-make-link nil))) :wk "Arcadia URL")
-  "A" '((yank--file-name (lambda (f) (arc-make-link t))) :wk "Arcadia URL with line number")
-  "f" '((yank--file-name 'file-relative-name) :wk "Filename")
-  "b" '((yank--file-name 'file-name-base) :wk "Filename base")
-  "p" '((yank--file-name (lambda (f) f)) :wk "Path"))
+  "a" '((lambda()
+          (require 'arc)
+          (interactive)
+          (yank--file-name (lambda (f)
+                             (arc-make-link nil))))
+        :wk "Arcadia URL")
+  "A" '((lambda ()
+          (require 'arc)
+          (interactive)
+          (yank--file-name (lambda (f)
+                             (arc-make-link t))))
+        :wk "Arcadia URL with line number")
+  "f" '((lambda ()
+          (interactive)
+          (yank--file-name 'file-relative-name))
+        :wk "Filename")
+  "b" '((lambda ()
+          (interactive)
+          (yank--file-name 'file-name-base))
+        :wk "Filename base")
+  "p" '((lambda ()
+          (interactive)
+          (yank--file-name (lambda (f) f)) :wk "Path")))
 
 (defun arc--call-process (program &rest args)
   (require 'arc)
