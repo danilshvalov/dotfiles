@@ -52,7 +52,6 @@
   (auto-save-default nil)
   (whitespace-style '(face tabs))
   (window-combination-resize t)
-  (split-width-threshold t)
   (help-window-select t)
   (bidi-display-reordering nil)
   (sentence-end-double-space nil)
@@ -255,11 +254,11 @@
 (use-builtin project
   :requires consult
   :custom
-  (project-switch-commands '((consult-fd "Find file")
+  (project-switch-commands '((consult-find "Find file")
                              (dired-project-root "Dired")))
   :general
   (:keymaps 'project-prefix-map
-            "f" 'consult-fd
+            "f" 'consult-find
             "d" 'dired-project-root)
   (nmap
     :prefix "SPC p"
@@ -512,6 +511,7 @@ expand immediately.  Common gateway for
   :custom
   (eglot-sync-connect nil)
   (eglot-events-buffer-size 0)
+  (eglot-send-changes-idle-time 0.1)
   :hook
   ((;;LaTeX-mode
     latex-mode
@@ -585,10 +585,11 @@ expand immediately.  Common gateway for
   (consult-async-refresh-delay 0.01)
   (consult-async-input-debounce 0.01)
   (consult-async-input-throttle 0.01)
-  (consult-fd-args '((if
-                         (executable-find "fdfind" 'remote)
-                         "fdfind" "fd")
-                     "--color=never --type=file"))
+  (consult-find-args "find . -not ( -path */__pycache__ -prune ) -not ( -path */.mypy_cache -prune )")
+  ;; (consult-fd-args '((if
+  ;;                        (executable-find "fdfind" 'remote)
+  ;;                        "fdfind" "fd")
+  ;;                    "--color=never --hidden --type=file --exclude=.mypy_cache"))
   :general
   (nvmap
     :keymaps 'override
@@ -596,8 +597,8 @@ expand immediately.  Common gateway for
     "" '(nil :wk "find")
     "r" '+consult-recent-file
     "b" 'consult-buffer
-    "f" 'consult-fd
-    "F" 'consult-fd-at
+    "f" 'consult-find
+    "F" 'consult-find-at
     "g" 'consult-ripgrep
     "G" 'consult-ripgrep-at
     "o" 'ff-find-other-file
@@ -607,10 +608,10 @@ expand immediately.  Common gateway for
           (call-process-shell-command "open .")))
 
   :preface
-  (defun consult-fd-at ()
+  (defun consult-find-at ()
     (interactive)
     (let ((directory (read-directory-name "Directory: ")))
-      (consult-fd directory)))
+      (consult-find directory)))
 
   (defun consult-ripgrep-at ()
     (interactive)
@@ -687,8 +688,6 @@ INITIAL is initial input."
   :init (marginalia-mode))
 
 (use-package orderless
-  :custom
-  (orderless-matching-styles '(orderless-literal orderless-regexp))
   :init
   (setq
    completion-styles '(orderless basic)
@@ -815,6 +814,14 @@ Quit if no candidate is selected."
 
   :config
   (evil-mode)
+
+  (evil-define-command my-evil-edit-arcadia (file)
+    :repeat nil
+    (interactive
+     (list (read-from-minibuffer "Arcadia path: " "~/arcadia/")))
+    (evil-edit file))
+
+  (evil-ex-define-cmd "ea" 'my-evil-edit-arcadia)
 
   (add-hook 'evil-insert-state-entry-hook
             (lambda () (unless (eq major-mode 'vterm-mode)
@@ -949,72 +956,72 @@ Quit if no candidate is selected."
                         (convert-standard-filename (expand-file-name filename))))
      ext)))
 
-(use-package vterm
-  :after evil
-  :custom
-  (vterm-tramp-shells '(("ssh" "/bin/zsh")
-                        ("sshx" "/bin/zsh")))
-  (vterm-copy-mode-remove-fake-newlines t)
-  (vterm-max-scrollback 100000)
-  :general
-  (nmap
-    :prefix "SPC t"
-    :keymaps 'override
-    "" '(nil :wk "toggle")
-    "t" 'toggle-vterm
-    "c" 'toggle-vterm-cd
-    "T" 'toggle-vterm-here)
-  (nmap
-    :keymaps 'vterm-mode-map
-    "q" 'delete-window
-    "C-p" "M-p"
-    "C-n" "M-n"
-    "M-:" 'eval-expression)
+;; (use-package vterm
+;;   :after evil
+;;   :custom
+;;   (vterm-tramp-shells '(("ssh" "/bin/zsh")
+;;                         ("sshx" "/bin/zsh")))
+;;   (vterm-copy-mode-remove-fake-newlines t)
+;;   (vterm-max-scrollback 100000)
+;;   :general
+;;   (nmap
+;;     :prefix "SPC t"
+;;     :keymaps 'override
+;;     "" '(nil :wk "toggle")
+;;     "t" 'toggle-vterm
+;;     "c" 'toggle-vterm-cd
+;;     "T" 'toggle-vterm-here)
+;;   (nmap
+;;     :keymaps 'vterm-mode-map
+;;     "q" 'delete-window
+;;     "C-p" "M-p"
+;;     "C-n" "M-n"
+;;     "M-:" 'eval-expression)
 
-  :preface
-  (defun toggle-vterm (&optional args)
-    (require 'vterm)
-    (interactive "p")
-    (let* ((default-directory (project-root-current))
-           (vterm-buffer-name (concat vterm-buffer-name (my-tab-name-current))))
-      (if (equal major-mode 'vterm-mode)
-          (let (display-buffer-alist)
-            (split-window-right)
-            (other-window 1)
-            (vterm args))
-        (vterm args))))
+;;   :preface
+;;   (defun toggle-vterm (&optional args)
+;;     (require 'vterm)
+;;     (interactive "p")
+;;     (let* ((default-directory (project-root-current))
+;;            (vterm-buffer-name (concat vterm-buffer-name (my-tab-name-current))))
+;;       (if (equal major-mode 'vterm-mode)
+;;           (let (display-buffer-alist)
+;;             (split-window-right)
+;;             (other-window 1)
+;;             (vterm args))
+;;         (vterm args))))
 
-  (defun toggle-vterm-cd (&optional args)
-    (interactive "p")
-    (let ((directory (project-root-current)))
-      (toggle-vterm args)
-      (vterm-send "C-u")
-      (vterm-send-string (concat "cd " directory))
-      (vterm-send-return)
-      (vterm-clear)))
+;;   (defun toggle-vterm-cd (&optional args)
+;;     (interactive "p")
+;;     (let ((directory (project-root-current)))
+;;       (toggle-vterm args)
+;;       (vterm-send "C-u")
+;;       (vterm-send-string (concat "cd " directory))
+;;       (vterm-send-return)
+;;       (vterm-clear)))
 
-  (defun toggle-vterm-here (&optional args)
-    (interactive "p")
-    (let (display-buffer-alist)
-      (toggle-vterm args)))
+;;   (defun toggle-vterm-here (&optional args)
+;;     (interactive "p")
+;;     (let (display-buffer-alist)
+;;       (toggle-vterm args)))
 
-  :config
-  (setq vterm-timer-delay 0.01)
+;;   :config
+;;   (setq vterm-timer-delay 0.01)
 
-  (add-hook 'vterm-mode-hook (lambda () (setq-local evil-insert-state-cursor '(box))))
-  (add-hook 'vterm-mode-hook (lambda () (setq-local global-hl-line-mode nil)))
+;;   (add-hook 'vterm-mode-hook (lambda () (setq-local evil-insert-state-cursor '(box))))
+;;   (add-hook 'vterm-mode-hook (lambda () (setq-local global-hl-line-mode nil)))
 
-  (add-to-list
-   'display-buffer-alist
-   '((lambda (buffer-or-name _)
-       (let ((buffer (get-buffer buffer-or-name)))
-         (with-current-buffer buffer
-           (or (equal major-mode 'vterm-mode)
-               (string-prefix-p vterm-buffer-name (buffer-name buffer))))))
-     (display-buffer-reuse-window display-buffer-in-direction)
-     (direction . bottom)
-     (reusable-frames . visible)
-     (window-height . 0.3))))
+;;   (add-to-list
+;;    'display-buffer-alist
+;;    '((lambda (buffer-or-name _)
+;;        (let ((buffer (get-buffer buffer-or-name)))
+;;          (with-current-buffer buffer
+;;            (or (equal major-mode 'vterm-mode)
+;;                (string-prefix-p vterm-buffer-name (buffer-name buffer))))))
+;;      (display-buffer-reuse-window display-buffer-in-direction)
+;;      (direction . bottom)
+;;      (reusable-frames . visible)
+;;      (window-height . 0.25))))
 
 (use-package editorconfig
   :demand t
@@ -1176,7 +1183,7 @@ Quit if no candidate is selected."
 
 (add-hook 'window-configuration-change-hook
           (lambda ()
-            (unless (or (memq major-mode '(minibuffer-mode vterm-mode))
+            (unless (or (memq major-mode '(minibuffer-mode vterm-mode eat-mode))
                         (bound-and-true-p visual-fill-column-mode))
               (set-window-margins nil 2))))
 
@@ -1219,6 +1226,7 @@ Quit if no candidate is selected."
   :hook
   ((text-mode prog-mode) . dash-modeline-prog-mode)
   (vterm-mode . dash-modeline-term-mode)
+  (eat-mode . dash-modeline-term-mode)
   (messages-buffer-mode . dash-modeline-message-mode)
   (org-agenda-mode . dash-modeline-agenda-mode)
   :config
@@ -1317,10 +1325,7 @@ Quit if no candidate is selected."
            "C-e" 'embark-act)
   (general-define-key
    :keymaps 'embark-file-map
-   "C-v" (lambda ()
-           (interactive)
-           (split-window-horizontally)
-           (other-window 1)))
+   "C-v" 'find-file-other-window)
   (:states '(normal visual insert)
            :keymaps 'vertico-map
            "C-v" "C-e C-v"
@@ -1351,7 +1356,7 @@ Quit if no candidate is selected."
   :config
   (setf (alist-get 'file embark-default-action-overrides
                    nil nil #'equal)
-        #'consult-fd))
+        #'consult-find))
 
 (use-package image-mode
   :elpaca nil
@@ -1865,13 +1870,9 @@ Note that these rules can't contain anchored rules themselves."
   :config
   (advice-add
    'cd
-   :around
-   (lambda (fun &rest args)
-     (apply fun args)
-     (my-set-current-directory (car args))
-     ;; (message "Directory: %s" default-directory)
-     ))
-  )
+   :after
+   (lambda (&rest args)
+     (my-set-current-directory (car args)))))
 
 (use-package web-mode
   :defer t
@@ -1936,7 +1937,7 @@ Note that these rules can't contain anchored rules themselves."
     "n" 'obsidian-new
     "f" (lambda ()
           (interactive)
-          (consult-fd "~/obsidian"))
+          (consult-find "~/obsidian"))
     "g" (lambda ()
           (interactive)
           (consult-ripgrep "~/obsidian"))))
@@ -2344,3 +2345,77 @@ LANG is a string, and the returned major mode is a symbol."
   :custom
   (visual-fill-column-center-text t)
   :hook (markdown-ts-mode . visual-fill-column-mode))
+
+(use-package eglot-booster
+  :elpaca (eglot-booster :host github :repo "jdtsmith/eglot-booster")
+  :after eglot
+  :config (eglot-booster-mode))
+
+(use-package eat
+  :custom
+  (eat-term-scrollback-size 10000000)
+  (eat-term-name "xterm-256color")
+  (eat-kill-buffer-on-exit t)
+  :general
+  (nmap
+    :prefix "SPC t"
+    :keymaps 'override
+    "" '(nil :wk "toggle")
+    "t" 'toggle-eat
+    ;; "c" 'toggle-vterm-cd
+    ;; "T" 'toggle-vterm-here
+    )
+
+  (nmap
+    :keymaps 'eat-mode-map
+    "q" 'delete-window)
+  :preface
+
+  (defun toggle-eat (&optional args)
+    (require 'eat)
+    (interactive "p")
+    (let* ((default-directory (project-root-current))
+           (eat-buffer-name (concat eat-buffer-name (my-tab-name-current))))
+      (if (equal major-mode 'eat-mode)
+          (let (display-buffer-alist)
+            (split-window-right)
+            (other-window 1)
+            (eat nil args))
+        (eat nil args))))
+
+  ;; (defun toggle-vterm-cd (&optional args)
+  ;;   (interactive "p")
+  ;;   (let ((directory (project-root-current)))
+  ;;     (toggle-vterm args)
+  ;;     (vterm-send "C-u")
+  ;;     (vterm-send-string (concat "cd " directory))
+  ;;     (vterm-send-return)
+  ;;     (vterm-clear)))
+
+  ;; (defun toggle-vterm-here (&optional args)
+  ;;   (interactive "p")
+  ;;   (let (display-buffer-alist)
+  ;;     (toggle-vterm args)))
+
+  :config
+  ;; (setq vterm-timer-delay 0.01)
+
+  (add-hook 'evil-insert-state-entry-hook (lambda ()
+                                            (when (eq major-mode 'eat-mode)
+                                              (goto-char (point-max)))))
+
+  (advice-add 'eat :around #'execute-at-project-root)
+
+  (add-hook 'eat-mode-hook (lambda () (setq-local evil-insert-state-cursor '(box))))
+
+  (add-to-list
+   'display-buffer-alist
+   '((lambda (buffer-or-name _)
+       (let ((buffer (get-buffer buffer-or-name)))
+         (with-current-buffer buffer
+           (or (equal major-mode 'eat-mode)
+               (string-prefix-p eat-buffer-name (buffer-name buffer))))))
+     (display-buffer-reuse-window display-buffer-in-direction)
+     (direction . bottom)
+     (reusable-frames . visible)
+     (window-height . 0.25))))

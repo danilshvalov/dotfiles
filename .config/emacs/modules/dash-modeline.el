@@ -79,6 +79,10 @@ Each face defined here is used by the modeline depending on the current state (a
   "Update selected window (before mode-line is active)"
   (setq dash-modeline--selected-window (selected-window)))
 
+(defun dash-modeline--buffer-modified-p ()
+  (and (not (memq major-mode '(vterm-mode eat-mode)))
+       (buffer-modified-p)))
+
 (defun dash-modeline--base-face (face-prefix)
   "Return the face for FACE-PREFIX according to current active state."
 
@@ -184,7 +188,7 @@ made DEFAULT."
     (cond (buffer-read-only
            (propertize (concat top (or status "RO") bot)
                        'face (dash-modeline-face 'status-RO)))
-          ((buffer-modified-p)
+          ((dash-modeline--buffer-modified-p)
            (propertize (concat top (or status "**") bot)
                        'face (dash-modeline-face 'status-**)))
           (t
@@ -207,9 +211,7 @@ made DEFAULT."
 
   (let ((format (or format " %l:%c ")))
     (propertize (format-mode-line format)
-                'face (dash-modeline-face (if (and (not (eq major-mode 'vterm-mode))
-                                                   (buffer-modified-p))
-                                              'status-**
+                'face (dash-modeline-face (if (dash-modeline--buffer-modified-p) 'status-**
                                             'status-RW)))))
 
 (defun dash-modeline-buffer-line-count ()
