@@ -2079,6 +2079,7 @@ LANG is a string, and the returned major mode is a symbol."
             (modified (buffer-modified-p))
             (has-font-lock-mode font-lock-mode)
             (buffer (current-buffer)) pos next)
+        (remove-text-properties start end '(face nil))
         (with-current-buffer
             (get-buffer-create
              (concat " treesit-injections-fontification:" (symbol-name lang-mode)))
@@ -2090,8 +2091,6 @@ LANG is a string, and the returned major mode is a symbol."
             (insert string " ")) ;; so there's a final property change
           (unless (eq major-mode lang-mode) (funcall lang-mode))
           (font-lock-ensure)
-          (with-current-buffer buffer
-            (remove-text-properties start end '(face nil)))
           (setq pos (point-min))
           (while (setq next (next-single-property-change pos 'face))
             (let ((val (get-text-property pos 'face)))
@@ -2102,9 +2101,9 @@ LANG is a string, and the returned major mode is a symbol."
                  'face
                  val buffer)))
             (setq pos next)))
-        (add-text-properties
-         start end
-         '(font-lock-fontified t fontified t font-lock-multiline t))
+        ;; (add-text-properties
+        ;;  start end
+        ;;  '(font-lock-fontified t fontified t font-lock-multiline t))
         (set-buffer-modified-p modified)))))
 
 
@@ -2180,7 +2179,10 @@ LANG is a string, and the returned major mode is a symbol."
            (let ((range-start (car range))
                  (range-end (cdr range)))
              (unless (or (< end range-start) (< range-end start))
-               (treesit-injections--fontify-code-block-natively language range-start range-end))))))))
+               (treesit-injections--fontify-code-block-natively language range-start range-end))))))
+     (add-text-properties
+         start end
+         '(font-lock-fontified t fontified t font-lock-multiline t))))
 
 (defun markdown-ts-mode--parser-notifier (ranges parser)
   (message "Data: %s %s" parser ranges))
