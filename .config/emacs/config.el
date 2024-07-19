@@ -727,6 +727,8 @@ Quit if no candidate is selected."
   :config
   (evil-mode)
 
+  (defalias 'forward-evil-word 'forward-evil-symbol)
+
   (evil-define-command my-evil-edit-arcadia (file)
     :repeat nil
     (interactive
@@ -1678,64 +1680,58 @@ Note that these rules can't contain anchored rules themselves."
 (use-package nginx-mode
   :defer t)
 
-(defun markdown-ts-query-blocks ()
-  (let* ((parser (treesit-parser-create 'markdown))
-         (root (treesit-parser-root-node parser))
-         (query '((fenced_code_block
-                   (info_string) @lang
-                   (code_fence_content) @content)))
-         (captures (treesit-query-capture root query))
-         (i 0))
-    (while (< i (length captures))
-      (let* ((lang-node (cdr (nth i captures)))
-             (lang (treesit-node-text lang-node))
-             (lang-mode (if lang (markdown-get-lang-mode lang)
-                          markdown-fontify-code-block-default-mode))
-             (content-node (cdr (nth (1+ i) captures)))
-             (content (treesit-node-text content-node))
-             (start (treesit-node-start content-node))
-             (end (treesit-node-end content-node)))
+;; (defun markdown-ts-query-blocks ()
+;;   (let* ((parser (treesit-parser-create 'markdown))
+;;          (root (treesit-parser-root-node parser))
+;;          (query '((fenced_code_block
+;;                    (info_string) @lang
+;;                    (code_fence_content) @content)))
+;;          (captures (treesit-query-capture root query))
+;;          (i 0))
+;;     (while (< i (length captures))
+;;       (let* ((lang-node (cdr (nth i captures)))
+;;              (lang (treesit-node-text lang-node))
+;;              (lang-mode (if lang (markdown-get-lang-mode lang)
+;;                           markdown-fontify-code-block-default-mode))
+;;              (content-node (cdr (nth (1+ i) captures)))
+;;              (content (treesit-node-text content-node))
+;;              (start (treesit-node-start content-node))
+;;              (end (treesit-node-end content-node)))
 
-        (let ((string content)
-              (modified (buffer-modified-p))
-              (markdown-buffer (current-buffer))
-              pos next)
-          (remove-text-properties start end '(face nil))
-          (with-current-buffer
-              (get-buffer-create
-               (concat " markdown-code-fontification:" (symbol-name lang-mode)))
-            ;; Make sure that modification hooks are not inhibited in
-            ;; the org-src-fontification buffer in case we're called
-            ;; from `jit-lock-function' (Bug#25132).
-            (let ((inhibit-modification-hooks nil))
-              (delete-region (point-min) (point-max))
-              (insert string " ")) ;; so there's a final property change
-            (unless (eq major-mode lang-mode) (funcall lang-mode))
-            (font-lock-ensure)
-            (setq pos (point-min))
-            (while (setq next (next-single-property-change pos 'face))
-              (let ((val (get-text-property pos 'face)))
-                (when val
-                  (message "%s" `(put-text-property
-                                  ,(+ start (1- pos)) ,(1- (+ start next)) 'face
-                                  ,val ,markdown-buffer))
-                  (put-text-property
-                   (+ start (1- pos)) (1- (+ start next)) 'font-lock-face
-                   val markdown-buffer)))
-              (setq pos next)))
-          (add-text-properties
-           start end
-           '(font-lock-fontified t fontified t font-lock-multiline t))
-          (set-buffer-modified-p modified))
-        ;; (message "%s" lang-mode)
-        ;; (message "%s" content)
-        ;; (message "%s" "------------")
-        )
-      (setq i (+ i 2)))
+;;         (let ((string content)
+;;               (modified (buffer-modified-p))
+;;               (markdown-buffer (current-buffer))
+;;               pos next)
+;;           (remove-text-properties start end '(face nil))
+;;           (with-current-buffer
+;;               (get-buffer-create
+;;                (concat " markdown-code-fontification:" (symbol-name lang-mode)))
+;;             ;; Make sure that modification hooks are not inhibited in
+;;             ;; the org-src-fontification buffer in case we're called
+;;             ;; from `jit-lock-function' (Bug#25132).
+;;             (let ((inhibit-modification-hooks nil))
+;;               (delete-region (point-min) (point-max))
+;;               (insert string " ")) ;; so there's a final property change
+;;             (unless (eq major-mode lang-mode) (funcall lang-mode))
+;;             (font-lock-ensure)
+;;             (setq pos (point-min))
+;;             (while (setq next (next-single-property-change pos 'face))
+;;               (let ((val (get-text-property pos 'face)))
+;;                 (when val
+;;                   (put-text-property
+;;                    (+ start (1- pos)) (1- (+ start next))
+;;                    val markdown-buffer)))
+;;               (setq pos next)))
+;;           (add-text-properties
+;;            start end
+;;            '(font-lock-fontified t fontified t font-lock-multiline t))
+;;           (set-buffer-modified-p modified))
+;;         )
+;;       (setq i (+ i 2)))
 
-    )
-  ;; (treesit-update-ranges)
-  )
+;;     )
+;;   ;; (treesit-update-ranges)
+;;   )
 
 
 (defmacro markdown-ts-capture (parser-language parser-mode)
@@ -1746,7 +1742,7 @@ Note that these rules can't contain anchored rules themselves."
                       (info_string) @lang
                       (code_fence_content) @content)))
             (captures (treesit-query-capture root query beg end))
-            (set-ranges)
+
             (i 0))
        (while (< i (length captures))
          (let* ((lang-node (cdr (nth i captures)))
@@ -1881,8 +1877,8 @@ Note that these rules can't contain anchored rules themselves."
    "C-c C-c" 'markdown-toggle-gfm-checkbox)
   )
 
-(use-package magit
-  :defer t)
+;; (use-package magit
+;;   :defer t)
 
 (use-package evil-anzu
   :demand t
@@ -1952,7 +1948,7 @@ Note that these rules can't contain anchored rules themselves."
   (indent-bars-prefer-character t)
   :hook ((prog-mode text-mode) . indent-bars-mode))
 
-(modify-syntax-entry ?_ "w")
+;; (modify-syntax-entry ?_ "w")
 
 (global-auto-revert-mode)
 
@@ -2018,9 +2014,9 @@ to directory DIR."
 (use-package protobuf-mode
   :mode "\\.proto\\'")
 
-(add-hook 'after-change-major-mode-hook
-          (lambda ()
-            (modify-syntax-entry ?_ "w")))
+;; (add-hook 'after-change-major-mode-hook
+;;           (lambda ()
+;;             (modify-syntax-entry ?_ "w")))
 
 (add-hook 'python-ts-mode-hook (lambda () (setq-local fill-column 120)))
 
@@ -2083,7 +2079,6 @@ LANG is a string, and the returned major mode is a symbol."
             (modified (buffer-modified-p))
             (has-font-lock-mode font-lock-mode)
             (buffer (current-buffer)) pos next)
-        (remove-text-properties start end '(face nil))
         (with-current-buffer
             (get-buffer-create
              (concat " treesit-injections-fontification:" (symbol-name lang-mode)))
@@ -2095,6 +2090,8 @@ LANG is a string, and the returned major mode is a symbol."
             (insert string " ")) ;; so there's a final property change
           (unless (eq major-mode lang-mode) (funcall lang-mode))
           (font-lock-ensure)
+          (with-current-buffer buffer
+            (remove-text-properties start end '(face nil)))
           (setq pos (point-min))
           (while (setq next (next-single-property-change pos 'face))
             (let ((val (get-text-property pos 'face)))
@@ -2114,9 +2111,9 @@ LANG is a string, and the returned major mode is a symbol."
 
 (defun treesit-tmp-fontify-code-block (node)
   (let* ((query '((fenced_code_block
-            (info_string
-             (language) @language)
-            (code_fence_content) @content)))
+                   (info_string
+                    (language) @language)
+                   (code_fence_content) @content)))
          (captures (treesit-query-capture node query))
          (language-node (cdr (assoc 'language captures)))
          (language (treesit-node-text language-node))
@@ -2161,6 +2158,17 @@ LANG is a string, and the returned major mode is a symbol."
 
 (require 'treesit)
 
+(defun markdown-language-at-point (pos)
+  (let* ((parser (treesit-parser-create 'markdown))
+         (root (treesit-parser-root-node parser))
+         (query '((fenced_code_block
+                   (info_string
+                    (language) @capture))))
+         (captures (treesit-query-capture root query pos pos))
+         (node (cdr (assoc 'capture captures))))
+    (if node (intern (treesit-node-text node))
+      'markdown)))
+
 (advice-add
    'treesit-font-lock-fontify-region
    :after
@@ -2169,8 +2177,13 @@ LANG is a string, and the returned major mode is a symbol."
        (let ((language (symbol-name
                         (treesit-parser-language parser))))
          (dolist (range (treesit-parser-included-ranges parser))
-           (treesit-injections--fontify-code-block-natively language (car range) (cdr range)))))))
+           (let ((range-start (car range))
+                 (range-end (cdr range)))
+             (unless (or (< end range-start) (< range-end start))
+               (treesit-injections--fontify-code-block-natively language range-start range-end))))))))
 
+(defun markdown-ts-mode--parser-notifier (ranges parser)
+  (message "Data: %s %s" parser ranges))
 
 (use-package which-key
   :custom

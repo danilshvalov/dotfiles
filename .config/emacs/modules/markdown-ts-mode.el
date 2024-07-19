@@ -1172,23 +1172,40 @@ Function is called repeatedly until it returns nil. For details, see
         (unless (and (eq new-start start) (eq new-end end))
           (cons new-start (min new-end (point-max))))))))
 
-(defun markdown-font-lock-extend-region-function (start end _)
-  "Used in `jit-lock-after-change-extend-region-functions'.
-Delegates to `markdown-syntax-propertize-extend-region'. START
-and END are the previous region to refontify."
-  (let ((res (markdown-syntax-propertize-extend-region start end)))
-    (when res
-      ;; syntax-propertize-function is not called when character at
-      ;; (point-max) is deleted, but font-lock-extend-region-functions
-      ;; are called.  Force a syntax property update in that case.
-      (when (= end (point-max))
-        ;; This function is called in a buffer modification hook.
-        ;; `markdown-syntax-propertize' doesn't save the match data,
-        ;; so we have to do it here.
-        (save-match-data
-          (markdown-syntax-propertize (car res) (cdr res))))
-      (setq jit-lock-start (car res)
-            jit-lock-end (cdr res)))))
+;; (defun markdown-font-lock-extend-region-function (start end _)
+;;   "Used in `jit-lock-after-change-extend-region-functions'.
+;; Delegates to `markdown-syntax-propertize-extend-region'. START
+;; and END are the previous region to refontify."
+;;   (message "%s %s" start end)
+;;   (dolist (parser (treesit-parser-list))
+;;     (let ((language (symbol-name
+;;                      (treesit-parser-language parser)))
+;;           min-range-start
+;;           max-range-end)
+;;       (dolist (range (treesit-parser-included-ranges parser))
+;;         (let ((range-start (car range))
+;;               (range-end (cdr range)))
+;;           (when (> (* (- start range-end) (- range-start end)) 0)
+;;             (message "%s %s : %s %s" start end range-start range-end)
+;;             (treesit-injections--fontify-code-block-natively language range-start range-end)
+;;             (setq min-range-start (min jit-lock-start range-start))
+;;             (setq max-range-end (max jit-lock-end range-end)))))
+;;       (setq jit-lock-start (or min-range-start start)
+;;             jit-lock-end (or max-range-end end))))
+;;   ;; (let ((res (markdown-syntax-propertize-extend-region start end)))
+;;   ;;   (when res
+;;   ;;     ;; syntax-propertize-function is not called when character at
+;;   ;;     ;; (point-max) is deleted, but font-lock-extend-region-functions
+;;   ;;     ;; are called.  Force a syntax property update in that case.
+;;   ;;     (when (= end (point-max))
+;;   ;;       ;; This function is called in a buffer modification hook.
+;;   ;;       ;; `markdown-syntax-propertize' doesn't save the match data,
+;;   ;;       ;; so we have to do it here.
+;;   ;;       (save-match-data
+;;   ;;         (markdown-syntax-propertize (car res) (cdr res))))
+;;   ;;     (setq jit-lock-start (car res)
+;;   ;;           jit-lock-end (cdr res))))
+;;   )
 
 (defun markdown--cur-list-item-bounds ()
   "Return a list describing the list item at point.
@@ -10002,8 +10019,10 @@ rows and columns and the column alignment."
 ;;;###autoload
 (define-derived-mode markdown-ts-mode text-mode "Markdown"
   "Major mode for editing Markdown files."
-  (when (treesit-ready-p 'markdown)
+  (when (and (treesit-ready-p 'markdown)
+             (treesit-ready-p 'markdown-inline))
     (treesit-parser-create 'markdown)
+    (treesit-parser-create 'markdown-inline)
 
     (setq-local treesit-font-lock-settings markdown-ts-mode--font-lock-settings)
 
@@ -10028,10 +10047,10 @@ rows and columns and the column alignment."
     ;; Sentence
     (setq-local sentence-end-base "[.?!…‽][]\"'”’)}»›*_`~]*")
     ;; Syntax
-    (add-hook 'syntax-propertize-extend-region-functions
-              #'markdown-syntax-propertize-extend-region nil t)
-    (add-hook 'jit-lock-after-change-extend-region-functions
-              #'markdown-font-lock-extend-region-function t t)
+    ;; (add-hook 'syntax-propertize-extend-region-functions
+    ;;           #'markdown-syntax-propertize-extend-region nil t)
+    ;; (add-hook 'jit-lock-after-change-extend-region-functions
+    ;;           #'markdown-font-lock-extend-region-function t t)
 
 
     (when treesit-font-lock-settings
@@ -10047,9 +10066,11 @@ rows and columns and the column alignment."
                                     keymap help-echo mouse-face))))
       (font-lock-mode 1)
       (treesit-font-lock-recompute-features)
-      (dolist (parser (treesit-parser-list))
-        (treesit-parser-add-notifier
-         parser #'treesit--font-lock-notifier)))
+      ;; (treesit-parser-add-notifier (treesit-parser-create 'sql) #'markdown-ts-mode--parser-notifier)
+      ;; (dolist (parser (treesit-parser-list))
+      ;;   (treesit-parser-add-notifier
+      ;;    parser #'treesit--font-lock-notifier))
+      )
     ;; Indent.
     (when treesit-simple-indent-rules
       (setq-local treesit-simple-indent-rules

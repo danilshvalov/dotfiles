@@ -128,11 +128,12 @@ using the given FACE-PREFIX as the default."
                      (concat (truncate-string-to-width left left-max-size)
                              (propertize "…" 'face `(:inherit  ,dash-modeline-base-face)))
                    left))
-           (right-len (length (format-mode-line right))))
+           (right-len (length (format-mode-line right)))
+           (right-margin (* (or (cdr (window-margins)) 0) -1)))
       (concat left
               (propertize " "
                           'face `(:inherit ,dash-modeline-base-face)
-                          'display `(space :align-to (- right ,right-len)))
+                          'display `(space :align-to (- right ,right-len ,right-margin)))
               right))))
 
 
