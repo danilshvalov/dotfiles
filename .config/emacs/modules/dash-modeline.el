@@ -127,12 +127,12 @@ using the given FACE-PREFIX as the default."
            (left (if (> (length left) left-max-size)
                      (concat (truncate-string-to-width left left-max-size)
                              (propertize "…" 'face `(:inherit  ,dash-modeline-base-face)))
-                   left)))
+                   left))
+           (right-len (length (format-mode-line right))))
       (concat left
               (propertize " "
                           'face `(:inherit ,dash-modeline-base-face)
-                          ;; 'display `(space :align-to (+ (- right ,(length right)) right-margin 1)))
-                          'display `(space :align-to (- (+ right right-fringe right-margin) ,(length right))))
+                          'display `(space :align-to (- right ,right-len)))
               right))))
 
 
@@ -168,6 +168,13 @@ made DEFAULT."
   (face-remap-set-base 'mode-line-inactive 'dash-modeline-empty-face)
   (add-hook 'post-command-hook #'dash-modeline--update-selected-window))
 
+(defun dash--buffer-file-name ()
+  (let ((file-name (buffer-file-name))
+        (project-root (project-root-current)))
+    (if (file-in-directory-p file-name project-root)
+        (file-relative-name file-name project-root)
+      (abbreviate-file-name file-name))))
+
 (defun dash-modeline-buffer-name (&optional name)
   "Buffer name"
 
@@ -175,7 +182,7 @@ made DEFAULT."
    (cond (name name)
          ((buffer-narrowed-p) (format"%s [narrow]" (buffer-name)))
          (dired-directory dired-directory)
-         ((buffer-file-name) (abbreviate-file-name (buffer-file-name)))
+         ((buffer-file-name) (dash--buffer-file-name))
          (t (buffer-name)))
    'face (dash-modeline-face 'name)))
 

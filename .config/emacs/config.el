@@ -1,44 +1,16 @@
 ;; -*-lexical-binding: t -*-
 
-(defmacro use-builtin (name &rest args)
-  (declare (indent defun))
-  `(use-package ,name
-     :elpaca nil
-     ,@args))
-
-(defun add-to-list! (list &rest args)
-  (dolist (item args)
-    (add-to-list list item)))
-
-(defun add-hook! (hook function &optional depth local)
-  (let ((hook (if (nlistp hook) (list hook) hook)))
-    (dolist (item hook)
-      (add-hook item function depth local))))
-
-
-(defun project-root-current ()
-                                        ; (or project-current-directory-override
-  (my-get-current-directory)
-  )
+(require 'my-utils)
 
 (use-package general
+  :ensure (:wait t)
   :demand t
   :config
   (general-auto-unbind-keys t)
   (general-evil-setup t))
 
-(elpaca-wait)
-
-(defun get-pwd ()
-  (let ((client (frame-parameter nil 'client)))
-    (if client
-        (process-get client 'server-client-directory)
-      (getenv "PWD"))))
-
-(use-package emacs
-  :elpaca nil
+(use-builtin emacs
   :custom
-  ;; (confirm-kill-emacs 'y-or-n-p)
   (confirm-kill-processes nil)
   (scroll-margin 10)
   (hscroll-margin 20)
@@ -60,84 +32,24 @@
   (warning-minimum-level :emergency)
   (initial-major-mode 'text-mode)
   (initial-scratch-message "")
+  (read-process-output-max (* 1024 1024))
   :hook
   (before-save . delete-trailing-whitespace)
   ((prog-mode text-mode) . display-fill-column-indicator-mode)
   :preface
-  (defvar my-default-directory
-    (file-name-as-directory (or (get-pwd) "~")))
-
-  (defvar my-directories nil)
-  (defvar my-directory nil)
-
-  (defun my-get-current-directory ()
-    (or (assoc-default (my-tab-name-current) my-directories)
-        (or (get-pwd) "~"))
-    )
-
-  (defun my-set-current-directory (directory)
-    (setq my-directories (push (cons (my-tab-name-current) directory) my-directories))
-    )
-
   ;; remove image resize delay
   (advice-add 'image--delayed-change-size :override 'image--change-size)
 
-  (defun show-file-name ()
-    "Show the full path file name in the minibuffer."
-    (interactive)
-    (message
-     (concat
-      (propertize "Current file:" 'face 'bold)
-      " "
-      (abbreviate-file-name (buffer-file-name)))))
-
-  (defun show-datetime ()
-    (interactive)
-    (message
-     (concat
-      (propertize "Current datetime:" 'face 'bold)
-      " "
-      (format-time-string "%A %d.%m %H:%M"))))
-
-  (defun execute-at-project-root (orig-fun &rest args)
-    (let ((default-directory (project-root-current)))
-      (apply orig-fun args)))
-
-  (defun inhibit-sentinel-messages (fun &rest args)
-    "Inhibit messages in all sentinels started by fun."
-    (cl-letf*
-        (
-         (old-set-process-sentinel (symbol-function 'set-process-sentinel))
-         ((symbol-function 'set-process-sentinel)
-          (lambda (process sentinel)
-            (funcall old-set-process-sentinel
-                     process
-                     `(lambda (&rest args)
-                        (let ((inhibit-message t))
-                          (apply (quote ,sentinel) args)))))))
-      (apply fun args)))
-
-  (defun new-instance--darwin ()
-    (call-process-shell-command "open -na Emacs"))
-
-  (defun new-instance ()
-    (interactive)
-    (pcase system-type
-      ('darwin (new-instance--darwin))
-      (type (error "New instance isn't implemented for \"%s\"" type))))
-
-  (defun open-finder (&optional path)
-    (interactive "P")
-    (let*
-        ((path (or path "."))
-         (path
-          (cond
-           ((listp path)
-            (string-join path " "))
-           (t
-            path)))
-         (command (list "open" path)))
-      (call-process-shell-command (string-join command " "))))
+  (defun crm-indicator (args)
+    (cons
+     (format "[CRM%s] %s"
+             (replace-regexp-in-string
+              "\\`\\[.*?]\\*\\|\\[.*?]\\*\\'"
+              ""
+              crm-separator)
+             (car args))
+     (cdr args)))
+  (advice-add #'completing-read-multiple :filter-args #'crm-indicator)
 
   :general
   (nvmap
@@ -168,19 +80,6 @@
   (nvmap :prefix "SPC s" "f" 'show-file-name "d" 'show-datetime)
 
   :init
-  ;; Add prompt indicator to `completing-read-multiple'.
-  ;; We display [CRM<separator>], e.g., [CRM,] if the separator is a comma.
-  (defun crm-indicator (args)
-    (cons
-     (format "[CRM%s] %s"
-             (replace-regexp-in-string
-              "\\`\\[.*?]\\*\\|\\[.*?]\\*\\'"
-              ""
-              crm-separator)
-             (car args))
-     (cdr args)))
-  (advice-add #'completing-read-multiple :filter-args #'crm-indicator)
-
   ;; Do not allow the cursor in the minibuffer prompt
   (setq minibuffer-prompt-properties
         '(read-only t cursor-intangible t face minibuffer-prompt))
@@ -192,12 +91,21 @@
   (setq-default buffer-file-coding-system 'utf-8-unix)
   (setq buffer-file-coding-system 'utf-8-unix)
 
+  (add-hook 'window-configuration-change-hook
+            (lambda ()
+              (unless (display-graphic-p)
+                (require 'disp-table)
+                (let ((display-table (or buffer-display-table
+                                         standard-display-table)))
+                  (set-display-table-slot display-table 'vertical-border ?│)))))
+
+  (xterm-mouse-mode)
+
   (menu-bar-mode -1)
 
   (when (fboundp 'scroll-bar-mode)
     (scroll-bar-mode -1))
   (global-whitespace-mode +1)
-  (window-divider-mode)
   (savehist-mode)
   ;; (global-hl-line-mode)
   (advice-add 'yes-or-no-p :override #'y-or-n-p))
@@ -241,6 +149,7 @@
     `(anzu-mode-line :foreground ,(doom-color 'fg))
     `(evil-goggles-default-face :foreground ,(doom-color 'bg) :background ,(doom-color 'yellow))
     `(flymake-end-of-line-diagnostics-face :height 'unspecified :box 'unspecified)
+    `(vertical-border :foreground ,(doom-color 'yellow) :background 'unspecified)
     `(eglot-diagnostic-tag-unnecessary-face :underline t))
 
   (add-hook 'image-mode-hook
@@ -471,10 +380,12 @@ DIR must include a .project file to be considered a project."
 (use-package yasnippet
   :hook
   (org-mode . (lambda () (yas-activate-extra-mode 'latex-mode)))
+  (evil-insert-state-entry . yas-minor-mode)
   :config
-  (yas-global-mode)
+  (setq yas-verbosity 2)
   (setq yas-indent-line 'fixed)
   (setq yas-triggers-in-field t)
+  (yas-reload-all)
 
   (defun yas--expand-or-prompt-for-template (templates &optional start end)
     "Expand one of TEMPLATES from START to END.
@@ -501,12 +412,12 @@ expand immediately.  Common gateway for
   :general
   (nvmap
     :keymaps 'override
-    "s" 'avy-goto-char-2))
+    "s" #'avy-goto-char-2))
 
 (use-package jsonrpc
   :defer t)
 
-(use-package eglot
+(use-builtin eglot
   :defer t
   :custom
   (eglot-sync-connect nil)
@@ -595,14 +506,14 @@ expand immediately.  Common gateway for
     :keymaps 'override
     :prefix "SPC f"
     "" '(nil :wk "find")
-    "r" '+consult-recent-file
-    "b" 'consult-buffer
-    "f" 'consult-find
-    "F" 'consult-find-at
-    "g" 'consult-ripgrep
-    "G" 'consult-ripgrep-at
-    "o" 'ff-find-other-file
-    "e" 'consult-flymake
+    "r" #'my-consult-recent-file
+    "b" #'consult-buffer
+    "f" #'consult-find
+    "F" #'consult-find-at
+    "g" #'consult-ripgrep
+    "G" #'consult-ripgrep-at
+    "o" #'ff-find-other-file
+    "e" #'consult-flymake
     "." (lambda ()
           (interactive)
           (call-process-shell-command "open .")))
@@ -617,10 +528,11 @@ expand immediately.  Common gateway for
     (interactive)
     (let ((directory (read-directory-name "Directory: ")))
       (consult-ripgrep directory)))
-  (defun +consult-recent-file ()
+
+  (defun my-consult-recent-file ()
     "Find recent file using `completing-read'."
-    (require 'consult)
     (interactive)
+    (require 'consult)
     (let ((default-directory (project-root-current)))
       (find-file
        (consult--read
@@ -695,11 +607,10 @@ INITIAL is initial input."
    completion-category-overrides '((file (styles orderless partial-completion)))))
 
 (use-package corfu
-  :demand t
-  :elpaca
-  (corfu :files (:defaults "extensions/*"))
+  :ensure (corfu :files (:defaults "extensions/*"))
   :after evil
   :custom
+  (global-corfu-minibuffer nil)
   (corfu-cycle t)
   (corfu-auto nil)
   (corfu-scroll-margin 2)
@@ -714,6 +625,7 @@ INITIAL is initial input."
   (corfu-auto-delay 0.1)
 
   :bind (:map corfu-map ("TAB" . nil) ([tab] . nil))
+  :hook (evil-insert-state-entry . global-corfu-mode)
 
   :general
   (imap
@@ -725,6 +637,8 @@ INITIAL is initial input."
     [tab] nil)
 
   :config
+  (require 'cape)
+
   (global-corfu-mode)
   (corfu-history-mode)
   (corfu-popupinfo-mode)
@@ -765,8 +679,6 @@ Quit if no candidate is selected."
   :unless (display-graphic-p))
 
 (use-package cape
-  :demand t
-  :after corfu
   :custom
   (cape-file-directory-must-exist nil)
   :general
@@ -823,11 +735,24 @@ Quit if no candidate is selected."
 
   (evil-ex-define-cmd "ea" 'my-evil-edit-arcadia)
 
-  (add-hook 'evil-insert-state-entry-hook
-            (lambda () (unless (eq major-mode 'vterm-mode)
-                         (send-string-to-terminal "\033[5 q"))))
-  (add-hook 'evil-insert-state-exit-hook
-            (lambda () (send-string-to-terminal "\033[2 q")))
+  (when (display-graphic-p)
+    (setopt confirm-kill-emacs #'y-or-n-p))
+
+  (when (display-graphic-p)
+    (nvmap
+      :keymaps 'override
+      "M-[" #'tab-previous
+      "M-]" #'tab-next
+      "M-{" #'tab-move-previous
+      "M-}" #'tab-move-next
+      "SPC c t" #'tab-new))
+
+  (unless (display-graphic-p)
+    (add-hook 'evil-insert-state-entry-hook
+              (lambda () (unless (eq major-mode 'vterm-mode)
+                           (send-string-to-terminal "\033[5 q"))))
+    (add-hook 'evil-insert-state-exit-hook
+              (lambda () (send-string-to-terminal "\033[2 q"))))
 
   (evil-define-operator evil-fill (beg end)
     "Fill text."
@@ -956,72 +881,75 @@ Quit if no candidate is selected."
                         (convert-standard-filename (expand-file-name filename))))
      ext)))
 
-;; (use-package vterm
-;;   :after evil
-;;   :custom
-;;   (vterm-tramp-shells '(("ssh" "/bin/zsh")
-;;                         ("sshx" "/bin/zsh")))
-;;   (vterm-copy-mode-remove-fake-newlines t)
-;;   (vterm-max-scrollback 100000)
-;;   :general
-;;   (nmap
-;;     :prefix "SPC t"
-;;     :keymaps 'override
-;;     "" '(nil :wk "toggle")
-;;     "t" 'toggle-vterm
-;;     "c" 'toggle-vterm-cd
-;;     "T" 'toggle-vterm-here)
-;;   (nmap
-;;     :keymaps 'vterm-mode-map
-;;     "q" 'delete-window
-;;     "C-p" "M-p"
-;;     "C-n" "M-n"
-;;     "M-:" 'eval-expression)
+(use-package vterm
+  :after evil
+  :custom
+  (vterm-tramp-shells '(("ssh" "/bin/zsh")
+                        ("sshx" "/bin/zsh")))
+  (vterm-max-scrollback 100000)
+  :general
+  (nmap
+    :prefix "SPC t"
+    :keymaps 'override
+    "" '(nil :wk "toggle")
+    "t" 'toggle-vterm
+    "c" 'toggle-vterm-cd
+    "T" 'toggle-vterm-here)
+  (nmap
+    :keymaps 'vterm-mode-map
+    "q" 'delete-window
+    "C-p" "M-p"
+    "C-n" "M-n"
+    "M-:" 'eval-expression)
 
-;;   :preface
-;;   (defun toggle-vterm (&optional args)
-;;     (require 'vterm)
-;;     (interactive "p")
-;;     (let* ((default-directory (project-root-current))
-;;            (vterm-buffer-name (concat vterm-buffer-name (my-tab-name-current))))
-;;       (if (equal major-mode 'vterm-mode)
-;;           (let (display-buffer-alist)
-;;             (split-window-right)
-;;             (other-window 1)
-;;             (vterm args))
-;;         (vterm args))))
+  :preface
+  (defun toggle-vterm (&optional args)
+    (interactive "p")
+    (require 'vterm)
+    (let* ((default-directory (project-root-current))
+           (vterm-buffer-name (concat vterm-buffer-name (my-tab-name-current))))
+      (if (equal major-mode 'vterm-mode)
+          (let (display-buffer-alist)
+            (split-window-right)
+            (other-window 1)
+            (vterm args))
+        (vterm args))))
 
-;;   (defun toggle-vterm-cd (&optional args)
-;;     (interactive "p")
-;;     (let ((directory (project-root-current)))
-;;       (toggle-vterm args)
-;;       (vterm-send "C-u")
-;;       (vterm-send-string (concat "cd " directory))
-;;       (vterm-send-return)
-;;       (vterm-clear)))
+  (defun toggle-vterm-cd (&optional args)
+    (interactive "p")
+    (let ((directory (project-root-current)))
+      (toggle-vterm args)
+      (vterm-send "C-u")
+      (vterm-send-string (concat "cd " directory))
+      (vterm-send-return)
+      (vterm-clear)))
 
-;;   (defun toggle-vterm-here (&optional args)
-;;     (interactive "p")
-;;     (let (display-buffer-alist)
-;;       (toggle-vterm args)))
+  (defun toggle-vterm-here (&optional args)
+    (interactive "p")
+    (let (display-buffer-alist)
+      (toggle-vterm args)))
 
-;;   :config
-;;   (setq vterm-timer-delay 0.01)
+  :config
+  (setq vterm-timer-delay 0.01)
 
-;;   (add-hook 'vterm-mode-hook (lambda () (setq-local evil-insert-state-cursor '(box))))
-;;   (add-hook 'vterm-mode-hook (lambda () (setq-local global-hl-line-mode nil)))
+  (add-hook 'vterm-mode-hook (lambda () (setq-local evil-insert-state-cursor '(box))))
+  (add-hook 'vterm-mode-hook (lambda () (setq-local global-hl-line-mode nil)))
 
-;;   (add-to-list
-;;    'display-buffer-alist
-;;    '((lambda (buffer-or-name _)
-;;        (let ((buffer (get-buffer buffer-or-name)))
-;;          (with-current-buffer buffer
-;;            (or (equal major-mode 'vterm-mode)
-;;                (string-prefix-p vterm-buffer-name (buffer-name buffer))))))
-;;      (display-buffer-reuse-window display-buffer-in-direction)
-;;      (direction . bottom)
-;;      (reusable-frames . visible)
-;;      (window-height . 0.25))))
+  (add-hook 'evil-insert-state-entry-hook (lambda ()
+                                            (when (eq major-mode 'vterm-mode)
+                                              (vterm-reset-cursor-point))))
+
+  (add-to-list
+   'display-buffer-alist
+   '((lambda (buffer-or-name _)
+       (let ((buffer (get-buffer buffer-or-name)))
+         (with-current-buffer buffer
+           (or (equal major-mode 'vterm-mode)
+               (string-prefix-p vterm-buffer-name (buffer-name buffer))))))
+     (display-buffer-reuse-window display-buffer-in-direction)
+     (direction . bottom)
+     (reusable-frames . visible)
+     (window-height . 0.25))))
 
 (use-package editorconfig
   :demand t
@@ -1032,18 +960,15 @@ Quit if no candidate is selected."
   :custom (reverse-im-input-methods '("russian-computer"))
   :config (reverse-im-mode t))
 
-(use-package saveplace
-  :elpaca nil
+(use-builtin saveplace
   :init (save-place-mode))
 
-(use-package ls-lisp
-  :elpaca nil
+(use-builtin ls-lisp
   :custom
   (ls-lisp-dirs-first t)
   (ls-lisp-use-insert-directory-program nil))
 
-(use-package dired
-  :elpaca nil
+(use-builtin dired
   :after ls-lisp
   :commands dired
   :custom
@@ -1068,7 +993,7 @@ Quit if no candidate is selected."
     "E" '+dired-open-here))
 
 (use-package auctex
-  :elpaca (auctex :pre-build (("./autogen.sh")
+  :ensure (auctex :pre-build (("./autogen.sh")
                               ("./configure"
                                "--without-texmf-dir"
                                "--with-packagelispdir=./"
@@ -1123,6 +1048,7 @@ Quit if no candidate is selected."
               '("\\.tsx\\'" . tsx-ts-mode)
               '("\\.puml\\'" . plantuml-mode)
               '("skhdrc\\'" . conf-mode)
+              '("CMakeLists.txt\\'" . cmake-ts-mode)
               '(".arcconfig\\'" . conf-mode))
 
 (setq-default css-indent-offset 2)
@@ -1170,10 +1096,6 @@ Quit if no candidate is selected."
 
 ;;   (setq markdown-regex-gfm-checkbox " \\(\\[[xX-]\\]\\) "))
 
-(use-package sql-indent
-  :hook (sql-mode . (lambda () (require 'sql-indent)))
-  :custom (sqlind-basic-offset 2))
-
 (use-package ialign
   :commands ialign
   :custom (ialign-initial-repeat t)
@@ -1183,8 +1105,8 @@ Quit if no candidate is selected."
 
 (add-hook 'window-configuration-change-hook
           (lambda ()
-            (unless (or (memq major-mode '(minibuffer-mode vterm-mode eat-mode))
-                        (bound-and-true-p visual-fill-column-mode))
+            (when (and (memq major-mode '(text-mode prog-mode))
+                       (not (bound-and-true-p visual-fill-column-mode)))
               (set-window-margins nil 2))))
 
 (use-package flymake
@@ -1202,6 +1124,7 @@ Quit if no candidate is selected."
   (flymake-proc-compilation-prevents-syntax-check t)
   (flymake-show-diagnostics-at-end-of-line nil)
   (flymake-wrap-around nil)
+  (flymake-indicator-type 'margins)
   :general
   (nvmap
     :prefix "g"
@@ -1209,10 +1132,12 @@ Quit if no candidate is selected."
     "p" 'flymake-goto-prev-error))
 
 (use-package flymake-sqlfluff
-  :elpaca (:host github :repo "danilshvalov/flymake-sqlfluff")
+  :ensure (:host github :repo "danilshvalov/flymake-sqlfluff")
   :hook (sql-mode . flymake-sqlfluff-load))
 
 (use-package exec-path-from-shell
+  :custom
+  (exec-path-from-shell-variables '("PATH" "cam" "icg"))
   :config
   (when (memq window-system '(mac ns x))
     (exec-path-from-shell-initialize)))
@@ -1220,13 +1145,11 @@ Quit if no candidate is selected."
 (use-package yaml-mode
   :mode "\\.ya?ml\\'")
 
-(use-package dash-modeline
-  :elpaca nil
+(use-builtin dash-modeline
   :custom (dash-modeline-position 'dash-modeline-footer)
   :hook
   ((text-mode prog-mode) . dash-modeline-prog-mode)
   (vterm-mode . dash-modeline-term-mode)
-  (eat-mode . dash-modeline-term-mode)
   (messages-buffer-mode . dash-modeline-message-mode)
   (org-agenda-mode . dash-modeline-agenda-mode)
   :config
@@ -1234,22 +1157,6 @@ Quit if no candidate is selected."
 
   (with-current-buffer "*Messages*"
     (dash-modeline-message-mode)))
-
-(use-builtin compile
-  :custom
-  (compilation-scroll-output t)
-  (compilation-read-command nil)
-  :general
-  (nvmap
-    :prefix "SPC c"
-    "c" 'compile)
-  :config
-  (defadvice compile (after jump-back activate)
-    (other-window 1))
-
-  (add-hook
-   'LaTeX-mode-hook
-   (lambda () (setq-local compile-command "latexmk"))))
 
 (use-builtin help
   :general
@@ -1304,14 +1211,14 @@ Quit if no candidate is selected."
          :revision "gh-pages"
          :source-dir "src"))
 
-  ;; (setq treesit-language-source-alist (treesit-auto--build-treesit-source-alist))
   (add-to-list! 'treesit-language-source-alist
                 '(markdown-inline . ("https://github.com/MDeiml/tree-sitter-markdown"
                                      nil
                                      "tree-sitter-markdown-inline/src"))
                 '(markdown . ("https://github.com/MDeiml/tree-sitter-markdown" nil "tree-sitter-markdown/src"))
                 '(gitcommit . ("https://github.com/gbprod/tree-sitter-gitcommit"))
-                '(diff . ("https://github.com/the-mikedavis/tree-sitter-diff")))
+                '(diff . ("https://github.com/the-mikedavis/tree-sitter-diff"))
+                '(sql . ("https://github.com/DerekStride/tree-sitter-sql")))
 
   (add-to-list 'treesit-auto-recipe-list my-sql-tsauto-config)
 
@@ -1358,8 +1265,7 @@ Quit if no candidate is selected."
                    nil nil #'equal)
         #'consult-find))
 
-(use-package image-mode
-  :elpaca nil
+(use-builtin image-mode
   :commands image-mode
   :custom (image-use-external-converter t))
 
@@ -1676,7 +1582,8 @@ Note that these rules can't contain anchored rules themselves."
    '((c++-mode . c++-ts-mode)
      (c-mode . c-ts-mode)
      (python-mode . python-ts-mode)
-     (diff-mode . diff-ts-mode))))
+     (diff-mode . diff-ts-mode)
+     (sql-mode . sql-ts-mode))))
 
 (use-package rainbow-mode
   :general
@@ -1921,8 +1828,7 @@ Note that these rules can't contain anchored rules themselves."
 (define-advice server-eval-and-print (:filter-args (args) no-print)
   (list (car args) nil))
 
-(use-package obsidian
-  :elpaca nil
+(use-builtin obsidian
   :mode "\\.md\\'"
   :custom
   (obsidian-workspaces '((notes . "~/obsidian")))
@@ -1942,10 +1848,10 @@ Note that these rules can't contain anchored rules themselves."
           (interactive)
           (consult-ripgrep "~/obsidian"))))
 
-(use-package edit-indirect)
+(use-package edit-indirect
+  :commands markdown-ts-mode)
 
-(use-package markdown-ts-mode
-  :elpaca nil
+(use-builtin markdown-ts-mode
   :mode "\\.md\\'"
   :custom
   (markdown-fontify-code-blocks-natively t)
@@ -2037,85 +1943,14 @@ Note that these rules can't contain anchored rules themselves."
           (interactive)
           (yank--file-name (lambda (f) f)) :wk "Path")))
 
-(defun arc--call-process (program &rest args)
-  (require 'arc)
-  (with-temp-buffer
-    (let* ((default-directory (expand-file-name arc-root))
-           (exit-code
-            (apply 'call-process
-                   program
-                   nil
-                   (current-buffer)
-                   nil
-                   args))
-           (content (buffer-string)))
-      (when (> exit-code 0)
-        (error "Arc error: %s" content))
-      content)))
-
-(defun arc--branches-raw ()
-  (let* ((branches (arc--call-process "arc" "branch" "--json"))
-         (branches (json-parse-string branches)))
-    branches))
-
-(defun arc--branch-current ()
-  (let* ((branches (arc--branches-raw))
-         (branches (cl-remove-if-not (lambda (x) (gethash "current" x nil)) branches))
-         (branch (aref branches 0))
-         (branch (gethash "name" branch)))
-    branch))
-
-(defun arc--branches ()
-  (let* ((branches (arc--branches-raw))
-         (branches (cl-remove-if-not (lambda (x) (gethash "local" x)) branches))
-         (branches (mapcar (lambda (x) (gethash "name" x)) branches)))
-    branches))
-
-(defun arc--select-branch (&optional prompt)
-  (let* ((prompt (or prompt "Select branch: "))
-         (branches (arc--branches))
-         (branch (completing-read prompt branches nil t)))
-    branch))
-
-(defun arc--select-branch-list ()
-  (let* ((branches (arc--branches))
-         (branch (completing-read-multiple "Select branch: " branches nil t)))
-    branch))
-
-(defun arc-branch-checkout (&optional branch)
-  (interactive)
-  (let* ((prompt (format "Select branch (current: %s): " (arc--branch-current)))
-         (branch (or branch (arc--select-branch prompt))))
-    (arc--call-process "arc" "co" branch)))
-
-(defun arc-pull ()
-  (interactive)
-  (arc--call-process "arc" "pull"))
-
-(defun arc-info ()
-  (interactive)
-  (message "Arc: %s" (arc--branch-current)))
-
-(nvmap
-  :prefix "SPC a"
-  :keymaps 'override
-  "c" 'arc-branch-checkout
-  "P" 'arc-pull
-  "i" 'arc-info)
-
-(defun arc-branch-delete (&optional branches)
-  (interactive)
-  (let* ((branches (or branches (arc--select-branch-list))))
-    (apply 'arc--call-process "arc" "branch" "--delete" branches)))
 
 (use-package indent-bars
-  :elpaca (indent-bars :host github :repo "jdtsmith/indent-bars")
+  :ensure (indent-bars :host github :repo "jdtsmith/indent-bars")
   :custom
   (indent-bars-color-by-depth nil)
   (indent-bars-color '(shadow :face-bg nil :blend 0.5))
+  (indent-bars-prefer-character t)
   :hook ((prog-mode text-mode) . indent-bars-mode))
-
-(advice-add 'arc--call-process :around #'execute-at-project-root)
 
 (modify-syntax-entry ?_ "w")
 
@@ -2133,26 +1968,31 @@ to directory DIR."
   (dired dir))
 
 (use-package git-commit-ts-mode
-  :elpaca (git-commit-ts-mode :repo "~/projects/git-commit-ts-mode")
+  :ensure (git-commit-ts-mode :repo "~/projects/git-commit-ts-mode")
   :mode "\\COMMIT_EDITMSG\\'")
 
-(use-package diff-ts-mode
+(use-builtin diff-ts-mode
+  :mode "\\.diff\\'"
   ;; :elpaca (diff-ts-mode :repo "~/projects/diff-ts-mode")
-  :elpaca nil
   :load-path "~/projects/diff-ts-mode"
   ;; :elpaca (git-commit-ts-mode :host github
   ;;                             :repo "danilshvalov/git-commit-ts-mode")
   )
 
 
-(use-package arc
-  :elpaca nil
+(use-builtin arc
   :general
   (nvmap
     :keymaps 'override
     :prefix "SPC a"
+    "c" 'arc-branch-checkout
     "t" 'arc-insert-ticket
-    "f" 'arc-find-file))
+    "f" 'arc-find-file
+    "d" 'arc-diff-trunk
+    "P" 'arc-pull
+    "i" 'arc-info)
+  :config
+  (advice-add 'arc--call-process :around #'execute-at-project-root))
 
 (defun find-file-wrapper (fun &rest args)
   (let ((args (push (substitute-in-file-name (string-trim (car args)))
@@ -2175,7 +2015,8 @@ to directory DIR."
   :custom (evil-lion-squeeze-spaces nil)
   :config (evil-lion-mode t))
 
-(use-package protobuf-mode)
+(use-package protobuf-mode
+  :mode "\\.proto\\'")
 
 (add-hook 'after-change-major-mode-hook
           (lambda ()
@@ -2261,8 +2102,7 @@ LANG is a string, and the returned major mode is a symbol."
                 (put-text-property
                  (+ start (1- pos))
                  (1- (+ start next))
-                 (if has-font-lock-mode 'font-lock-face
-                   'face)
+                 'face
                  val buffer)))
             (setq pos next)))
         (add-text-properties
@@ -2347,75 +2187,60 @@ LANG is a string, and the returned major mode is a symbol."
   :hook (markdown-ts-mode . visual-fill-column-mode))
 
 (use-package eglot-booster
-  :elpaca (eglot-booster :host github :repo "jdtsmith/eglot-booster")
+  :ensure (eglot-booster :host github :repo "jdtsmith/eglot-booster")
   :after eglot
   :config (eglot-booster-mode))
 
-(use-package eat
-  :custom
-  (eat-term-scrollback-size 10000000)
-  (eat-term-name "xterm-256color")
-  (eat-kill-buffer-on-exit t)
+
+(use-package hydra
   :general
-  (nmap
-    :prefix "SPC t"
-    :keymaps 'override
-    "" '(nil :wk "toggle")
-    "t" 'toggle-eat
-    ;; "c" 'toggle-vterm-cd
-    ;; "T" 'toggle-vterm-here
-    )
-
-  (nmap
-    :keymaps 'eat-mode-map
-    "q" 'delete-window)
+  (nvmap
+    :prefix "C-w"
+    "C-w" #'hydra-window/body)
   :preface
+  (require 'windmove)
 
-  (defun toggle-eat (&optional args)
-    (require 'eat)
+  (defun hydra-move-splitter-left (arg)
+    "Move window splitter left."
     (interactive "p")
-    (let* ((default-directory (project-root-current))
-           (eat-buffer-name (concat eat-buffer-name (my-tab-name-current))))
-      (if (equal major-mode 'eat-mode)
-          (let (display-buffer-alist)
-            (split-window-right)
-            (other-window 1)
-            (eat nil args))
-        (eat nil args))))
+    (if (let ((windmove-wrap-around))
+          (windmove-find-other-window 'right))
+        (shrink-window-horizontally arg)
+      (enlarge-window-horizontally arg)))
 
-  ;; (defun toggle-vterm-cd (&optional args)
-  ;;   (interactive "p")
-  ;;   (let ((directory (project-root-current)))
-  ;;     (toggle-vterm args)
-  ;;     (vterm-send "C-u")
-  ;;     (vterm-send-string (concat "cd " directory))
-  ;;     (vterm-send-return)
-  ;;     (vterm-clear)))
+  (defun hydra-move-splitter-right (arg)
+    "Move window splitter right."
+    (interactive "p")
+    (if (let ((windmove-wrap-around))
+          (windmove-find-other-window 'right))
+        (enlarge-window-horizontally arg)
+      (shrink-window-horizontally arg)))
 
-  ;; (defun toggle-vterm-here (&optional args)
-  ;;   (interactive "p")
-  ;;   (let (display-buffer-alist)
-  ;;     (toggle-vterm args)))
+  (defun hydra-move-splitter-up (arg)
+    "Move window splitter up."
+    (interactive "p")
+    (if (let ((windmove-wrap-around))
+          (windmove-find-other-window 'up))
+        (enlarge-window arg)
+      (shrink-window arg)))
+
+  (defun hydra-move-splitter-down (arg)
+    "Move window splitter down."
+    (interactive "p")
+    (if (let ((windmove-wrap-around))
+          (windmove-find-other-window 'up))
+        (shrink-window arg)
+      (enlarge-window arg)))
 
   :config
-  ;; (setq vterm-timer-delay 0.01)
+  (defhydra hydra-window (:color red :hint nil)
+    "
+Move: _h_: left  _j_: down  _k_: up  _l_: right"
+    ("h" hydra-move-splitter-left)
+    ("j" hydra-move-splitter-down)
+    ("k" hydra-move-splitter-up)
+    ("l" hydra-move-splitter-right)))
 
-  (add-hook 'evil-insert-state-entry-hook (lambda ()
-                                            (when (eq major-mode 'eat-mode)
-                                              (goto-char (point-max)))))
-
-  (advice-add 'eat :around #'execute-at-project-root)
-
-  (add-hook 'eat-mode-hook (lambda () (setq-local evil-insert-state-cursor '(box))))
-
-  (add-to-list
-   'display-buffer-alist
-   '((lambda (buffer-or-name _)
-       (let ((buffer (get-buffer buffer-or-name)))
-         (with-current-buffer buffer
-           (or (equal major-mode 'eat-mode)
-               (string-prefix-p eat-buffer-name (buffer-name buffer))))))
-     (display-buffer-reuse-window display-buffer-in-direction)
-     (direction . bottom)
-     (reusable-frames . visible)
-     (window-height . 0.25))))
+(use-package sql-ts-mode
+  :ensure (sql-ts-mode :host github :repo "nverno/sql-ts-mode")
+  :mode "\\.sql\\'")

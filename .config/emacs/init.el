@@ -38,9 +38,9 @@
 (elpaca `(,@elpaca-order))
 
 (elpaca elpaca-use-package
-  (elpaca-use-package-mode)
-  (setq elpaca-use-package-by-default t))
+  (elpaca-use-package-mode))
 
+(setq use-package-always-ensure t)
 (setq use-package-expand-minimally t)
 (setq use-package-compute-statistics t)
 
