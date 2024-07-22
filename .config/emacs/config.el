@@ -1140,9 +1140,18 @@ Quit if no candidate is selected."
 (use-package exec-path-from-shell
   :custom
   (exec-path-from-shell-variables '("PATH" "cam" "icg"))
+  :preface
+  (defun source-file-and-get-envs (filename)
+    (let* ((cmd (concat ". " filename "; env"))
+           (env-str (shell-command-to-string cmd))
+           (env-lines (split-string env-str "\n"))
+           (envs (mapcar (lambda (s) (replace-regexp-in-string "=.*$" "" s)) env-lines)))
+      (delete "" envs)))
+
   :config
   (when (memq window-system '(mac ns x))
-    (exec-path-from-shell-initialize)))
+    (exec-path-from-shell-initialize)
+    (exec-path-from-shell-copy-envs (source-file-and-get-envs "~/.zprofile"))))
 
 (use-package yaml-mode
   :mode "\\.ya?ml\\'")
@@ -1870,6 +1879,7 @@ Note that these rules can't contain anchored rules themselves."
   :config
   (font-lock-add-keywords 'markdown-ts-mode
                           '(("\\(^\\|[[:space:]]+\\)\\(#[[:alnum:]-_/]+\\)" 2 'obsidian-tag prepend)) t)
+
   ;; (add-hook 'markdown-ts-mode-hook 'markdown-toggle-markup-hiding)
   ;; (add-hook 'markdown-ts-mode-hook 'auto-fill-mode)
   (general-define-key
@@ -1965,6 +1975,7 @@ to directory DIR."
 
 (use-package git-commit-ts-mode
   :ensure (git-commit-ts-mode :repo "~/projects/git-commit-ts-mode")
+  ;; :ensure (git-commit-ts-mode :host github :repo "danilshvalov/git-commit-ts-mode")
   :mode "\\COMMIT_EDITMSG\\'")
 
 (use-builtin diff-ts-mode
@@ -2068,7 +2079,8 @@ LANG is a string, and the returned major mode is a symbol."
                           (intern (concat (downcase lang) "-ts-mode")))))
           (list
            (intern (concat lang "-mode"))
-           (intern (concat (downcase lang) "-mode"))))))
+           (intern (concat (downcase lang) "-mode")))
+          (list 'fundamental-mode))))
 
 (defun treesit-injections--fontify-code-block-natively (lang start end)
   (interactive)
@@ -2101,91 +2113,90 @@ LANG is a string, and the returned major mode is a symbol."
                  'face
                  val buffer)))
             (setq pos next)))
-        ;; (add-text-properties
-        ;;  start end
-        ;;  '(font-lock-fontified t fontified t font-lock-multiline t))
         (set-buffer-modified-p modified)))))
 
 
 
-(defun treesit-tmp-fontify-code-block (node)
-  (let* ((query '((fenced_code_block
-                   (info_string
-                    (language) @language)
-                   (code_fence_content) @content)))
-         (captures (treesit-query-capture node query))
-         (language-node (cdr (assoc 'language captures)))
-         (language (treesit-node-text language-node))
-         (parser (treesit-parser-create (intern language)))
-         (content-node (cdr (assoc 'content captures)))
-         (range (cons (treesit-node-start content-node)
-                      (treesit-node-end content-node))))
-    (cons parser range)))
+;; (defun treesit-tmp-fontify-code-block (node)
+;;   (when-let* ((query '((fenced_code_block
+;;                    (info_string
+;;                     (language) @language)
+;;                    (code_fence_content) @content)))
+;;          (captures (treesit-query-capture node query))
+;;          (language-node (cdr (assoc 'language captures)))
+;;          (language (treesit-node-text language-node))
+;;          (language (intern language))
+;;          (parser-exists (treesit-ready-p language))
+;;          (parser (treesit-parser-create language))
+;;          (content-node (cdr (assoc 'content captures)))
+;;          (range (cons (treesit-node-start content-node)
+;;                       (treesit-node-end content-node))))
+;;     (cons parser range)))
 
-(defun markdown--code-blocks-parsers-ranges (start end)
-  (let* ((parser (treesit-parser-create 'markdown))
-         (root (treesit-parser-root-node parser))
-         (query '((fenced_code_block) @capture))
-         (captures (treesit-query-capture root query start end))
-         (parser-ranges))
-    (dolist (capture captures)
-      (let* ((parser-range (treesit-tmp-fontify-code-block (cdr capture)))
-             (parser (car parser-range))
-             (range (cdr parser-range))
-             (previous-ranges (cdr (assoc parser parser-ranges)))
-             (new-ranges (push range previous-ranges)))
-        (setf (alist-get parser parser-ranges) new-ranges)))
-    (cl-loop for (parser . ranges) in parser-ranges
-             collect (cons parser (reverse ranges)))))
+;; (defun markdown--code-blocks-parsers-ranges (start end)
+;;   (let* ((parser (treesit-parser-create 'markdown))
+;;          (root (treesit-parser-root-node parser))
+;;          (query '((fenced_code_block) @capture))
+;;          (captures (treesit-query-capture root query start end))
+;;          (parser-ranges))
+;;     (dolist (capture captures)
+;;       (when-let ((parser-range (treesit-tmp-fontify-code-block (cdr capture))))
+;;         (let* ((parser (car parser-range))
+;;                (range (cdr parser-range))
+;;                (previous-ranges (cdr (assoc parser parser-ranges)))
+;;                (new-ranges (push range previous-ranges)))
+;;           (setf (alist-get parser parser-ranges) new-ranges))))
+;;     (cl-loop for (parser . ranges) in parser-ranges
+;;              collect (cons parser (reverse ranges)))))
 
-(defun markdown-fontify-code-blocks (start end)
-  (cl-loop for (parser . ranges) in (markdown--code-blocks-parsers-ranges start end) do
-           (treesit-parser-set-included-ranges
-            parser
-            (treesit--clip-ranges
-             (treesit--merge-ranges
-              (treesit-parser-included-ranges parser)
-              ranges start end)
-             (point-min) (point-max)))))
+;; (defun markdown-fontify-code-blocks (start end)
+;;   (cl-loop for (parser . ranges) in (markdown--code-blocks-parsers-ranges start end) do
+;;            (treesit-parser-set-included-ranges
+;;             parser
+;;             (treesit--clip-ranges
+;;              (treesit--merge-ranges
+;;               (treesit-parser-included-ranges parser)
+;;               ranges start end)
+;;              (point-min) (point-max)))))
 
 
-(add-hook 'markdown-ts-mode-hook
-          (lambda ()
-            (setq treesit-range-settings
-                  (treesit-range-rules
-                   'markdown-fontify-code-blocks))))
+;; (add-hook 'markdown-ts-mode-hook
+;;           (lambda ()
+;;             (setq treesit-range-settings
+;;                   (treesit-range-rules
+;;                    'markdown-fontify-code-blocks))))
 
 (require 'treesit)
 
-(defun markdown-language-at-point (pos)
-  (let* ((parser (treesit-parser-create 'markdown))
-         (root (treesit-parser-root-node parser))
-         (query '((fenced_code_block
-                   (info_string
-                    (language) @capture))))
-         (captures (treesit-query-capture root query pos pos))
-         (node (cdr (assoc 'capture captures))))
-    (if node (intern (treesit-node-text node))
-      'markdown)))
+;; (defun markdown-language-at-point (pos)
+;;   (let* ((parser (treesit-parser-create 'markdown))
+;;          (root (treesit-parser-root-node parser))
+;;          (query '((fenced_code_block
+;;                    (info_string
+;;                     (language) @capture))))
+;;          (captures (treesit-query-capture root query pos pos))
+;;          (node (cdr (assoc 'capture captures))))
+;;     (if node (intern (treesit-node-text node))
+;;       'markdown)))
 
-(advice-add
-   'treesit-font-lock-fontify-region
-   :after
-   (lambda (start end &optional loudly)
-     (dolist (parser (treesit-parser-list))
-       (let ((language (symbol-name
-                        (treesit-parser-language parser))))
-         (dolist (range (treesit-parser-included-ranges parser))
-           (let ((range-start (car range))
-                 (range-end (cdr range)))
-             (unless (or (< end range-start) (< range-end start))
-               (treesit-injections--fontify-code-block-natively language range-start range-end))))))
-     (add-text-properties
-         start end
-         '(font-lock-fontified t fontified t font-lock-multiline t))))
+;; (advice-add
+;;  'treesit-font-lock-fontify-region
+;;  :after
+;;  (lambda (start end &optional loudly)
+;;    (dolist (parser (treesit-parser-list))
+;;      (let ((language (symbol-name
+;;                       (treesit-parser-language parser))))
+;;        (dolist (range (treesit-parser-included-ranges parser))
+;;          (let ((range-start (car range))
+;;                (range-end (cdr range)))
+;;            (unless (or (< end range-start) (< range-end start))
+;;              (treesit-injections--fontify-code-block-natively language range-start range-end))))))
+;;    (add-text-properties
+;;     start end
+;;     '(font-lock-fontified t fontified t font-lock-multiline t))))
 
-(defun markdown-ts-mode--parser-notifier (ranges parser)
-  (message "Data: %s %s" parser ranges))
+;; (defun markdown-ts-mode--parser-notifier (ranges parser)
+;;   (message "Data: %s %s" parser ranges))
 
 (use-package which-key
   :custom
@@ -2258,4 +2269,11 @@ Move: _h_: left  _j_: down  _k_: up  _l_: right"
 
 (use-package sql-ts-mode
   :ensure (sql-ts-mode :host github :repo "nverno/sql-ts-mode")
-  :mode "\\.sql\\'")
+  :mode "\\.sql\\'"
+  :preface
+  (defun my-markdown-ts-mode-faces ()
+    "Set background color for use only in emacs lisp modes."
+    (interactive)
+    (face-remap-add-relative 'font-lock-variable-name-face `(:foreground ,(doom-color 'yellow))))
+  :config
+  (add-hook 'sql-ts-mode-hook #'my-markdown-ts-mode-faces))

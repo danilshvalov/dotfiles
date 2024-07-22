@@ -2171,27 +2171,6 @@ Depending on your font, some reasonable choices are:
   (let ((query '((html_block) @capture)))
     (markdown-fontify-injection last "html" query)))
 
-(defun markdown--fontify-code-block (node)
-  (let* ((query '((fenced_code_block
-            (info_string
-             (language) @language)
-            (code_fence_content) @content)))
-         (captures (treesit-query-capture node query))
-         (language-node (cdr (assoc 'language captures)))
-         (language (treesit-node-text language-node))
-         (content-node (cdr (assoc 'content captures)))
-         (content-start (treesit-node-start content-node))
-         (content-end (treesit-node-end content-node)))
-    (markdown-fontify-code-block-natively language content-start content-end)))
-
-(defun markdown-fontify-code (last)
-  (let* ((parser (treesit-parser-create 'markdown))
-         (root (treesit-parser-root-node parser))
-         (query '((fenced_code_block) @capture))
-         (captures (treesit-query-capture root query (point) last)))
-    (cl-loop for capture in captures do
-             (markdown--fontify-code-block (cdr capture)))))
-
 (defvar markdown-ts-mode-font-lock-keywords
   `((markdown-match-yaml-metadata-begin . ((1 'markdown-markup-face)))
     (markdown-match-yaml-metadata-end . ((1 'markdown-markup-face)))
@@ -2205,7 +2184,6 @@ Depending on your font, some reasonable choices are:
     ;;                                         (5 markdown-markup-properties nil t)))
     ;; (markdown-match-gfm-close-code-blocks . ((0 markdown-markup-properties)))
     ;; (markdown-fontify-gfm-code-blocks)
-    ;; (markdown-fontify-code)
     (markdown-fontify-html)
     ;; (markdown-fontify-tables)
     ;; (markdown-match-fenced-start-code-block . ((1 markdown-markup-properties)
@@ -9893,6 +9871,65 @@ rows and columns and the column alignment."
   (interactive)
   (browse-url "https://jblevins.org/projects/markdown-ts-mode/"))
 
+(defun markdown-ts--fontify-code-block-natively (lang start end)
+  (interactive)
+  (let ((lang-mode (if lang (treesit-injections-get-lang-mode lang)
+                     fundamental-mode)))
+    (when (fboundp lang-mode)
+      (let ((string (buffer-substring-no-properties start end))
+            (modified (buffer-modified-p))
+            (has-font-lock-mode font-lock-mode)
+            (buffer (current-buffer)) pos next)
+        (remove-text-properties start end '(face nil))
+        (with-current-buffer
+            (get-buffer-create
+             (concat " treesit-injections-fontification:" (symbol-name lang-mode)))
+          ;; Make sure that modification hooks are not inhibited in
+          ;; the org-src-fontification buffer in case we're called
+          ;; from `jit-lock-function' (Bug#25132).
+          (let ((inhibit-modification-hooks nil))
+            (delete-region (point-min) (point-max))
+            (insert string " ")) ;; so there's a final property change
+          (unless (eq major-mode lang-mode) (funcall lang-mode))
+          (font-lock-ensure)
+          (setq pos (point-min))
+          (while (setq next (next-single-property-change pos 'face))
+            (let ((val (get-text-property pos 'face)))
+              (when val
+                (put-text-property
+                 (+ start (1- pos))
+                 (1- (+ start next))
+                 'face
+                 val buffer)))
+            (setq pos next)))
+        (set-buffer-modified-p modified)))))
+
+(defun markdown-ts--fontify-code-block (node _ _ _ &rest _)
+  (let ((start (treesit-node-start node))
+        (end (treesit-node-end node)))
+    (put-text-property start end 'face 'markdown-markup-face))
+
+  (when-let* ((query '((fenced_code_block
+                        (info_string
+                         (language) @language)
+                        (code_fence_content) @content)))
+              (captures (treesit-query-capture node query))
+              (language-node (cdr (assoc 'language captures)))
+              (language (treesit-node-text language-node))
+              (content-node (cdr (assoc 'content captures)))
+              (start (treesit-node-start content-node))
+              (end (treesit-node-end content-node)))
+    (markdown-ts--fontify-code-block-natively language start end))
+  ;; (let* ((start (treesit-node-start node))
+  ;;        (end (treesit-node-end node))
+  ;;        (length (- end start))
+  ;;        (separator (+ start git-commit-ts-max-message-size 1)))
+  ;;   (if (<= length git-commit-ts-max-message-size)
+  ;;       (treesit-fontify-with-override start end 'git-commit-ts-title-face nil)
+  ;;     (treesit-fontify-with-override start separator 'git-commit-ts-title-face nil)
+  ;;     (treesit-fontify-with-override separator end 'git-commit-ts-overflow-face t)))
+  )
+
 (defvar markdown-ts-mode--font-lock-settings
   (treesit-font-lock-rules
    :language 'markdown
@@ -9904,15 +9941,14 @@ rows and columns and the column alignment."
      (atx_heading (atx_h5_marker)) @markdown-header-face-5
      (atx_heading (atx_h6_marker)) @markdown-header-face-6)
 
-   ;; :language 'markdown
-   ;; :feature 'keyword
-   ;; `((fenced_code_block
-   ;;    (info_string (text) @markdown-language-keyword-face)))
-
    :language 'markdown
-   :feature 'markup
-   :override t
-   `((fenced_code_block) @markdown-markup-face)
+   :feature 'keyword
+   `((fenced_code_block) @markdown-ts--fontify-code-block)
+
+   ;; :language 'markdown
+   ;; :feature 'markup
+   ;; :override t
+   ;; `((fenced_code_block) @markdown-markup-face)
 
    :language 'markdown-inline
    :feature 'inline-code
@@ -10052,25 +10088,8 @@ rows and columns and the column alignment."
     ;; (add-hook 'jit-lock-after-change-extend-region-functions
     ;;           #'markdown-font-lock-extend-region-function t t)
 
+    (treesit-major-mode-setup)
 
-    (when treesit-font-lock-settings
-      ;; `font-lock-mode' wouldn't set up properly if
-      ;; `font-lock-defaults' is nil, see `font-lock-specified-p'.
-      (setq-local font-lock-defaults
-                  '(markdown-ts-mode-font-lock-keywords
-                    nil nil nil nil
-                    (font-lock-fontify-syntactically-function . treesit-font-lock-fontify-region)
-                    (font-lock-multiline . t)
-                    (font-lock-extra-managed-props
-                     . (composition display invisible rear-nonsticky
-                                    keymap help-echo mouse-face))))
-      (font-lock-mode 1)
-      (treesit-font-lock-recompute-features)
-      ;; (treesit-parser-add-notifier (treesit-parser-create 'sql) #'markdown-ts-mode--parser-notifier)
-      ;; (dolist (parser (treesit-parser-list))
-      ;;   (treesit-parser-add-notifier
-      ;;    parser #'treesit--font-lock-notifier))
-      )
     ;; Indent.
     (when treesit-simple-indent-rules
       (setq-local treesit-simple-indent-rules
@@ -10113,9 +10132,9 @@ rows and columns and the column alignment."
     ;;         (font-lock-extra-managed-props
     ;;          . (composition display invisible rear-nonsticky
     ;;                         keymap help-echo mouse-face))))
-    (if markdown-hide-markup
-        (add-to-invisibility-spec 'markdown-markup)
-      (remove-from-invisibility-spec 'markdown-markup))
+    ;; (if markdown-hide-markup
+    ;;     (add-to-invisibility-spec 'markdown-markup)
+    ;;   (remove-from-invisibility-spec 'markdown-markup))
     ;; Wiki links
     ;; (markdown-setup-wiki-link-hooks)
     ;; Math mode
