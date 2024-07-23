@@ -1155,9 +1155,6 @@ Quit if no candidate is selected."
     (exec-path-from-shell-initialize)
     (exec-path-from-shell-copy-envs (source-file-and-get-envs "~/.zprofile"))))
 
-(use-package yaml-mode
-  :mode "\\.ya?ml\\'")
-
 (use-builtin dash-modeline
   :custom (dash-modeline-position 'dash-modeline-footer)
   :hook
@@ -1878,19 +1875,13 @@ Note that these rules can't contain anchored rules themselves."
      ("screen" . shell-script-mode)
      ("shell" . sh-mode)
      ("bash" . sh-mode)))
-  :config
-  (font-lock-add-keywords 'markdown-ts-mode
-                          '(("\\(^\\|[[:space:]]+\\)\\(#[[:alnum:]-_/]+\\)" 2 'obsidian-tag prepend)) t)
-
-  ;; (add-hook 'markdown-ts-mode-hook 'markdown-toggle-markup-hiding)
-  ;; (add-hook 'markdown-ts-mode-hook 'auto-fill-mode)
+  :general
   (general-define-key
    :keymaps 'markdown-ts-mode-map
-   "C-c C-c" 'markdown-toggle-gfm-checkbox)
-  )
-
-;; (use-package magit
-;;   :defer t)
+   "C-c C-c" 'markdown-ts-toggle-checkbox)
+  :config
+  (font-lock-add-keywords 'markdown-ts-mode
+                          '(("\\(^\\|[[:space:]]+\\)\\(#[[:alnum:]-_/]+\\)" 2 'obsidian-tag prepend)) t))
 
 (use-package evil-anzu
   :demand t
@@ -2279,3 +2270,25 @@ Move: _h_: left  _j_: down  _k_: up  _l_: right"
     (face-remap-add-relative 'font-lock-variable-name-face `(:foreground ,(doom-color 'yellow))))
   :config
   (add-hook 'sql-ts-mode-hook #'my-markdown-ts-mode-faces))
+
+(defvar yaml-indent-offset 4)
+
+(defvar my-yaml-ts-indent-rules
+  (let ((offset yaml-indent-offset))
+    `((yaml
+       ;; ((match nil "block_mapping" nil 2 2) parent-bol ,offset)
+       ((query "(block_node (block_mapping)) @indent") parent-bol ,offset)
+       ((query "(block_node (block_sequence)) @indent") parent-bol 2)
+       ((parent-is "block_mapping") parent-bol 0)
+       ((parent-is "block_sequence") parent-bol 0)
+       ;; ((query "(block_mapping_pair value: (block_node (block_mapping (block_mapping_pair) @indent)))") parent-bol ,offset)
+       ;; ((parent-is "block_mapping_pair") parent-bol ,offset)
+       ;; ((parent-is "list") prev-sibling 0)
+       ;; ((match nil "paragraph" nil 0 nil) parent-bol 2)
+       ))))
+
+(use-builtin yaml-ts-mode
+  :mode "\\.ya?ml\\'"
+  :hook (yaml-ts-mode . (lambda ()
+                          (setq-local treesit-simple-indent-rules my-yaml-ts-indent-rules)
+                          (treesit-major-mode-setup))))
