@@ -54,6 +54,13 @@ mode to use is `tuareg-mode'."
    **bold text**"
   :group 'markdown-ts-faces)
 
+(defface markdown-ts-strike-through-face
+  '((t (:strike-through t)))
+  "Face for strike-through text. Example of strike-through text:
+
+   ---strike-through text---"
+  :group 'markdown-ts-faces)
+
 (defface markdown-ts-heading-face
   '((t (:inherit font-lock-keyword-face)))
   "Default face for any heading level. Examples of headings:
@@ -137,12 +144,12 @@ mode to use is `tuareg-mode'."
   "Face for GFM checkboxes."
   :group 'markdown-ts-faces)
 
-;; --
-
-(defface markdown-ts-strike-through-face
-  '((t (:strike-through t)))
-  "Face for strike-through text."
+(defface markdown-ts-escape-face
+  '((t (:inherit font-lock-escape-face)))
+  "Face for escapes (e.g. backslash escape or hard linebreak)."
   :group 'markdown-ts-faces)
+
+;; --
 
 (defface markdown-ts-markup-face
   '((t (:inherit shadow :slant normal :weight normal)))
@@ -226,23 +233,16 @@ inline code fragments and code blocks."
   "Face for footnote text."
   :group 'markdown-ts-faces)
 
+(defface markdown-ts-link-title-face
+  '((t (:inherit font-lock-comment-face)))
+  "Face for reference link titles."
+  :group 'markdown-ts-faces)
+
 (defface markdown-ts-url-face
   '((t (:inherit markdown-ts-link-face)))
   "Face for URLs that are part of markup.
 For example, this applies to URLs in inline links:
 [link text](http://example.com/)."
-  :group 'markdown-ts-faces)
-
-(defface markdown-ts-plain-url-face
-  '((t (:inherit markdown-ts-link-face)))
-  "Face for URLs that are also links.
-For example, this applies to plain angle bracket URLs:
-<http://example.com/>."
-  :group 'markdown-ts-faces)
-
-(defface markdown-ts-link-title-face
-  '((t (:inherit font-lock-comment-face)))
-  "Face for reference link titles."
   :group 'markdown-ts-faces)
 
 (defface markdown-ts-line-break-face
@@ -338,8 +338,22 @@ For example, this applies to plain angle bracket URLs:
 
 (defun markdown-ts-toggle-checkbox ()
   (interactive)
-  (when-let* ((list-item (markdown--find-list-item (point))))
-    (message "Content: %s" (treesit-node-text list-item))))
+  (when-let* ((list-item-node (markdown--find-list-item (point)))
+              (query '((list_item (_) (_) @capture)))
+              (captures (treesit-query-capture list-item-node query))
+              (capture-node (cdr (assoc 'capture captures)))
+              (capture-type (treesit-node-type capture-node))
+              (capture-start (treesit-node-start capture-node))
+              (capture-end (treesit-node-end capture-node)))
+    (pcase capture-type
+      ("task_list_marker_unchecked" (replace-region-contents
+                                     capture-start
+                                     capture-end
+                                     (lambda () "[x]")))
+      ("task_list_marker_checked" (replace-region-contents
+                                   capture-start
+                                   capture-end
+                                   (lambda () "[ ]"))))))
 
 (defun markdown-ts--language-mode-predicate (mode)
   (and mode
@@ -459,20 +473,29 @@ For example, this applies to plain angle bracket URLs:
    :feature 'emphasis
    :override t
    '((strong_emphasis) @markdown-ts-bold-face
-     (emphasis) @markdown-ts-italic-face)
+     (emphasis) @markdown-ts-italic-face
+     (strikethrough) @markdown-ts-strike-through-face)
+
+   :language 'markdown-inline
+   :feature 'link
+   :override t
+   '([(link_label)
+      (link_text)
+      (link_title)
+      (image_description)] @markdown-ts-link-title-face)
 
    :language 'markdown
    :feature 'checkbox
+   :override t
    '((task_list_marker_unchecked) @markdown-ts-checkbox-face
      (task_list_marker_checked) @markdown-ts-checkbox-face)
 
    :language 'markdown-inline
    :feature 'link
    :override t
-   '((inline_link
-      (link_text) @markdown-ts-link-title-face
-      (link_destination) @markdown-ts-url-face)
-     ((uri_autolink) @markdown-ts-plain-url-face))
+   '([(link_destination)
+      (uri_autolink)
+      (email_autolink)] @markdown-ts-url-face)
 
    :language 'markdown
    :feature 'punctuation
@@ -529,6 +552,12 @@ For example, this applies to plain angle bracket URLs:
       (thematic_break)] @markdown-ts-punctuation-special-face)
 
    :language 'markdown-inline
+   :feature 'escape
+   :override t
+   '((backslash_escape) @markdown-ts-escape-face
+     (hard_line_break) @markdown-ts-escape-face)
+
+   :language 'markdown-inline
    :feature 'punctuation
    :override t
    '((inline_link
@@ -554,7 +583,7 @@ For example, this applies to plain angle bracket URLs:
     (setq-local treesit-font-lock-settings markdown-ts-font-lock-settings)
     (setq-local treesit-font-lock-feature-list
                 '((link keyword emphasis heading)
-                  (inline-code quote delimiter)
+                  (inline-code quote delimiter escape)
                   (html checkbox)
                   (fontified-code math punctuation)))
     (treesit-major-mode-setup)

@@ -1225,10 +1225,10 @@ Quit if no candidate is selected."
          :source-dir "src"))
 
   (add-to-list! 'treesit-language-source-alist
-                '(markdown-inline . ("https://github.com/MDeiml/tree-sitter-markdown"
+                '(markdown-inline . ("https://github.com/tree-sitter-grammars/tree-sitter-markdown"
                                      nil
                                      "tree-sitter-markdown-inline/src"))
-                '(markdown . ("https://github.com/MDeiml/tree-sitter-markdown" nil "tree-sitter-markdown/src"))
+                '(markdown . ("https://github.com/tree-sitter-grammars/tree-sitter-markdown" nil "tree-sitter-markdown/src"))
                 '(gitcommit . ("https://github.com/gbprod/tree-sitter-gitcommit"))
                 '(diff . ("https://github.com/the-mikedavis/tree-sitter-diff"))
                 '(sql . ("https://github.com/DerekStride/tree-sitter-sql")))
