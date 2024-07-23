@@ -569,9 +569,17 @@ For example, this applies to URLs in inline links:
      (collapsed_reference_link
       ["[" "]"] @markdown-ts-punctuation-delimiter-face)
      (shortcut_link
-      ["[" "]"] @markdown-ts-punctuation-delimiter-face))
+      ["[" "]"] @markdown-ts-punctuation-delimiter-face))))
 
-   ))
+(defvar markdown-ts-indent-rules
+  (let ((offset 2))
+    `((markdown
+       ((match nil "list" nil 0 0) parent-bol 2)
+       ((parent-is "list") prev-sibling 0)
+       ((match nil "paragraph" nil 0 nil) parent-bol 2)))))
+
+(defun markdown-ts-language-at (pos)
+  'markdown)
 
 ;;;###autoload
 (define-derived-mode markdown-ts-mode prog-mode "Markdown"
@@ -581,6 +589,8 @@ For example, this applies to URLs in inline links:
     (treesit-parser-create 'markdown-inline)
 
     (setq-local treesit-font-lock-settings markdown-ts-font-lock-settings)
+    (setq-local treesit-simple-indent-rules markdown-ts-indent-rules)
+    (setq-local treesit-language-at-point-function #'markdown-ts-language-at)
     (setq-local treesit-font-lock-feature-list
                 '((link keyword emphasis heading)
                   (inline-code quote delimiter escape)
