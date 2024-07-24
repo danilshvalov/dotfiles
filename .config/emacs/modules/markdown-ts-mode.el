@@ -449,6 +449,29 @@ For example, this applies to URLs in inline links:
               (mode (markdown-ts--get-language-mode "mhtml")))
     (markdown-ts--fontify-as-mode mode start end)))
 
+(defun markdown-ts-insert-list-item ()
+  (interactive)
+  (when-let* ((node-at-point (treesit-node-at (point)))
+              (list-item-node (markdown--find-list-item node-at-point))
+              (query '((list_item (_) @capture)))
+              (captures (treesit-query-capture list-item-node query))
+              (capture-node (cdr (assoc 'capture captures)))
+              (capture-type (treesit-node-type capture-node))
+              (capture-text (treesit-node-text capture-node))
+              (list-item-end (treesit-node-end list-item-node)))
+    (goto-char list-item-end)
+    (pcase capture-type
+      ((or "list_marker_minus"
+           "list_marker_plus"
+           "list_marker_star")
+       (insert capture-text))
+      ("list_marker_dot"
+       (let ((item-number (string-to-number
+                           (substring capture-text nil -1))))
+         (insert (format "%d. " (1+ item-number))))))
+    (save-excursion
+      (insert "\n"))))
+
 (defvar markdown-ts-font-lock-settings
   (treesit-font-lock-rules
    :language 'markdown
@@ -576,19 +599,23 @@ For example, this applies to URLs in inline links:
               (list-node (markdown--find-list-item node))
               (query '((list_item (_) @capture)))
               (captures (treesit-query-capture list-node query))
-              (capture-node (cdr (assoc 'capture captures)))
-              (capture-text (treesit-node-text capture-node)))
-    (1+ (length capture-text))))
+              (capture-node (cdr (assoc 'capture captures))))
+    (treesit-node-end capture-node)))
 
 (defvar markdown-ts-indent-rules
   (let ((offset 2))
     `((markdown
        ((match nil "list_item" nil 0 0) ,'markdown-ts--list-indent-anchor 0)
-       ;; ((parent-is "list") prev-sibling 0)
        ((parent-is "paragraph") ,'markdown-ts--list-indent-anchor 0)))))
 
 (defun markdown-ts-language-at (pos)
   'markdown)
+
+(defvar markdown-ts-mode-map
+  (let ((map (make-keymap)))
+    (define-key map (kbd "M-RET") #'markdown-ts-insert-list-item)
+    (define-key map (kbd "C-c C-j") #'markdown-ts-insert-list-item)
+    map))
 
 ;;;###autoload
 (define-derived-mode markdown-ts-mode prog-mode "Markdown"
