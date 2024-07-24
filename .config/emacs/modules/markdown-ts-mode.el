@@ -330,15 +330,15 @@ For example, this applies to URLs in inline links:
    'markdown
    '((html_block) @capture)))
 
-(defun markdown--find-list-item (pos)
-  (when-let ((node (treesit-node-at pos 'markdown))
-             (pred (lambda (node &optional _ _)
-                     (equal (treesit-node-type node) "list_item"))))
+(defun markdown--find-list-item (node)
+  (let ((pred (lambda (node &optional _ _)
+                (equal (treesit-node-type node) "list_item"))))
     (treesit-parent-until node pred t)))
 
 (defun markdown-ts-toggle-checkbox ()
   (interactive)
-  (when-let* ((list-item-node (markdown--find-list-item (point)))
+  (when-let* ((node-at-point (treesit-node-at pos 'markdown))
+              (list-item-node (markdown--find-list-item node-at-point))
               (query '((list_item (_) (_) @capture)))
               (captures (treesit-query-capture list-item-node query))
               (capture-node (cdr (assoc 'capture captures)))
@@ -571,12 +571,21 @@ For example, this applies to URLs in inline links:
      (shortcut_link
       ["[" "]"] @markdown-ts-punctuation-delimiter-face))))
 
+(defun markdown-ts--list-indent-anchor (node parent &rest _)
+  (when-let* ((node (or node (treesit-node-at (point))))
+              (list-node (markdown--find-list-item node))
+              (query '((list_item (_) @capture)))
+              (captures (treesit-query-capture list-node query))
+              (capture-node (cdr (assoc 'capture captures)))
+              (capture-text (treesit-node-text capture-node)))
+    (1+ (length capture-text))))
+
 (defvar markdown-ts-indent-rules
   (let ((offset 2))
     `((markdown
-       ((match nil "list" nil 0 0) parent-bol 2)
-       ((parent-is "list") prev-sibling 0)
-       ((match nil "paragraph" nil 0 nil) parent-bol 2)))))
+       ((match nil "list_item" nil 0 0) ,'markdown-ts--list-indent-anchor 0)
+       ;; ((parent-is "list") prev-sibling 0)
+       ((parent-is "paragraph") ,'markdown-ts--list-indent-anchor 0)))))
 
 (defun markdown-ts-language-at (pos)
   'markdown)
