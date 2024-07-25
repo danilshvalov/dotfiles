@@ -16,6 +16,7 @@
   (hscroll-margin 20)
   (scroll-conservatively 101)
   (scroll-preserve-screen-position t)
+  (split-width-threshold nil)
   (ring-bell-function 'ignore)
   (fill-column 80)
   (use-short-answers t)
@@ -490,8 +491,6 @@ expand immediately.  Common gateway for
      "\\`\\*Async-native-compile-log\\*\\'"
      "\\`\\*tramp/.*\\*\\'"
      "\\`\\*Eglot .*\\*\\'"))
-  ;; (consult-ripgrep-args
-  ;;  "rg --null --line-buffered --color=never --max-columns=1000 --path-separator / --smart-case --no-heading --with-filename --line-number --search-zip")
   (consult-async-split-style 'semicolon)
   (consult-preview-key nil)
   (consult-async-min-input 0)
@@ -499,10 +498,6 @@ expand immediately.  Common gateway for
   (consult-async-input-debounce 0.01)
   (consult-async-input-throttle 0.01)
   (consult-find-args "find . -not ( -path */__pycache__ -prune ) -not ( -path */.mypy_cache -prune )")
-  ;; (consult-fd-args '((if
-  ;;                        (executable-find "fdfind" 'remote)
-  ;;                        "fdfind" "fd")
-  ;;                    "--color=never --hidden --type=file --exclude=.mypy_cache"))
   :general
   (nvmap
     :keymaps 'override
@@ -801,7 +796,7 @@ Quit if no candidate is selected."
 (use-package evil-goggles
   :after evil
   :custom
-  (evil-goggles-duration 0.25)
+  (evil-goggles-duration 0.2)
   (evil-goggles-enable-paste nil)
   (evil-goggles-enable-change nil)
   (evil-goggles-enable-delete nil)
@@ -1242,7 +1237,10 @@ Quit if no candidate is selected."
            "C-e" 'embark-act)
   (general-define-key
    :keymaps 'embark-file-map
-   "C-v" 'find-file-other-window)
+   "C-v" (lambda (file)
+           (interactive "f")
+           (split-window-right)
+           (find-file-other-window file)))
   (:states '(normal visual insert)
            :keymaps 'vertico-map
            "C-v" "C-e C-v"
@@ -1261,6 +1259,17 @@ Quit if no candidate is selected."
 
   ;; (setq embark-default-action-overrides '((file . consult-fd)))
 
+  (add-to-list
+   'display-buffer-alist
+   '((lambda (buffer-or-name _)
+       (let ((buffer (get-buffer buffer-or-name)))
+         (with-current-buffer buffer
+           (equal major-mode 'embark-collect-mode))))
+     (display-buffer-reuse-window display-buffer-in-direction)
+     (direction . bottom)
+     (reusable-frames . visible)
+     (window-height . 0.2)))
+
   (setq embark-indicators
         '(embark--vertico-indicator
           embark-minimal-indicator
@@ -1273,7 +1282,11 @@ Quit if no candidate is selected."
   :config
   (setf (alist-get 'file embark-default-action-overrides
                    nil nil #'equal)
-        #'consult-find))
+        #'consult-find)
+  (setf (alist-get '(file . my-consult-recent-file)
+                   embark-default-action-overrides
+                   nil nil #'equal)
+        #'find-file))
 
 (use-builtin image-mode
   :commands image-mode
@@ -2277,10 +2290,10 @@ Move: _h_: left  _j_: down  _k_: up  _l_: right"
   (let ((offset yaml-indent-offset))
     `((yaml
        ;; ((match nil "block_mapping" nil 2 2) parent-bol ,offset)
-       ((query "(block_node (block_mapping)) @indent") parent-bol ,offset)
-       ((query "(block_node (block_sequence)) @indent") parent-bol 2)
-       ((parent-is "block_mapping") parent-bol 0)
-       ((parent-is "block_sequence") parent-bol 0)
+       ((query "(block_node (block_mapping)) @indent") parent ,offset)
+       ((query "(block_node (block_sequence)) @indent") parent 2)
+       ((parent-is "block_mapping") parent 0)
+       ((parent-is "block_sequence") parent 0)
        ;; ((query "(block_mapping_pair value: (block_node (block_mapping (block_mapping_pair) @indent)))") parent-bol ,offset)
        ;; ((parent-is "block_mapping_pair") parent-bol ,offset)
        ;; ((parent-is "list") prev-sibling 0)

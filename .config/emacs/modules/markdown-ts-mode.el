@@ -1,3 +1,5 @@
+;;; markdown-ts-mode.el --- Major mode for markdown -*- lexical-binding: t; -*-
+
 (require 'treesit)
 
 (declare-function treesit-parser-create "treesit.c")
@@ -316,7 +318,7 @@ For example, this applies to URLs in inline links:
    '((fenced_code_block
       (info_string
        (language) @language)
-      (code_fence_content) @content))))
+      (code_fence_content) @content) @code-block)))
 
 (defvar markdown-ts--latex-block-query
   (treesit-query-compile
@@ -330,30 +332,35 @@ For example, this applies to URLs in inline links:
    'markdown
    '((html_block) @capture)))
 
-(defun markdown--find-list-item (node)
-  (let ((pred (lambda (node &optional _ _)
-                (equal (treesit-node-type node) "list_item"))))
-    (treesit-parent-until node pred t)))
+(defvar markdown-ts--list-item-query
+  (treesit-query-compile
+   'markdown
+   '((list_item
+      (_) @list-marker
+      (_) @task-list-marker) @list-item)))
+
+(defun markdown-ts--find-list-item-predicate (node &optional _ _)
+  (equal (treesit-node-type node) "list_item"))
+
+(defun markdown-ts-find-list-item (node)
+  (when-let* ((pred #'markdown-ts--find-list-item-predicate)
+              (node (treesit-parent-until node pred t)))
+    (treesit-query-capture node markdown-ts--list-item-query)))
+
+(defun markdown-ts-list-item-at (pos)
+  (when-let ((node (treesit-node-at pos 'markdown)))
+    (markdown-ts-find-list-item node)))
 
 (defun markdown-ts-toggle-checkbox ()
   (interactive)
-  (when-let* ((node-at-point (treesit-node-at pos 'markdown))
-              (list-item-node (markdown--find-list-item node-at-point))
-              (query '((list_item (_) (_) @capture)))
-              (captures (treesit-query-capture list-item-node query))
-              (capture-node (cdr (assoc 'capture captures)))
-              (capture-type (treesit-node-type capture-node))
-              (capture-start (treesit-node-start capture-node))
-              (capture-end (treesit-node-end capture-node)))
-    (pcase capture-type
-      ("task_list_marker_unchecked" (replace-region-contents
-                                     capture-start
-                                     capture-end
-                                     (lambda () "[x]")))
-      ("task_list_marker_checked" (replace-region-contents
-                                   capture-start
-                                   capture-end
-                                   (lambda () "[ ]"))))))
+  (when-let* ((captures (markdown-ts-list-item-at (point)))
+              (node (cdr (assoc 'task-list-marker captures)))
+              (new-marker (pcase (treesit-node-type node)
+                            ("task_list_marker_unchecked" "[x]")
+                            ("task_list_marker_checked" "[ ]"))))
+    (replace-region-contents (treesit-node-start node)
+                             (treesit-node-end node)
+                             (lambda () new-marker))))
 
 (defun markdown-ts--language-mode-predicate (mode)
   (and mode
@@ -413,20 +420,30 @@ For example, this applies to URLs in inline links:
           (setq pos next)))
       (set-buffer-modified-p modified))))
 
+(defun markdown-ts--find-code-block-predicate (node &optional _ _)
+  (equal (treesit-node-type node) "fenced_code_block"))
+
+(defun markdown-ts-find-code-block (node)
+  (when-let* ((pred #'markdown-ts--find-code-block-predicate)
+              (node (treesit-parent-until node pred t)))
+    (treesit-query-capture node markdown-ts--code-block-query)))
+
+(defun markdown-ts-code-block-at (pos)
+  (when-let ((node (treesit-node-at pos 'markdown)))
+    (markdown-ts-find-code-block node)))
+
 (defun markdown-ts--fontify-code-block (node _ _ _ &rest _)
   (let ((start (treesit-node-start node))
         (end (treesit-node-end node)))
     (put-text-property start end 'face 'markdown-ts-markup-face))
 
-  (when-let* ((query markdown-ts--code-block-query)
-              (captures (treesit-query-capture node query))
+  (when-let* ((captures (markdown-ts-find-code-block node))
               (language-node (cdr (assoc 'language captures)))
-              (language (treesit-node-text language-node))
-              (mode (markdown-ts--get-language-mode language))
               (content-node (cdr (assoc 'content captures)))
-              (start (treesit-node-start content-node))
-              (end (treesit-node-end content-node)))
-    (markdown-ts--fontify-as-mode mode start end)))
+              (language (treesit-node-text language-node)))
+    (markdown-ts--fontify-as-mode (markdown-ts--get-language-mode language)
+                                  (treesit-node-start content-node)
+                                  (treesit-node-end content-node))))
 
 (defun markdown-ts--fontify-latex-block (node _ _ _ &rest _)
   (when-let* ((query markdown-ts--latex-block-query)
@@ -451,15 +468,18 @@ For example, this applies to URLs in inline links:
 
 (defun markdown-ts-insert-list-item ()
   (interactive)
-  (when-let* ((node-at-point (treesit-node-at (point)))
-              (list-item-node (markdown--find-list-item node-at-point))
-              (query '((list_item (_) @capture)))
-              (captures (treesit-query-capture list-item-node query))
-              (capture-node (cdr (assoc 'capture captures)))
+  (when-let* ((captures (markdown-ts-list-item-at (point)))
+              (list-item-node (cdr (assoc 'list-item captures)))
+              (capture-node (cdr (assoc 'list-marker captures)))
               (capture-type (treesit-node-type capture-node))
               (capture-text (treesit-node-text capture-node))
-              (list-item-end (treesit-node-end list-item-node)))
+              (list-item-start (treesit-node-start list-item-node))
+              (list-item-end (treesit-node-end list-item-node))
+              (indent-size (save-excursion
+                             (goto-char list-item-start)
+                             (- list-item-start (pos-bol)))))
     (goto-char list-item-end)
+    (insert (make-string indent-size ? ))
     (pcase capture-type
       ((or "list_marker_minus"
            "list_marker_plus"
@@ -595,12 +615,9 @@ For example, this applies to URLs in inline links:
       ["[" "]"] @markdown-ts-punctuation-delimiter-face))))
 
 (defun markdown-ts--list-indent-anchor (node parent &rest _)
-  (when-let* ((node (or node (treesit-node-at (point))))
-              (list-node (markdown--find-list-item node))
-              (query '((list_item (_) @capture)))
-              (captures (treesit-query-capture list-node query))
-              (capture-node (cdr (assoc 'capture captures))))
-    (treesit-node-end capture-node)))
+  (when-let* ((captures (markdown-ts-list-item-at (point)))
+              (node (cdr (assoc 'list-marker captures))))
+    (treesit-node-end node)))
 
 (defvar markdown-ts-indent-rules
   (let ((offset 2))
@@ -608,8 +625,16 @@ For example, this applies to URLs in inline links:
        ((match nil "list_item" nil 0 0) ,'markdown-ts--list-indent-anchor 0)
        ((parent-is "paragraph") ,'markdown-ts--list-indent-anchor 0)))))
 
+(defun markdown-ts--language-at-from-code-block (pos)
+  (when-let ((captures (markdown-ts-code-block-at pos))
+             (node (cdr (assoc 'language captures)))
+             (language (treesit-node-text node)))
+    (intern language)))
+
 (defun markdown-ts-language-at (pos)
-  'markdown)
+  (or
+   (markdown-ts--language-at-from-code-block pos)
+   'markdown))
 
 (defvar markdown-ts-mode-map
   (let ((map (make-keymap)))
