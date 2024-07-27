@@ -979,9 +979,17 @@ Quit if no candidate is selected."
   (defun +dired-open-here ()
     (interactive)
     (dired (project-root-current)))
+  (defun my-evil-dired-change ()
+    (interactive)
+    (dired-toggle-read-only)
+    (call-interactively 'evil-change))
+  (defun my-dired-setup ()
+    (nmap dired-mode-map
+      "c" 'my-evil-dired-change))
   :hook
   (dired-mode . auto-revert-mode)
   (dired-mode . dired-hide-details-mode)
+  (dired-mode . my-dired-setup)
   :general
   (nmap
     :keymaps 'override
