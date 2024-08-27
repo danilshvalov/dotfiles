@@ -81,14 +81,11 @@
 
 (defun open-finder (&optional path)
   (interactive "P")
-  (let*
-      ((path (or path "."))
-       (path
-        (cond
-         ((listp path)
-          (string-join path " "))
-         (t
-          path)))
+  (let* ((path (or path "."))
+         (path
+          (cond
+           ((listp path) (string-join path " "))
+           (t path)))
        (command (list "open" path)))
     (call-process-shell-command (string-join command " "))))
 

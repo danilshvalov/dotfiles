@@ -165,13 +165,13 @@ by each section class that has a deletable thing.")
           (oset obj stdout
                 (pcase parse
                   ('json (goto-char (point-min))
-                         (json-read))
+                         (json-parse-buffer :object-type 'alist))
                   ('json-stream
                    (goto-char (point-min))
                    (let ((json-object-list))
                      (while (not (eobp))
                        (condition-case nil
-                           (push (json-read) json-object-list)
+                           (push (json-parse-buffer :object-type 'alist) json-object-list)
                          (end-of-file (goto-char (point-max)))))
                      (nreverse json-object-list)))
                   (_ (string-trim (buffer-string)))))))
@@ -296,6 +296,7 @@ process object. Optional argument PARSE behaves as for
   "P" 'arcit-push
   "r" 'arcit-rebase
   "z" 'arcit-stash
+  "S" 'arcit-submit
 
   ;; The top-level transient is bound everywhere. It displays some
   ;; buffer local commands in specific modes, but unfortunately this
@@ -512,7 +513,7 @@ current HEAD."
    ("h" "Log HEAD" (lambda () (interactive) (arcit--display-log "HEAD")))
    ("b" "Log branch" (lambda () (interactive) (arcit--display-log (arcit-read-branch "Log branch: "))))
    ("o" "Log other" (lambda () (interactive)
-                      (arcit--display-log (read-string "Show log of: "))))
+                      (arcit--display-log (arcit-read-branch "Show log of: "))))
    ("t" "Log trunk" (lambda () (interactive) (arcit--display-log "trunk")))])
 
 (defun arcit-log-buffer-file (follow)
@@ -699,6 +700,24 @@ already been staged."
          (oref proc stdout))
         (insert "\n")))))
 
+;; arc submit
+
+(defun arcit-call-submit ()
+  (interactive)
+  (with-editor
+    (arcit-async-arc (append '("submit") (transient-args 'arcit-submit))
+                     nil (lambda (_) (arcit--refresh-status (arcit--get-status-buffer))))))
+
+(transient-define-prefix arcit-submit ()
+  "Invoke `arc submit' interactively."
+  ["Options:"
+   ("-A" "automatically publish, automerge and remove review requirement" "--auto")
+   ("-M" "enable automatic merging" "--merge")
+   ("-ne" "use the last commit message without launching an editor" "--no-edit")
+   ("-nr" "disable code review check" "--no-code-review")]
+  ["Submit:"
+   ("s" "submit changes for review" arcit-call-submit)])
+
 ;; Status display
 
 (defvar-keymap arcit-status-mode-map
@@ -768,7 +787,8 @@ already been staged."
    ("F" "       Pull" arcit-pull :transient t)
    ("P" "       Push" arcit-push)
    ("r" "       Rebase" arcit-rebase :transient t)
-   ("z" "       Stash" arcit-stash)]
+   ("z" "       Stash" arcit-stash)
+   ("S" "       Submit" arcit-submit :transient t)]
 
   ["Applying changes"
    :if-mode arcit-status-mode
@@ -1007,8 +1027,8 @@ if SHOW-STATUS is set."
   (browse-url (concat "https://a.yandex-team.ru/review/" (oref obj pr-id))))
 
 (cl-defmethod arcit-copy-section-thing ((obj arcit-status-pr-section))
-  (kill-new (format "REVIEW: %s" (oref obj pr-id)))
-  (message "Copied ID of pull-request"))
+  (kill-new (format "https://a.yandex-team.ru/review/%s/details" (oref obj pr-id)))
+  (message "Copied URL of pull-request"))
 
 (defun arcit--parse-file-diffs (proc)
   "Parses an `arc diff' output and returns an alist of the files

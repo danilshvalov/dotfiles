@@ -58,7 +58,23 @@
    (arc--call-process "arc" "merge-base" "HEAD" "trunk")))
 
 (defun arc--diff-trunk ()
-    (arc--call-process "arc" "diff" (arc--merge-base-trunk) "HEAD" "--no-color"))
+  (arc--call-process "arc" "diff" (arc--merge-base-trunk) "HEAD" "--no-color"))
+
+(defun arc--diff-head ()
+  (arc--call-process "arc" "diff" "HEAD" "--no-color"))
+
+(defun arc-diff-head ()
+  (interactive)
+  (let* ((diff-content (arc--diff-head))
+         (buffer (get-buffer-create "arc-diff-head")))
+    (with-current-buffer buffer
+      (read-only-mode -1)
+      (erase-buffer)
+      (insert diff-content)
+      (goto-char (point-min))
+      (diff-ts-mode)
+      (read-only-mode)
+      (set-window-buffer nil buffer))))
 
 (defun arc-diff-trunk ()
   (interactive)

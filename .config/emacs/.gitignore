@@ -24,4 +24,8 @@ tabsession.el
 tramp
 projects
 
+*.elc
+
+modules/arcit.el
+
 .DS_Store

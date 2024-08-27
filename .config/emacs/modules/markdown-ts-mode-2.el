@@ -220,10 +220,37 @@ mode to use is `tuareg-mode'."
               (cells (markdown-ts-table-row-cells-at node)))
     (car cells)))
 
+(defun markdown-ts-table-header-cells-at (pos)
+  (when-let* ((node (markdown-ts-table-at pos))
+              (query '((pipe_table_header
+                        (pipe_table_cell) @capture)))
+              (captures (treesit-query-capture node query))
+              (captures (mapcar (lambda (entry) (cdr entry))
+                                captures)))
+    captures))
+
 (defun markdown-ts--table-previous-row-cell (node)
   (when-let* ((node (markdown-ts-table-previous-row node))
               (cells (markdown-ts-table-row-cells-at node)))
     (car (last cells))))
+
+(defun markdown-ts-table-cell-count (pos)
+  (when-let* ((cells (markdown-ts-table-header-cells-at pos)))
+    (length cells)))
+
+(defun markdown-ts-table-last-row (pos)
+  (when-let* ((rows (markdown-ts-table-rows-at pos)))
+    (car (last rows))))
+
+(defun markdown-ts-table-insert-row (pos)
+  (when-let* ((row-node (markdown-ts-table-row-at pos))
+              (cells-count (markdown-ts-table-cell-count pos))
+              (blank-row (replace-regexp-in-string "[^|]" " "
+                                                   (treesit-node-text row-node))))
+    (goto-char (1+ (treesit-node-end row-node)))
+    (save-excursion
+      (insert blank-row "\n"))
+    (goto-char (+ 2 (treesit-node-end row-node)))))
 
 (defun markdown-ts-table-next-cell ()
   (interactive)

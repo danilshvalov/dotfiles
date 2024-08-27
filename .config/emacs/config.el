@@ -33,9 +33,9 @@
   (warning-minimum-level :emergency)
   (initial-major-mode 'text-mode)
   (initial-scratch-message "")
+  (enable-recursive-minibuffers t)
   (read-process-output-max (* 1024 1024))
   :hook
-  (before-save . delete-trailing-whitespace)
   ((prog-mode text-mode) . display-fill-column-indicator-mode)
   :preface
   ;; remove image resize delay
@@ -79,18 +79,12 @@
             (message "Path \"%s\" is copied to the clipboard" path))))
 
   (nvmap :prefix "SPC s" "f" 'show-file-name "d" 'show-datetime)
-
-  :init
-  ;; Do not allow the cursor in the minibuffer prompt
-  (setq minibuffer-prompt-properties
-        '(read-only t cursor-intangible t face minibuffer-prompt))
-  (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
-
-  ;; Enable recursive minibuffers
-  (setq enable-recursive-minibuffers t)
   :config
   (setq-default buffer-file-coding-system 'utf-8-unix)
   (setq buffer-file-coding-system 'utf-8-unix)
+
+  (when (display-graphic-p)
+    (setopt confirm-kill-emacs #'y-or-n-p))
 
   (add-hook 'window-configuration-change-hook
             (lambda ()
@@ -100,6 +94,7 @@
                                          standard-display-table)))
                   (set-display-table-slot display-table 'vertical-border ?│)))))
 
+  ;; enable mouse in terminal
   (xterm-mouse-mode)
 
   (menu-bar-mode -1)
@@ -108,7 +103,6 @@
     (scroll-bar-mode -1))
   (global-whitespace-mode +1)
   (savehist-mode)
-  ;; (global-hl-line-mode)
   (advice-add 'yes-or-no-p :override #'y-or-n-p))
 
 (use-package doom-themes
@@ -153,33 +147,10 @@
     `(evil-goggles-default-face :foreground ,(doom-color 'bg) :background ,(doom-color 'yellow))
     `(flymake-end-of-line-diagnostics-face :height 'unspecified :box 'unspecified)
     `(vertical-border :foreground ,(doom-color 'yellow) :background 'unspecified)
-    `(eglot-diagnostic-tag-unnecessary-face :underline t))
-
-  (add-hook 'image-mode-hook
-            (lambda ()
-              (face-remap-add-relative 'default '(:background "white"))
-              (face-remap-add-relative 'cursor '(:background "white")))))
+    `(eglot-diagnostic-tag-unnecessary-face :underline t)))
 
 (defun concat-lines (&rest args)
   (string-join args "\n"))
-
-(use-builtin project
-  :requires consult
-  :custom
-  (project-switch-commands '((consult-find "Find file")
-                             (dired-project-root "Dired")))
-  :general
-  (:keymaps 'project-prefix-map
-            "f" 'consult-find
-            "d" 'dired-project-root)
-  (nmap
-    :prefix "SPC p"
-    "s" 'project-switch-project
-    "a" 'my-project-add)
-
-  :init
-
-  )
 
 (defun dired-project-root ()
   (interactive)
@@ -711,7 +682,7 @@ Quit if no candidate is selected."
   (setq evil-want-C-u-scroll t)
   (setq evil-split-window-below t)
   (setq evil-vsplit-window-right t)
-  (setq evil-cross-lines t)
+  (setq evil-want-fine-undo t)
 
   :general
   (nmap
@@ -724,8 +695,6 @@ Quit if no candidate is selected."
   :config
   (evil-mode)
 
-  (defalias 'forward-evil-word 'forward-evil-symbol)
-
   (evil-define-command my-evil-edit-arcadia (file)
     :repeat nil
     (interactive
@@ -733,9 +702,6 @@ Quit if no candidate is selected."
     (evil-edit file))
 
   (evil-ex-define-cmd "ea" 'my-evil-edit-arcadia)
-
-  (when (display-graphic-p)
-    (setopt confirm-kill-emacs #'y-or-n-p))
 
   (when (display-graphic-p)
     (nvmap
@@ -1000,14 +966,14 @@ Quit if no candidate is selected."
     "E" '+dired-open-here))
 
 (use-package auctex
-  :ensure (auctex :pre-build (("./autogen.sh")
-                              ("./configure"
-                               "--without-texmf-dir"
-                               "--with-packagelispdir=./"
-                               "--with-packagedatadir=./")
-                              ("make"))
-                  :build (:not elpaca--compile-info) ;; Make will take care of this step
-                  :files ("*.el" "doc/*.info*" "etc" "images" "latex" "style"))
+  ;; :ensure (auctex :pre-build (("./autogen.sh")
+  ;;                             ("./configure"
+  ;;                              "--without-texmf-dir"
+  ;;                              "--with-packagelispdir=./"
+  ;;                              "--with-packagedatadir=./")
+  ;;                             ("make"))
+  ;;                 :build (:not elpaca--compile-info) ;; Make will take care of this step
+  ;;                 :files ("*.el" "doc/*.info*" "etc" "images" "latex" "style"))
   ;; :commands (LaTeX-mode latex-mode)
   :custom
   (LaTeX-item-indent 0)
@@ -1043,9 +1009,6 @@ Quit if no candidate is selected."
             (setq-local comment-add 0)
             (face-remap-add-relative 'font-lock-type-face '(:inherit default))))
 
-                                        ; (use-package cmake-mode
-                                        ;   :commands cmake-mode)
-
 (add-to-list! 'auto-mode-alist
               '("\\.latexmkrc\\'" . perl-mode)
               '("\\.h\\'" . c++-ts-mode)
@@ -1055,53 +1018,11 @@ Quit if no candidate is selected."
               '("\\.tsx\\'" . tsx-ts-mode)
               '("\\.puml\\'" . plantuml-mode)
               '("skhdrc\\'" . conf-mode)
-              '("CMakeLists.txt\\'" . cmake-ts-mode)
-              '(".arcconfig\\'" . conf-mode))
+              '("\\(CMakeLists.txt\\|\\.cmake\\)\\'" . cmake-ts-mode)
+              '(".arcconfig\\'" . conf-mode)
+              '("\\.lua\\'" . lua-ts-mode))
 
 (setq-default css-indent-offset 2)
-
-;; (use-package markdown-mode
-;;   :requires edit-indirect
-;;   :commands markdown-mode
-;;   :hook
-;;   (markdown-mode . auto-fill-mode)
-;;   (markdown-mode . (lambda () (setq-local tab-width 2)))
-;;   (markdown-mode . markdown-toggle-markup-hiding)
-;;   :custom
-;;   (markdown-fontify-code-blocks-natively t)
-;;   (markdown-list-item-bullets '("—"))
-;;   (markdown-code-lang-modes
-;;    '(("ocaml" . tuareg-mode)
-;;      ("elisp" . emacs-lisp-mode)
-;;      ("ditaa" . artist-mode)
-;;      ("asymptote" . asy-mode)
-;;      ("dot" . fundamental-mode)
-;;      ("sqlite" . sql-mode)
-;;      ("calc" . fundamental-mode)
-;;      ("C" . c-ts-mode)
-;;      ("cpp" . c++-ts-mode)
-;;      ("C++" . c++-ts-mode)
-;;      ("html" . mhtml-mode)
-;;      ;; ("python" . python-ts-mode)
-;;      ("screen" . shell-script-mode)
-;;      ("shell" . sh-mode)
-;;      ("bash" . sh-mode)))
-;;   :general
-;;   (general-define-key
-;;    :keymaps 'markdown-mode-map
-;;    "C-c C-c" 'markdown-toggle-gfm-checkbox)
-;;   :config
-;;   (defun markdown-fontify-tables (last)
-;;     ;; (when (re-search-forward "|" last t)
-;;     ;;   (when (markdown-table-at-point-p)
-;;     ;;     (font-lock-append-text-property
-;;     ;;      (line-beginning-position) (min (1+ (line-end-position)) (point-max))
-;;     ;;      'face 'markdown-table-face))
-;;     ;;   (forward-line 1)
-;;     ;;   t)
-;;     )
-
-;;   (setq markdown-regex-gfm-checkbox " \\(\\[[xX-]\\]\\) "))
 
 (use-package ialign
   :commands ialign
@@ -1175,43 +1096,6 @@ Quit if no candidate is selected."
   :general
   (nvmap "SPC h" `(,(general-simulate-key "C-h") :wk "+help")))
 
-;; (use-package markdown-preview-mode
-;;   :commands markdown-preview-mode
-;;   :config
-;;   (setq markdown-preview-stylesheets
-;;         (list
-;;          "https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/2.9.0/github-markdown.min.css"
-;;          "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"
-;;          "
-;;   <style>
-;;    .markdown-body {
-;;      box-sizing: border-box;
-;;      min-width: 200px;
-;;      max-width: 980px;
-;;      margin: 0 auto;
-;;      padding: 45px;
-;;    }
-
-;;    @media (max-width: 767px) {
-;;      .markdown-body {
-;;        padding: 15px;
-;;      }
-;;    }
-;;   </style>
-;; "))
-;;   (setq markdown-preview-javascript
-;;         (list
-;;          "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"
-;;          "
-;;   <script>
-;;    $(document).on('mdContentChange', function() {
-;;      $('pre code').each(function(i, block) {
-;;        hljs.highlightBlock(block);
-;;      });
-;;    });
-;;   </script>
-;; ")))
-
 (use-package treesit-auto
   :demand t
   :config
@@ -1230,8 +1114,10 @@ Quit if no candidate is selected."
                                      "tree-sitter-markdown-inline/src"))
                 '(markdown . ("https://github.com/tree-sitter-grammars/tree-sitter-markdown" nil "tree-sitter-markdown/src"))
                 '(gitcommit . ("https://github.com/gbprod/tree-sitter-gitcommit"))
+                '(git-rebase . ("https://github.com/the-mikedavis/tree-sitter-git-rebase"))
                 '(diff . ("https://github.com/the-mikedavis/tree-sitter-diff"))
-                '(sql . ("https://github.com/DerekStride/tree-sitter-sql")))
+                '(sql . ("https://github.com/DerekStride/tree-sitter-sql"))
+                '(lua . ("https://github.com/tree-sitter-grammars/tree-sitter-lua")))
 
   (add-to-list 'treesit-auto-recipe-list my-sql-tsauto-config)
 
@@ -1564,47 +1450,13 @@ Note that these rules can't contain anchored rules themselves."
                font-lock-constant-face)
              prepend)))))))
 
-(use-package lua-mode
-  :mode "\\.lua\\'")
-
-;; (use-builtin tramp
-;;   :defer t
-;;   :config
-;;   (add-to-list 'tramp-remote-path "/home/linuxbrew/.linuxbrew/bin")
-
-;;   (setopt
-;;    explicit-shell-file-name "/bin/zsh"
-;;    tramp-encoding-shell "/bin/zsh"
-;;    tramp-verbose 0
-;;    tramp-histfile-override nil))
+;; (use-package lua-mode
+;;   :mode "\\.lua\\'")
 
 (use-builtin calendar
   :defer t
   :custom
   (calendar-minimum-window-height 10))
-
-;; (use-package smartparens
-;;   :demand t
-;;   :general
-;;   (imap "C-M-i" 'sp-up-sexp)
-;;   :config
-;;   (smartparens-global-mode t)
-
-;;   (dolist (prefix '("\\Big" "\\Bigg" "\\big" "\\bigg"))
-;;     (dolist (suffixes '(("(" . ")") ("{" . "}") ("[" . "]") ("|" . "|")))
-;;       (sp-local-pair 'latex-mode
-;;                      (concat prefix (car suffixes))
-;;                      (concat prefix (cdr suffixes)))))
-
-;;   (sp-with-modes '(tex-mode
-;;                    plain-tex-mode
-;;                    latex-mode
-;;                    LaTeX-mode)
-;;     (sp-local-pair "\\{" "\\}")
-;;     (sp-local-pair "\\[" "\\]"))
-
-;;   (sp-with-modes 'org-mode
-;;     (sp-local-pair "~" "~")))
 
 (use-builtin treesit
   :custom
@@ -1614,7 +1466,99 @@ Note that these rules can't contain anchored rules themselves."
      (c-mode . c-ts-mode)
      (python-mode . python-ts-mode)
      (diff-mode . diff-ts-mode)
-     (sql-mode . sql-ts-mode))))
+     (sql-mode . sql-ts-mode)))
+  :config
+  (defun treesit--install-language-grammar-1
+    (out-dir lang url &optional revision source-dir cc c++)
+  "Install and compile a tree-sitter language grammar library.
+
+OUT-DIR is the directory to put the compiled library file.  If it
+is nil, the \"tree-sitter\" directory under user's Emacs
+configuration directory is used (and automatically created if it
+does not exist).
+
+For LANG, URL, REVISION, SOURCE-DIR, GRAMMAR-DIR, CC, C++, see
+`treesit-language-source-alist'.  If anything goes wrong, this
+function signals an error."
+  (let* ((lang (symbol-name lang))
+         (maybe-repo-dir (expand-file-name url))
+         (url-is-dir (file-accessible-directory-p maybe-repo-dir))
+         (default-directory (make-temp-file "treesit-workdir" t))
+         (workdir (if url-is-dir
+                      maybe-repo-dir
+                    (expand-file-name "repo")))
+         (source-dir (expand-file-name (or source-dir "src") workdir))
+         (cc (or cc (seq-find #'executable-find '("cc" "gcc" "c99"))
+                 ;; If no C compiler found, just use cc and let
+                 ;; `call-process' signal the error.
+                 "cc"))
+         (c++ (or c++ (seq-find #'executable-find '("c++" "g++"))
+                  "c++"))
+         (npm (seq-find #'executable-find '("npm")))
+         (soext (or (car dynamic-library-suffixes)
+                    (signal 'treesit-error '("Emacs cannot figure out the file extension for dynamic libraries for this system, because `dynamic-library-suffixes' is nil"))))
+         (out-dir (or (and out-dir (expand-file-name out-dir))
+                      (locate-user-emacs-file "tree-sitter")))
+         (lib-name (concat "libtree-sitter-" lang soext)))
+    (unwind-protect
+        (with-temp-buffer
+          (if url-is-dir
+              (when revision
+                (treesit--git-checkout-branch workdir revision))
+            (treesit--git-clone-repo url revision workdir))
+          (setq default-directory workdir)
+          (message "Generating sources")
+          (treesit--call-process-signal npm nil t nil "run" "build")
+          ;; We need to go into the source directory because some
+          ;; header files use relative path (#include "../xxx").
+          ;; cd "${sourcedir}"
+          (setq default-directory source-dir)
+          (message "Compiling library")
+          ;; cc -fPIC -c -I. parser.c
+          (treesit--call-process-signal
+           cc nil t nil "-fPIC" "-c" "-I." "parser.c")
+          ;; cc -fPIC -c -I. scanner.c
+          (when (file-exists-p "scanner.c")
+            (treesit--call-process-signal
+             cc nil t nil "-fPIC" "-c" "-I." "scanner.c"))
+          ;; c++ -fPIC -I. -c scanner.cc
+          (when (file-exists-p "scanner.cc")
+            (treesit--call-process-signal
+             c++ nil t nil "-fPIC" "-c" "-I." "scanner.cc"))
+          ;; cc/c++ -fPIC -shared *.o -o "libtree-sitter-${lang}.${soext}"
+          (apply #'treesit--call-process-signal
+                 (if (file-exists-p "scanner.cc") c++ cc)
+                 nil t nil
+                 (if (eq system-type 'cygwin)
+                     `("-shared" "-Wl,-dynamicbase"
+                       ,@(directory-files
+                          default-directory nil
+                          (rx bos (+ anychar) ".o" eos))
+                       "-o" ,lib-name)
+                   `("-fPIC" "-shared"
+                     ,@(directory-files
+                        default-directory nil
+                        (rx bos (+ anychar) ".o" eos))
+                     "-o" ,lib-name)))
+          ;; Copy out.
+          (unless (file-exists-p out-dir)
+            (make-directory out-dir t))
+          (let* ((library-fname (expand-file-name lib-name out-dir))
+                 (old-fname (concat library-fname ".old")))
+            ;; Rename the existing shared library, if any, then
+            ;; install the new one, and try deleting the old one.
+            ;; This is for Windows systems, where we cannot simply
+            ;; overwrite a DLL that is being used.
+            (if (file-exists-p library-fname)
+                (rename-file library-fname old-fname t))
+            (copy-file lib-name (file-name-as-directory out-dir) t t)
+            ;; Ignore errors, in case the old version is still used.
+            (ignore-errors (delete-file old-fname)))
+          (message "Library installed to %s/%s" out-dir lib-name))
+      ;; Remove workdir if it's not a repo owned by user and we
+      ;; managed to create it in the first place.
+      (when (and (not url-is-dir) (file-exists-p workdir))
+        (delete-directory workdir t))))))
 
 (use-package rainbow-mode
   :general
@@ -1709,60 +1653,6 @@ Note that these rules can't contain anchored rules themselves."
 (use-package nginx-mode
   :defer t)
 
-;; (defun markdown-ts-query-blocks ()
-;;   (let* ((parser (treesit-parser-create 'markdown))
-;;          (root (treesit-parser-root-node parser))
-;;          (query '((fenced_code_block
-;;                    (info_string) @lang
-;;                    (code_fence_content) @content)))
-;;          (captures (treesit-query-capture root query))
-;;          (i 0))
-;;     (while (< i (length captures))
-;;       (let* ((lang-node (cdr (nth i captures)))
-;;              (lang (treesit-node-text lang-node))
-;;              (lang-mode (if lang (markdown-get-lang-mode lang)
-;;                           markdown-fontify-code-block-default-mode))
-;;              (content-node (cdr (nth (1+ i) captures)))
-;;              (content (treesit-node-text content-node))
-;;              (start (treesit-node-start content-node))
-;;              (end (treesit-node-end content-node)))
-
-;;         (let ((string content)
-;;               (modified (buffer-modified-p))
-;;               (markdown-buffer (current-buffer))
-;;               pos next)
-;;           (remove-text-properties start end '(face nil))
-;;           (with-current-buffer
-;;               (get-buffer-create
-;;                (concat " markdown-code-fontification:" (symbol-name lang-mode)))
-;;             ;; Make sure that modification hooks are not inhibited in
-;;             ;; the org-src-fontification buffer in case we're called
-;;             ;; from `jit-lock-function' (Bug#25132).
-;;             (let ((inhibit-modification-hooks nil))
-;;               (delete-region (point-min) (point-max))
-;;               (insert string " ")) ;; so there's a final property change
-;;             (unless (eq major-mode lang-mode) (funcall lang-mode))
-;;             (font-lock-ensure)
-;;             (setq pos (point-min))
-;;             (while (setq next (next-single-property-change pos 'face))
-;;               (let ((val (get-text-property pos 'face)))
-;;                 (when val
-;;                   (put-text-property
-;;                    (+ start (1- pos)) (1- (+ start next))
-;;                    val markdown-buffer)))
-;;               (setq pos next)))
-;;           (add-text-properties
-;;            start end
-;;            '(font-lock-fontified t fontified t font-lock-multiline t))
-;;           (set-buffer-modified-p modified))
-;;         )
-;;       (setq i (+ i 2)))
-
-;;     )
-;;   ;; (treesit-update-ranges)
-;;   )
-
-
 (defmacro markdown-ts-capture (parser-language parser-mode)
   `(lambda (beg end)
      (let* ((parser (treesit-parser-create 'markdown))
@@ -1814,41 +1704,12 @@ Note that these rules can't contain anchored rules themselves."
   :config
   (add-hook 'mhtml-mode-hook 'web-mode))
 
-(use-package git-commit
-  :defer t)
-
-;; (imap "<backtab>" "C-d")
 (advice-add 'indent-for-tab-command
             :around
             (lambda (fun &rest args)
               (if (eq evil-state 'insert)
                   (tab-to-tab-stop)
                 (apply fun args))))
-
-(use-package clipetty
-  :demand t
-  :config
-  ;; (defun clipetty--emit (string)
-  ;;   "Emit STRING, optionally wrapped in a DCS, to an appropriate tty."
-  ;;   (let ((tmux    (getenv "TMUX" (selected-frame)))
-  ;;         (term    (getenv "TERM" (selected-frame)))
-  ;;         (ssh-tty (getenv "SSH_TTY" (selected-frame))))
-  ;;     (if (<= (length string) clipetty--max-cut)
-  ;;         (write-region
-  ;;          string
-  ;;          ;; (clipetty--dcs-wrap string tmux term ssh-tty)
-  ;;          nil
-  ;;          "/dev/fd/2"
-  ;;          nil
-  ;;          0)
-  ;;       (message "Selection too long to send to terminal %d" (length string))
-  ;;       (sit-for 1))))
-  (global-clipetty-mode))
-
-;; (use-package with-editor
-;;   :demand t
-;;   :config
-;;   (add-hook 'vterm-mode-hook 'with-editor-export-editor))
 
 (define-advice server-eval-and-print (:filter-args (args) no-print)
   (list (car args) nil))
@@ -1877,6 +1738,7 @@ Note that these rules can't contain anchored rules themselves."
   :commands markdown-ts-mode)
 
 (use-builtin markdown-ts-mode
+  :ensure (markdown-ts-mode :repo "~/projects/markdown-ts-mode" :main "markdown-ts-mode.el")
   :mode "\\.md\\'"
   :custom
   (markdown-fontify-code-blocks-natively t)
@@ -1929,8 +1791,6 @@ Note that these rules can't contain anchored rules themselves."
             (cd (process-get (frame-parameter nil 'client) 'server-client-directory))
             (dired (project-root-current))))
 
-(require 'transient)
-
 (defun yank--file-name (format-fn &rest args)
   (let ((filename (apply format-fn (buffer-file-name) args)))
     (kill-new filename)
@@ -1963,7 +1823,6 @@ Note that these rules can't contain anchored rules themselves."
           (interactive)
           (yank--file-name (lambda (f) f)) :wk "Path")))
 
-
 (use-package indent-bars
   :ensure (indent-bars :host github :repo "jdtsmith/indent-bars")
   :custom
@@ -1971,8 +1830,6 @@ Note that these rules can't contain anchored rules themselves."
   (indent-bars-color '(shadow :face-bg nil :blend 0.5))
   (indent-bars-prefer-character t)
   :hook ((prog-mode text-mode) . indent-bars-mode))
-
-;; (modify-syntax-entry ?_ "w")
 
 (global-auto-revert-mode)
 
@@ -1990,7 +1847,20 @@ to directory DIR."
 (use-package git-commit-ts-mode
   :ensure (git-commit-ts-mode :repo "~/projects/git-commit-ts-mode")
   ;; :ensure (git-commit-ts-mode :host github :repo "danilshvalov/git-commit-ts-mode")
-  :mode "\\COMMIT_EDITMSG\\'")
+  :mode "\\COMMIT_EDITMSG\\'"
+  :config
+  (when (daemonp)
+    (nmap git-commit-ts-mode-map
+      "C-c C-c" 'server-edit)))
+
+(use-package git-rebase-ts-mode
+  :ensure nil
+  :mode "git-rebase-todo\\'"
+  ;; :ensure (git-commit-ts-mode :host github :repo "danilshvalov/git-commit-ts-mode")
+  :config
+  (when (daemonp)
+    (nmap git-commit-ts-mode-map
+      "C-c C-c" 'server-edit)))
 
 (use-builtin diff-ts-mode
   :mode "\\.diff\\'"
@@ -2230,7 +2100,6 @@ LANG is a string, and the returned major mode is a symbol."
   :ensure (eglot-booster :host github :repo "jdtsmith/eglot-booster")
   :after eglot
   :config (eglot-booster-mode))
-
 
 (use-package hydra
   :general
