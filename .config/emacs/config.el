@@ -134,6 +134,7 @@
     `(font-lock-punctuation-face :foreground ,(doom-color 'punctuations))
     `(tab-bar-tab :background ,(doom-color 'region))
     `(show-paren-mismatch :foreground ,(doom-color 'red) :background 'unspecified)
+    `(jinx-misspelled :underline `(:style wave :color ,(doom-color 'yellow)))
     `(markdown-ts-heading-1-face :foreground ,(doom-color 'blue))
     `(markdown-ts-heading-2-face :foreground ,(doom-color 'yellow))
     `(markdown-ts-heading-3-face :foreground ,(doom-color 'green))
@@ -186,7 +187,7 @@ DIR must include a .project file to be considered a project."
  `(variable-pitch ((t (:inherit (default)))))
  `(variable-pitch-text ((t (:height 1.0)))))
 
-(add-hook 'c++-ts-mode-hook (lambda () (setq c-ts-mode-indent-offset 2)))
+(add-hook 'c++-ts-mode-hook (lambda () (setq c-ts-mode-indent-offset 4)))
 
 (defun c++-ts-mode-indent-style ()
   `((c-ts-mode--for-each-tail-body-matcher prev-line c-ts-mode-indent-offset)
@@ -296,7 +297,7 @@ DIR must include a .project file to be considered a project."
 (use-package highlight-doxygen
   :hook (c++-ts-mode . highlight-doxygen-mode))
 
-(use-package adaptive-wrap
+(use-builtin adaptive-wrap
   :hook
   ((prog-mode text-mode vterm-mode) . visual-line-mode)
   (visual-line-mode . +adaptive-wrap-prefix-mode)
@@ -304,10 +305,11 @@ DIR must include a .project file to be considered a project."
   :init
   (defun +adaptive-wrap-prefix-mode ()
     "Toggle `visual-line-mode' and `adaptive-wrap-prefix-mode' simultaneously."
-    (unless
-        (or (equal major-mode 'org-mode) (equal major-mode 'org-journal-mode))
-      (adaptive-wrap-prefix-mode
-       (if visual-line-mode 1 -1))))
+    (when (fboundp 'adaptive-wrap-prefix-mode)
+      (unless
+          (or (equal major-mode 'org-mode) (equal major-mode 'org-journal-mode))
+        (adaptive-wrap-prefix-mode
+         (if visual-line-mode 1 -1)))))
 
   (defun +disable-visual-line-mode ()
     (visual-line-mode -1)
@@ -349,7 +351,9 @@ DIR must include a .project file to be considered a project."
 (use-builtin electric
   :config
   (electric-indent-mode +1)
-  (electric-pair-mode t))
+  (electric-pair-mode t)
+
+  (add-to-list 'electric-pair-pairs (cons ?« ?»)))
 
 (use-package yasnippet
   :hook
@@ -387,9 +391,6 @@ expand immediately.  Common gateway for
   (nvmap
     :keymaps 'override
     "s" #'avy-goto-char-2))
-
-(use-package jsonrpc
-  :defer t)
 
 (use-builtin eglot
   :defer t
@@ -468,7 +469,7 @@ expand immediately.  Common gateway for
   (consult-async-refresh-delay 0.01)
   (consult-async-input-debounce 0.01)
   (consult-async-input-throttle 0.01)
-  (consult-find-args "find . -not ( -path */__pycache__ -prune ) -not ( -path */.mypy_cache -prune )")
+  (consult-find-args "find . -not ( -path */__pycache__ -prune ) -not ( -path */.mypy_cache -prune ) -not ( -path */build_debug -prune )")
   :general
   (nvmap
     :keymaps 'override
@@ -486,6 +487,12 @@ expand immediately.  Common gateway for
           (interactive)
           (call-process-shell-command "open .")))
 
+  (nvmap
+    :keymaps 'override
+    :prefix "SPC b"
+    "f" #'consult-bookmark
+    "e" #'edit-bookmarks)
+
   :preface
   (defun consult-find-at ()
     (interactive)
@@ -502,36 +509,40 @@ expand immediately.  Common gateway for
     (interactive)
     (require 'consult)
     (let ((default-directory (project-root-current)))
+      (unless (bound-and-true-p recentf-list)
+        (user-error "No recent files, `recentf-mode' is %s"
+                    (if recentf-mode
+                        "enabled"
+                      "disabled")))
       (find-file
        (consult--read
-        (or
-         (mapcar
-          #'consult--fast-abbreviate-file-name
-          (mapcar
-           (lambda (file)
-             (let ((root (expand-file-name (project-root-current)))
-                   (file (expand-file-name file)))
-               (if (string-prefix-p root file)
-                   (file-relative-name file root)
-                 file)))
-           (cl-remove-if
-            (lambda (x)
-              (or
-               (string-prefix-p "/var/tmp/tmp" x)
-               (not (file-exists-p x))))
-            (remove
-             (abbreviate-file-name (or (buffer-file-name) ""))
-             (bound-and-true-p recentf-list)))))
-         (user-error "No recent files, `recentf-mode' is %s"
-                     (if recentf-mode
-                         "enabled"
-                       "disabled")))
+        (mapcar
+         (lambda (file)
+           (let ((root (consult--fast-abbreviate-file-name (project-root-current)))
+                 (file (consult--fast-abbreviate-file-name file)))
+             (if (string-prefix-p root file)
+                 (file-relative-name file root)
+               file)))
+         (cl-remove-if
+          (lambda (x)
+            (or
+             (string-prefix-p "/var/tmp/tmp" x)
+             (string-prefix-p "/private/var/folders" x)
+             (not (file-exists-p x))))
+          (remove
+           (abbreviate-file-name (or (buffer-file-name) ""))
+           (mapcar
+            #'consult--fast-abbreviate-file-name
+            (bound-and-true-p recentf-list)))))
         :prompt "Find recent file: "
         :sort nil
         :require-match t
         :category 'file
         :state (consult--file-preview)
-        :history 'file-name-history))))
+        :history 'file-name-history))
+      )
+    ;; (recentf-track-opened-file)
+    )
   :config
   (defun consult--find (prompt builder initial)
     "Run find command in current directory.
@@ -560,7 +571,9 @@ INITIAL is initial input."
   (recentf-max-saved-items 100000)
   (recentf-arrange-rules nil)
   (recentf-auto-cleanup 'never)
-  :hook (buffer-list-update . recentf-track-opened-file)
+  (recentf-keep nil)
+  :hook
+  (window-configuration-change . recentf-track-opened-file)
   :config
   (recentf-mode t))
 
@@ -683,6 +696,7 @@ Quit if no candidate is selected."
   (setq evil-split-window-below t)
   (setq evil-vsplit-window-right t)
   (setq evil-want-fine-undo t)
+  (setq evil-shift-round nil)
 
   :general
   (nmap
@@ -785,6 +799,8 @@ Quit if no candidate is selected."
   :config
   (rassq-delete-all 'cmake-format apheleia-mode-alist)
 
+  (add-hook 'apheleia-formatter-exited-hook (lambda (&rest args) (revert-buffer :ignore-auto :noconfirm)))
+
   (add-to-list! 'apheleia-formatters
                 '(sqlfluff . ("sqlfluff" "format" "--dialect" "postgres" "-"))
                 '(taplo . ("taplo" "fmt"))
@@ -792,6 +808,7 @@ Quit if no candidate is selected."
                 '(prettier . ("prettier" "--stdin-filepath" filepath))
                 '(markdownlint . ("markdownlint" "--quiet" "--fix" filepath))
                 '(phpcs . ("my-phpcs" "fix" "-n" "-q" filepath))
+                '(yamlfmt . ("yamlfmt" filepath))
                 '(taxi-format . ("taxi-format-quiet" "--quiet" filepath)))
 
   (add-to-list! 'apheleia-mode-alist
@@ -803,14 +820,15 @@ Quit if no candidate is selected."
                 '(xml-mode . xmllint)
                 '(nxml-mode . xmllint)
                 '(json-ts-mode . taxi-format)
-                '(yaml-ts-mode . taxi-format)
+                '(yaml-ts-mode . yamlfmt)
+                ;; '(yaml-ts-mode . taxi-format)
                 '(markdown-ts-mode . prettier)))
 
 (use-package jinx
   :custom
   (jinx-languages "ru_RU en_US")
   (jinx-camel-modes '(prog-mode text-mode))
-  :hook (text-mode . jinx-mode)
+  :hook ((text-mode markdown-ts-mode) . jinx-mode)
   :general
   (nvmap
     "z=" 'jinx-correct
@@ -916,7 +934,7 @@ Quit if no candidate is selected."
      (reusable-frames . visible)
      (window-height . 0.25))))
 
-(use-package editorconfig
+(use-builtin editorconfig
   :demand t
   :config (editorconfig-mode 1))
 
@@ -941,6 +959,7 @@ Quit if no candidate is selected."
   (dired-auto-revert-buffer t)
   (auto-revert-verbose nil)
   (dired-kill-when-opening-new-dired-buffer t)
+  (dired-movement-style 'bounded)
   :preface
   (defun +dired-open-here ()
     (interactive)
@@ -998,9 +1017,9 @@ Quit if no candidate is selected."
   (font-latex-sectioning-3-face ((t :inherit 'bold)))
   (font-latex-sectioning-4-face ((t :inherit 'bold)))
   (font-latex-sectioning-5-face ((t :inherit 'bold)))
-  :hook
-  (latex-mode . auto-fill-mode)
-  (LaTeX-mode . auto-fill-mode)
+  ;; :hook
+  ;; (latex-mode . auto-fill-mode)
+  ;; (LaTeX-mode . auto-fill-mode)
   :config
   (add-to-list 'LaTeX-indent-environment-list '("align*")))
 
@@ -1013,6 +1032,7 @@ Quit if no candidate is selected."
               '("\\.latexmkrc\\'" . perl-mode)
               '("\\.h\\'" . c++-ts-mode)
               '("\\.yql\\'" . sql-mode)
+              '("\\.ts\\'" . typescript-ts-mode)
               '("\\.sqlfluff\\'" . conf-mode)
               '("\\.clang-format\\'" . yaml-mode)
               '("\\.tsx\\'" . tsx-ts-mode)
@@ -1037,7 +1057,7 @@ Quit if no candidate is selected."
                        (not (bound-and-true-p visual-fill-column-mode)))
               (set-window-margins nil 2))))
 
-(use-package flymake
+(use-builtin flymake
   :hook
   ((sql-mode) . flymake-mode)
   :commands flymake-mode
@@ -1466,11 +1486,12 @@ Note that these rules can't contain anchored rules themselves."
      (c-mode . c-ts-mode)
      (python-mode . python-ts-mode)
      (diff-mode . diff-ts-mode)
-     (sql-mode . sql-ts-mode)))
+     ;; (sql-mode . sql-ts-mode)
+     ))
   :config
   (defun treesit--install-language-grammar-1
-    (out-dir lang url &optional revision source-dir cc c++)
-  "Install and compile a tree-sitter language grammar library.
+      (out-dir lang url &optional revision source-dir cc c++)
+    "Install and compile a tree-sitter language grammar library.
 
 OUT-DIR is the directory to put the compiled library file.  If it
 is nil, the \"tree-sitter\" directory under user's Emacs
@@ -1480,93 +1501,93 @@ does not exist).
 For LANG, URL, REVISION, SOURCE-DIR, GRAMMAR-DIR, CC, C++, see
 `treesit-language-source-alist'.  If anything goes wrong, this
 function signals an error."
-  (let* ((lang (symbol-name lang))
-         (maybe-repo-dir (expand-file-name url))
-         (url-is-dir (file-accessible-directory-p maybe-repo-dir))
-         (default-directory (make-temp-file "treesit-workdir" t))
-         (workdir (if url-is-dir
-                      maybe-repo-dir
-                    (expand-file-name "repo")))
-         (source-dir (expand-file-name (or source-dir "src") workdir))
-         (cc (or cc (seq-find #'executable-find '("cc" "gcc" "c99"))
-                 ;; If no C compiler found, just use cc and let
-                 ;; `call-process' signal the error.
-                 "cc"))
-         (c++ (or c++ (seq-find #'executable-find '("c++" "g++"))
-                  "c++"))
-         (npm (seq-find #'executable-find '("npm")))
-         (soext (or (car dynamic-library-suffixes)
-                    (signal 'treesit-error '("Emacs cannot figure out the file extension for dynamic libraries for this system, because `dynamic-library-suffixes' is nil"))))
-         (out-dir (or (and out-dir (expand-file-name out-dir))
-                      (locate-user-emacs-file "tree-sitter")))
-         (lib-name (concat "libtree-sitter-" lang soext)))
-    (unwind-protect
-        (with-temp-buffer
-          (if url-is-dir
-              (when revision
-                (treesit--git-checkout-branch workdir revision))
-            (treesit--git-clone-repo url revision workdir))
-          (setq default-directory workdir)
-          (message "Generating sources")
-          (treesit--call-process-signal npm nil t nil "run" "build")
-          ;; We need to go into the source directory because some
-          ;; header files use relative path (#include "../xxx").
-          ;; cd "${sourcedir}"
-          (setq default-directory source-dir)
-          (message "Compiling library")
-          ;; cc -fPIC -c -I. parser.c
-          (treesit--call-process-signal
-           cc nil t nil "-fPIC" "-c" "-I." "parser.c")
-          ;; cc -fPIC -c -I. scanner.c
-          (when (file-exists-p "scanner.c")
+    (let* ((lang (symbol-name lang))
+           (maybe-repo-dir (expand-file-name url))
+           (url-is-dir (file-accessible-directory-p maybe-repo-dir))
+           (default-directory (make-temp-file "treesit-workdir" t))
+           (workdir (if url-is-dir
+                        maybe-repo-dir
+                      (expand-file-name "repo")))
+           (source-dir (expand-file-name (or source-dir "src") workdir))
+           (cc (or cc (seq-find #'executable-find '("cc" "gcc" "c99"))
+                   ;; If no C compiler found, just use cc and let
+                   ;; `call-process' signal the error.
+                   "cc"))
+           (c++ (or c++ (seq-find #'executable-find '("c++" "g++"))
+                    "c++"))
+           (npm (seq-find #'executable-find '("npm")))
+           (soext (or (car dynamic-library-suffixes)
+                      (signal 'treesit-error '("Emacs cannot figure out the file extension for dynamic libraries for this system, because `dynamic-library-suffixes' is nil"))))
+           (out-dir (or (and out-dir (expand-file-name out-dir))
+                        (locate-user-emacs-file "tree-sitter")))
+           (lib-name (concat "libtree-sitter-" lang soext)))
+      (unwind-protect
+          (with-temp-buffer
+            (if url-is-dir
+                (when revision
+                  (treesit--git-checkout-branch workdir revision))
+              (treesit--git-clone-repo url revision workdir))
+            (setq default-directory workdir)
+            (message "Generating sources")
+            (treesit--call-process-signal npm nil t nil "run" "build")
+            ;; We need to go into the source directory because some
+            ;; header files use relative path (#include "../xxx").
+            ;; cd "${sourcedir}"
+            (setq default-directory source-dir)
+            (message "Compiling library")
+            ;; cc -fPIC -c -I. parser.c
             (treesit--call-process-signal
-             cc nil t nil "-fPIC" "-c" "-I." "scanner.c"))
-          ;; c++ -fPIC -I. -c scanner.cc
-          (when (file-exists-p "scanner.cc")
-            (treesit--call-process-signal
-             c++ nil t nil "-fPIC" "-c" "-I." "scanner.cc"))
-          ;; cc/c++ -fPIC -shared *.o -o "libtree-sitter-${lang}.${soext}"
-          (apply #'treesit--call-process-signal
-                 (if (file-exists-p "scanner.cc") c++ cc)
-                 nil t nil
-                 (if (eq system-type 'cygwin)
-                     `("-shared" "-Wl,-dynamicbase"
+             cc nil t nil "-fPIC" "-c" "-I." "parser.c")
+            ;; cc -fPIC -c -I. scanner.c
+            (when (file-exists-p "scanner.c")
+              (treesit--call-process-signal
+               cc nil t nil "-fPIC" "-c" "-I." "scanner.c"))
+            ;; c++ -fPIC -I. -c scanner.cc
+            (when (file-exists-p "scanner.cc")
+              (treesit--call-process-signal
+               c++ nil t nil "-fPIC" "-c" "-I." "scanner.cc"))
+            ;; cc/c++ -fPIC -shared *.o -o "libtree-sitter-${lang}.${soext}"
+            (apply #'treesit--call-process-signal
+                   (if (file-exists-p "scanner.cc") c++ cc)
+                   nil t nil
+                   (if (eq system-type 'cygwin)
+                       `("-shared" "-Wl,-dynamicbase"
+                         ,@(directory-files
+                            default-directory nil
+                            (rx bos (+ anychar) ".o" eos))
+                         "-o" ,lib-name)
+                     `("-fPIC" "-shared"
                        ,@(directory-files
                           default-directory nil
                           (rx bos (+ anychar) ".o" eos))
-                       "-o" ,lib-name)
-                   `("-fPIC" "-shared"
-                     ,@(directory-files
-                        default-directory nil
-                        (rx bos (+ anychar) ".o" eos))
-                     "-o" ,lib-name)))
-          ;; Copy out.
-          (unless (file-exists-p out-dir)
-            (make-directory out-dir t))
-          (let* ((library-fname (expand-file-name lib-name out-dir))
-                 (old-fname (concat library-fname ".old")))
-            ;; Rename the existing shared library, if any, then
-            ;; install the new one, and try deleting the old one.
-            ;; This is for Windows systems, where we cannot simply
-            ;; overwrite a DLL that is being used.
-            (if (file-exists-p library-fname)
-                (rename-file library-fname old-fname t))
-            (copy-file lib-name (file-name-as-directory out-dir) t t)
-            ;; Ignore errors, in case the old version is still used.
-            (ignore-errors (delete-file old-fname)))
-          (message "Library installed to %s/%s" out-dir lib-name))
-      ;; Remove workdir if it's not a repo owned by user and we
-      ;; managed to create it in the first place.
-      (when (and (not url-is-dir) (file-exists-p workdir))
-        (delete-directory workdir t))))))
+                       "-o" ,lib-name)))
+            ;; Copy out.
+            (unless (file-exists-p out-dir)
+              (make-directory out-dir t))
+            (let* ((library-fname (expand-file-name lib-name out-dir))
+                   (old-fname (concat library-fname ".old")))
+              ;; Rename the existing shared library, if any, then
+              ;; install the new one, and try deleting the old one.
+              ;; This is for Windows systems, where we cannot simply
+              ;; overwrite a DLL that is being used.
+              (if (file-exists-p library-fname)
+                  (rename-file library-fname old-fname t))
+              (copy-file lib-name (file-name-as-directory out-dir) t t)
+              ;; Ignore errors, in case the old version is still used.
+              (ignore-errors (delete-file old-fname)))
+            (message "Library installed to %s/%s" out-dir lib-name))
+        ;; Remove workdir if it's not a repo owned by user and we
+        ;; managed to create it in the first place.
+        (when (and (not url-is-dir) (file-exists-p workdir))
+          (delete-directory workdir t))))))
 
-(use-package rainbow-mode
-  :general
-  (nvmap
-    :prefix "SPC t"
-    "r" 'rainbow-mode))
+                                        ; (use-package rainbow-mode
+                                        ;   :general
+                                        ;   (nvmap
+                                        ;     :prefix "SPC t"
+                                        ;     "r" 'rainbow-mode))
 
-(use-package eldoc
+(use-builtin eldoc
   :defer t
   :custom
   (eldoc-echo-area-use-multiline-p nil))
@@ -1723,7 +1744,10 @@ function signals an error."
   (nvmap
     :keymaps 'override
     :prefix "SPC o"
-    "t" 'obsidian-today
+    "t" (lambda ()
+          (interactive)
+          (find-file "~/obsidian/список-задач.md"))
+    "T" 'obsidian-today
     "o" 'obsidian-open
     "i" 'obsidian-insert-tag
     "n" 'obsidian-new
@@ -1743,7 +1767,7 @@ function signals an error."
   :custom
   (markdown-fontify-code-blocks-natively t)
   (markdown-list-item-bullets '("—"))
-  (markdown-code-lang-modes
+  (markdown-ts-code-language-modes
    '(("ocaml" . tuareg-mode)
      ("elisp" . emacs-lisp-mode)
      ("ditaa" . artist-mode)
@@ -1758,6 +1782,8 @@ function signals an error."
      ("screen" . shell-script-mode)
      ("shell" . sh-mode)
      ("bash" . sh-mode)))
+  :hook (markdown-ts-mode . (lambda ()
+                              (setq-local adaptive-fill-regexp "[-–!|#%;>·•‣⁃◦ 	]*")))
   :general
   (general-define-key
    :keymaps 'markdown-ts-mode-map
@@ -1831,7 +1857,7 @@ function signals an error."
   (indent-bars-prefer-character t)
   :hook ((prog-mode text-mode) . indent-bars-mode))
 
-(global-auto-revert-mode)
+;; (global-auto-revert-mode)
 
 (defun my-switch-project (dir)
   "\"Switch\" to another project by running an Emacs command.
@@ -1855,7 +1881,7 @@ to directory DIR."
 
 (use-package git-rebase-ts-mode
   :ensure nil
-  :mode "git-rebase-todo\\'"
+  :mode "arc-rebase-todo\\'"
   ;; :ensure (git-commit-ts-mode :host github :repo "danilshvalov/git-commit-ts-mode")
   :config
   (when (daemonp)
@@ -2050,8 +2076,6 @@ LANG is a string, and the returned major mode is a symbol."
 ;;                   (treesit-range-rules
 ;;                    'markdown-fontify-code-blocks))))
 
-(require 'treesit)
-
 ;; (defun markdown-language-at-point (pos)
 ;;   (let* ((parser (treesit-parser-create 'markdown))
 ;;          (root (treesit-parser-root-node parser))
@@ -2082,7 +2106,7 @@ LANG is a string, and the returned major mode is a symbol."
 ;; (defun markdown-ts-mode--parser-notifier (ranges parser)
 ;;   (message "Data: %s %s" parser ranges))
 
-(use-package which-key
+(use-builtin which-key
   :custom
   (which-key-separator " → " )
   (which-key-min-display-lines 10)
@@ -2094,7 +2118,7 @@ LANG is a string, and the returned major mode is a symbol."
 (use-package visual-fill-column
   :custom
   (visual-fill-column-center-text t)
-  :hook (markdown-ts-mode . visual-fill-column-mode))
+  :hook ((markdown-ts-mode latex-mode LaTeX-mode) . visual-fill-column-mode))
 
 (use-package eglot-booster
   :ensure (eglot-booster :host github :repo "jdtsmith/eglot-booster")
@@ -2150,35 +2174,29 @@ Move: _h_: left  _j_: down  _k_: up  _l_: right"
     ("k" hydra-move-splitter-up)
     ("l" hydra-move-splitter-right)))
 
-(use-package sql-ts-mode
-  :ensure (sql-ts-mode :host github :repo "nverno/sql-ts-mode")
-  :mode "\\.sql\\'"
-  :preface
-  (defun my-markdown-ts-mode-faces ()
-    "Set background color for use only in emacs lisp modes."
-    (interactive)
-    (face-remap-add-relative 'font-lock-variable-name-face `(:foreground ,(doom-color 'yellow))))
-  :config
-  (add-hook 'sql-ts-mode-hook #'my-markdown-ts-mode-faces))
+;; (use-package sql-ts-mode
+;;   :ensure (sql-ts-mode :host github :repo "nverno/sql-ts-mode")
+;;   :mode "\\.sql\\'"
+;;   :preface
+;;   (defun my-markdown-ts-mode-faces ()
+;;     "Set background color for use only in emacs lisp modes."
+;;     (interactive)
+;;     (face-remap-add-relative 'font-lock-variable-name-face `(:foreground ,(doom-color 'yellow))))
+;;   :config
+;;   (add-hook 'sql-ts-mode-hook #'my-markdown-ts-mode-faces))
 
 (defvar yaml-indent-offset 4)
 
-(defvar my-yaml-ts-indent-rules
-  (let ((offset yaml-indent-offset))
-    `((yaml
-       ;; ((match nil "block_mapping" nil 2 2) parent-bol ,offset)
-       ((query "(block_node (block_mapping)) @indent") parent ,offset)
-       ((query "(block_node (block_sequence)) @indent") parent 2)
-       ((parent-is "block_mapping") parent 0)
-       ((parent-is "block_sequence") parent 0)
-       ;; ((query "(block_mapping_pair value: (block_node (block_mapping (block_mapping_pair) @indent)))") parent-bol ,offset)
-       ;; ((parent-is "block_mapping_pair") parent-bol ,offset)
-       ;; ((parent-is "list") prev-sibling 0)
-       ;; ((match nil "paragraph" nil 0 nil) parent-bol 2)
-       ))))
-
 (use-builtin yaml-ts-mode
-  :mode "\\.ya?ml\\'"
-  :hook (yaml-ts-mode . (lambda ()
-                          (setq-local treesit-simple-indent-rules my-yaml-ts-indent-rules)
-                          (treesit-major-mode-setup))))
+  :mode "\\.ya?ml\\'")
+
+(setq word-wrap-by-category t)
+;; Add the | (= line-breakable) category to the - char.
+(modify-category-entry ?- ?| (standard-category-table))
+(modify-category-entry ?_ ?| (standard-category-table))
+(modify-category-entry ?/ ?| (standard-category-table))
+
+(add-to-list 'safe-local-variable-values '(apheleia-formatter . (taxi-format)))
+(add-to-list! 'safe-local-variable-directories
+              (expand-file-name "~")
+              (expand-file-name "~/arcadia/taxi"))
