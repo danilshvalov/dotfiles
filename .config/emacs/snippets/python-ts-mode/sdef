@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: sdef
+# key: sdef
+# --
+def $1(self$2):
+    $0

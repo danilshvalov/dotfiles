@@ -1,0 +1,12 @@
+# -*- mode: snippet -*-
+# name: param
+# key: param
+# --
+@pytest.mark.parametrize(
+    ['$1'],
+    [
+        pytest.param(
+            id='$2'
+        )
+    ]
+)

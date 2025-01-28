@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: adef
+# key: adef
+# --
+async def $1($2):
+    $0

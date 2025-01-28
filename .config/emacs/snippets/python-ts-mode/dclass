@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: dclass
+# key: dclass
+# --
+@dataclasses.dataclass
+class $1:
+    $0

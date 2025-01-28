@@ -26,7 +26,10 @@
   (whitespace-style '(face tabs))
   (window-combination-resize t)
   (help-window-select t)
-  (bidi-display-reordering nil)
+  (bidi-display-reordering 'left-to-right)
+  (bidi-paragraph-direction 'left-to-right)
+  (bidi-inhibit-bpa t)
+  (auto-mode-case-fold nil)
   (sentence-end-double-space nil)
   (history-length t)
   (visible-cursor nil)
@@ -38,9 +41,6 @@
   :hook
   ((prog-mode text-mode) . display-fill-column-indicator-mode)
   :preface
-  ;; remove image resize delay
-  (advice-add 'image--delayed-change-size :override 'image--change-size)
-
   (defun crm-indicator (args)
     (cons
      (format "[CRM%s] %s"
@@ -392,7 +392,7 @@ expand immediately.  Common gateway for
     :keymaps 'override
     "s" #'avy-goto-char-2))
 
-(use-builtin eglot
+(use-package eglot
   :defer t
   :custom
   (eglot-sync-connect nil)
@@ -418,7 +418,8 @@ expand immediately.  Common gateway for
     "a"
     'eglot-code-actions)
   :config
-  (add-hook 'eglot-managed-mode-hook (lambda () (eglot-inlay-hints-mode -1)))
+  (add-hook 'eglot-managed-mode-hook (lambda ()
+                                       (eglot-inlay-hints-mode -1)))
   (fset #'jsonrpc--log-event #'ignore)
 
   (fset #'eglot--snippet-expansion-fn #'ignore)
@@ -426,6 +427,7 @@ expand immediately.  Common gateway for
   (add-to-list 'eglot-server-programs '(c++-ts-mode . ("clangd" "--compile-commands-dir=build_debug")))
   (add-to-list 'eglot-server-programs '(latex-mode . ("texlab")))
   (add-to-list 'eglot-server-programs '(python-ts-mode . ("pylsp")))
+  (add-to-list 'eglot-server-programs '(python-ts-mode . ("basedpyright-langserver" "--stdio")))
   (add-to-list
    'eglot-server-programs
    '(conf-toml-mode . ("taplo" "lsp" "stdio"))))
@@ -527,6 +529,7 @@ expand immediately.  Common gateway for
           (lambda (x)
             (or
              (string-prefix-p "/var/tmp/tmp" x)
+             (string-suffix-p "sync-recentf-marker" x)
              (string-prefix-p "/private/var/folders" x)
              (not (file-exists-p x))))
           (remove
@@ -554,15 +557,15 @@ BUILDER is the command line builder function.
 PROMPT is the prompt.
 INITIAL is initial input."
     (consult--read
-     (consult--async-command builder
-       (consult--async-map (lambda (x) (string-remove-prefix "./" x)))
-       (consult--async-highlight builder)
+     (consult--process-collection builder
+       :transform (consult--async-map (lambda (x) (string-remove-prefix "./" x)))
+       :highlight t
        :file-handler t) ;; allow tramp
      :prompt prompt
      :sort t
      :require-match t
-     :initial (consult--async-split-initial initial)
-     :add-history (consult--async-split-thingatpt 'filename)
+     :initial initial
+     :add-history (thing-at-point 'filename)
      :category 'file
      :history '(:input consult--find-history))))
 
@@ -801,19 +804,40 @@ Quit if no candidate is selected."
 
   (add-hook 'apheleia-formatter-exited-hook (lambda (&rest args) (revert-buffer :ignore-auto :noconfirm)))
 
+  (defun my-make-taxi-format (filepath)
+    `("taxi-format-quiet" "--quiet" ,filepath "-"))
+
+  (defun my-file-in-arcadia-p (filepath)
+    (file-in-directory-p filepath "~/arcadia"))
+
+  (defun my-make-python-formatter ()
+    (let* ((filepath (buffer-file-name))
+           (black `("black" "--line-length" "120" ,filepath)))
+      (if (my-file-in-arcadia-p filepath)
+          (my-make-taxi-format filepath)
+        black)))
+
+  (defun my-make-yaml-formatter ()
+    (let* ((filepath (buffer-file-name))
+           (yamlfmt `("yamlfmt" ,filepath)))
+      (if (my-file-in-arcadia-p filepath)
+          (my-make-taxi-format filepath)
+        yamlfmt)))
+
   (add-to-list! 'apheleia-formatters
                 '(sqlfluff . ("sqlfluff" "format" "--dialect" "postgres" "-"))
                 '(taplo . ("taplo" "fmt"))
                 '(csharpier . ("dotnet" "csharpier"))
-                '(prettier . ("prettier" "--stdin-filepath" filepath))
+                '(prettier . ("prettier" "--stdin-filepath" filepath "--embedded-language-formatting" "off"))
                 '(markdownlint . ("markdownlint" "--quiet" "--fix" filepath))
                 '(phpcs . ("my-phpcs" "fix" "-n" "-q" filepath))
-                '(yamlfmt . ("yamlfmt" filepath))
-                '(taxi-format . ("taxi-format-quiet" "--quiet" filepath)))
+                '(yamlfmt . ((my-make-yaml-formatter)))
+                '(taxi-format . ("taxi-format-quiet" "--quiet" filepath "-"))
+                '(python-format . ((my-make-python-formatter))))
 
   (add-to-list! 'apheleia-mode-alist
                 '(sql-mode . sqlfluff)
-                '(python-ts-mode . taxi-format)
+                '(python-ts-mode . python-format)
                 '(c++-mode . taxi-format)
                 '(conf-toml-mode . taplo)
                 '(csharp-mode . csharpier)
@@ -957,6 +981,7 @@ Quit if no candidate is selected."
   :custom
   (dired-listing-switches "-lAXGh --group-directories-first")
   (dired-auto-revert-buffer t)
+  (dired-dwim-target t)
   (auto-revert-verbose nil)
   (dired-kill-when-opening-new-dired-buffer t)
   (dired-movement-style 'bounded)
@@ -984,44 +1009,44 @@ Quit if no candidate is selected."
           (dired default-directory))
     "E" '+dired-open-here))
 
-(use-package auctex
-  ;; :ensure (auctex :pre-build (("./autogen.sh")
-  ;;                             ("./configure"
-  ;;                              "--without-texmf-dir"
-  ;;                              "--with-packagelispdir=./"
-  ;;                              "--with-packagedatadir=./")
-  ;;                             ("make"))
-  ;;                 :build (:not elpaca--compile-info) ;; Make will take care of this step
-  ;;                 :files ("*.el" "doc/*.info*" "etc" "images" "latex" "style"))
-  ;; :commands (LaTeX-mode latex-mode)
-  :custom
-  (LaTeX-item-indent 0)
-  (LaTeX-indent-level 2)
-  (tex-fontify-script nil)
-  (TeX-close-quote ">>")
-  (TeX-open-quote "<<")
-  (tex-close-quote ">>")
-  (tex-open-quote "<<")
-  (TeX-engine 'luatex)
-  (font-latex-fontify-script nil)
-  :custom-face
-  (font-latex-warning-face ((t :inherit 'bold)))
-  (font-latex-math-face ((t :inherit 'bold)))
-  (font-latex-string-face ((t :inherit 'font-lock-string-face)))
-  (font-latex-verbatim-face ((t :inherit 'bold)))
-  (font-latex-bold-face ((t :inherit 'bold)))
-  (font-latex-italic-face ((t :inherit 'italic)))
-  (font-latex-sectioning-0-face ((t :inherit 'bold)))
-  (font-latex-sectioning-1-face ((t :inherit 'bold)))
-  (font-latex-sectioning-2-face ((t :inherit 'bold)))
-  (font-latex-sectioning-3-face ((t :inherit 'bold)))
-  (font-latex-sectioning-4-face ((t :inherit 'bold)))
-  (font-latex-sectioning-5-face ((t :inherit 'bold)))
-  ;; :hook
-  ;; (latex-mode . auto-fill-mode)
-  ;; (LaTeX-mode . auto-fill-mode)
-  :config
-  (add-to-list 'LaTeX-indent-environment-list '("align*")))
+;; (use-package auctex
+;;   ;; :ensure (auctex :pre-build (("./autogen.sh")
+;;   ;;                             ("./configure"
+;;   ;;                              "--without-texmf-dir"
+;;   ;;                              "--with-packagelispdir=./"
+;;   ;;                              "--with-packagedatadir=./")
+;;   ;;                             ("make"))
+;;   ;;                 :build (:not elpaca--compile-info) ;; Make will take care of this step
+;;   ;;                 :files ("*.el" "doc/*.info*" "etc" "images" "latex" "style"))
+;;   ;; :commands (LaTeX-mode latex-mode)
+;;   :custom
+;;   (LaTeX-item-indent 0)
+;;   (LaTeX-indent-level 2)
+;;   (tex-fontify-script nil)
+;;   (TeX-close-quote ">>")
+;;   (TeX-open-quote "<<")
+;;   (tex-close-quote ">>")
+;;   (tex-open-quote "<<")
+;;   (TeX-engine 'luatex)
+;;   (font-latex-fontify-script nil)
+;;   :custom-face
+;;   (font-latex-warning-face ((t :inherit 'bold)))
+;;   (font-latex-math-face ((t :inherit 'bold)))
+;;   (font-latex-string-face ((t :inherit 'font-lock-string-face)))
+;;   (font-latex-verbatim-face ((t :inherit 'bold)))
+;;   (font-latex-bold-face ((t :inherit 'bold)))
+;;   (font-latex-italic-face ((t :inherit 'italic)))
+;;   (font-latex-sectioning-0-face ((t :inherit 'bold)))
+;;   (font-latex-sectioning-1-face ((t :inherit 'bold)))
+;;   (font-latex-sectioning-2-face ((t :inherit 'bold)))
+;;   (font-latex-sectioning-3-face ((t :inherit 'bold)))
+;;   (font-latex-sectioning-4-face ((t :inherit 'bold)))
+;;   (font-latex-sectioning-5-face ((t :inherit 'bold)))
+;;   ;; :hook
+;;   ;; (latex-mode . auto-fill-mode)
+;;   ;; (LaTeX-mode . auto-fill-mode)
+;;   :config
+;;   (add-to-list 'LaTeX-indent-environment-list '("align*")))
 
 (add-hook 'LaTeX-mode-hook
           (lambda ()
@@ -1071,7 +1096,6 @@ Quit if no candidate is selected."
   (flymake-start-on-save-buffer t)
   (flymake-proc-compilation-prevents-syntax-check t)
   (flymake-show-diagnostics-at-end-of-line nil)
-  (flymake-wrap-around nil)
   (flymake-indicator-type 'margins)
   :general
   (nvmap
@@ -1808,6 +1832,10 @@ function signals an error."
                       (replace (format "%d/%d" here total)))))
         (propertize status 'face 'anzu-mode-line))))
 
+  ;; fix evil
+  (defun anzu--use-result-cache-p (input)
+    nil)
+
   (custom-set-variables
    '(anzu-mode-line-update-function #'my/anzu-update-func)))
 
@@ -1935,12 +1963,7 @@ to directory DIR."
 (use-package protobuf-mode
   :mode "\\.proto\\'")
 
-;; (add-hook 'after-change-major-mode-hook
-;;           (lambda ()
-;;             (modify-syntax-entry ?_ "w")))
-
 (add-hook 'python-ts-mode-hook (lambda () (setq-local fill-column 120)))
-
 
 (defcustom treesit-injections-code-lang-modes
   '(("ocaml" . tuareg-mode) ("elisp" . emacs-lisp-mode) ("ditaa" . artist-mode)
@@ -2120,10 +2143,10 @@ LANG is a string, and the returned major mode is a symbol."
   (visual-fill-column-center-text t)
   :hook ((markdown-ts-mode latex-mode LaTeX-mode) . visual-fill-column-mode))
 
-(use-package eglot-booster
-  :ensure (eglot-booster :host github :repo "jdtsmith/eglot-booster")
-  :after eglot
-  :config (eglot-booster-mode))
+;; (use-package eglot-booster
+;;   :ensure (eglot-booster :host github :repo "jdtsmith/eglot-booster")
+;;   :after eglot
+;;   :config (eglot-booster-mode))
 
 (use-package hydra
   :general
@@ -2200,3 +2223,8 @@ Move: _h_: left  _j_: down  _k_: up  _l_: right"
 (add-to-list! 'safe-local-variable-directories
               (expand-file-name "~")
               (expand-file-name "~/arcadia/taxi"))
+
+(use-package sync-recentf)
+
+(use-package wgrep
+  :commands 'wgrep-change-to-wgrep-mode)
