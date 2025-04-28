@@ -80,4 +80,53 @@ kit.require_on_exported_call = function(require_path)
   })
 end
 
+kit.block_on = function(async_fn_with_callback, timeout)
+  local done = false
+  local result
+  timeout = timeout and timeout or 2000
+
+  local function collect_result(res)
+    result = res
+    done = true
+  end
+
+  async_fn_with_callback(collect_result)
+
+  vim.wait(timeout, function()
+    return done
+  end, 20, false)
+
+  return result
+end
+
+kit.input = function(opts)
+  return kit.block_on(function(cb)
+    vim.ui.input(opts, cb)
+  end)
+end
+
+kit.select = function(items, opts)
+  return kit.block_on(function(cb)
+    vim.ui.select(items, opts, cb)
+  end)
+end
+
+kit.echo = function(prompt)
+  vim.api.nvim_echo({ { prompt } }, false, {})
+end
+
+kit.confirm = function(opts)
+  kit.echo(opts.prompt)
+  local answer = vim.fn.nr2char(vim.fn.getchar()):lower()
+  if answer ~= "y" and answer ~= "n" then
+    answer = opts.default and "y" or "n"
+  end
+
+  if answer == "y" then
+    return true
+  elseif answer == "n" then
+    return false
+  end
+end
+
 return _G.kit

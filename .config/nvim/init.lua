@@ -19,7 +19,7 @@ vim.o.smoothscroll = true
 
 vim.o.termguicolors = true
 
-vim.o.colorcolumn = "80"
+vim.o.colorcolumn = "120"
 
 -- show tabs
 vim.o.list = true
@@ -41,6 +41,9 @@ vim.o.clipboard = "unnamedplus"
 
 -- enable cursor line highlight
 vim.o.cursorline = true
+
+vim.o.number = true
+vim.o.relativenumber = true
 
 vim.o.cinoptions = vim.o.cinoptions .. "L0"
 
@@ -106,7 +109,9 @@ vim.o.scrolloff = 10
 vim.o.sidescrolloff = 20
 vim.o.signcolumn = "yes"
 
-vim.opt.completeopt = { "menu", "preview", "menuone", "noinsert" }
+vim.opt.completeopt = { "menu", "popup", "menuone", "noinsert", "fuzzy" }
+
+vim.opt.wildmode = "full:longest"
 
 kit.autocmd("TextYankPost", {
   callback = function()
@@ -200,13 +205,36 @@ end
 
 map:ft({ "tex", "markdown" }):mode("i"):set("<A-CR>", insert_item)
 
-kit.call_at_ft({ "markdown", "org", "tex" }, function()
-  vim.bo.textwidth = 80
-end)
+-- kit.call_at_ft({ "markdown", "org", "tex" }, function()
+--   vim.bo.textwidth = 80
+-- end)
+
+function _G.Eatchar(path)
+  local c = vim.fn.nr2char(vim.fn.getchar(0))
+  if c == path then
+    return ""
+  end
+  return c
+end
 
 vim.cmd.cabbrev("ц w")
 vim.cmd.cabbrev("й q")
 vim.cmd.cabbrev("цй wq")
+vim.cmd.cabbrev("ea e ~/arcadia/<C-R>")
+
+-- kit.create_cmd("Ea", function(opts)
+--   vim.cmd.edit(vim.fs.joinpath("~/arcadia", opts.fargs[1]))
+-- end, {
+--   nargs = 1,
+--   complete = function(ArgLead, CmdLine, CursorPos)
+--     local dir = vim.fs.dirname(vim.fs.joinpath("~/arcadia", ArgLead))
+--     local result = {}
+--     for name, _ in vim.fs.dir(dir) do
+--       table.insert(result, name)
+--     end
+--     return result
+--   end,
+-- })
 
 if vim.env["SSH_TTY"] then
   vim.g.clipboard = {
@@ -311,7 +339,7 @@ function Arc.copy_link()
   vim.notify(string.format("Copied link: %s", link))
 end
 
-map:prefix("<leader>a"):set("l", Arc.copy_link)
+map:prefix("<leader>y"):set("a", Arc.copy_link)
 
 local function url_encode(str)
   str = string.gsub(str, "([^%w%.%- ])", function(c)
@@ -341,3 +369,58 @@ local function url_shortener()
 end
 
 map:set("<leader>u", url_shortener)
+
+function Arc.get_conflicted_files(opts)
+  opts = opts or {}
+  local root = Arc.root(opts)
+  local changed_files = vim
+    .system({ "arc", "status", "--json" }, { text = true, cwd = opts.cwd })
+    :wait()
+  changed_files = vim.json.decode(changed_files.stdout)
+
+  local conflicted_files = vim
+    .iter(changed_files["status"]["unmerged"])
+    :filter(function(entry)
+      return entry["status"] == "conflict"
+    end)
+    :map(function(entry)
+      return { filename = vim.fs.joinpath(root, entry["path"]), valid = true }
+    end)
+    :totable()
+
+  vim.fn.setqflist(conflicted_files, "r")
+  vim.cmd.copen()
+end
+
+function Arc.insert_ticket()
+  local lines = vim
+    .iter(vim.api.nvim_buf_get_lines(0, 0, -1, true))
+    :map(function(line)
+      return line:match("[A-Z]+%-%d+")
+    end)
+    :filter(function(line)
+      return line ~= nil
+    end)
+    :totable()
+  if #lines == 0 then
+    return
+  end
+
+  vim.ui.select(
+    { "not required", "autotests", "testing", "testing, autotests" },
+    { prompt = "Select tests type" },
+    function(tests)
+      if not tests then
+        return tests
+      end
+
+      local ticket = lines[1]
+      vim.api.nvim_buf_set_lines(0, 1, 1, true, { "", "Relates: " .. ticket, "Tests: " .. tests })
+    end
+  )
+end
+
+map:set("<leader>aC", Arc.get_conflicted_files)
+map:set("<leader>at", Arc.insert_ticket)
+
+map:set("<C-e>", "<C-6>")
